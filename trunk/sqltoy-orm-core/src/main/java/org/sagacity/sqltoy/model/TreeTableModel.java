@@ -167,8 +167,8 @@ public class TreeTableModel implements Serializable {
 	 */
 	@Deprecated
 	public TreeTableModel rootId(Object pidValue) {
-		this.pidValue = pidValue;
-		return this;
+		// update 2026-11-12 废弃方法委派至语义正确的方法,收敛为单一赋值路径
+		return pidValue(pidValue);
 	}
 
 	public TreeTableModel pidValue(Object pidValue) {

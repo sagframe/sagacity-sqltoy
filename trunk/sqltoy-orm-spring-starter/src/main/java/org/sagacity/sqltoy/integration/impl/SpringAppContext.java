@@ -46,7 +46,8 @@ public class SpringAppContext implements AppContext, ApplicationContextAware {
 
 	@Deprecated
 	public void setContext(ApplicationContext applicationContext) {
-		this.applicationContext = applicationContext;
+		// update 2026-11-12 废弃方法委派至spring标准setter,收敛为单一赋值路径
+		setApplicationContext(applicationContext);
 	}
 
 	/**

@@ -41,6 +41,7 @@ import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
+import org.sagacity.sqltoy.model.ResultColumnMeta;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.TypeHandler;
@@ -480,6 +481,17 @@ public class DefaultDialectUtils {
 							// oracle的vector/json列getObject直接报ORA-17004,TEXT_READ预分类改走getString)
 							String[] usfTypeNames = ResultUtils.readColumnTypeNames(finalRs, rowCnt);
 							int[] usfKinds = ResultUtils.buildColumnKinds(dbType, usfTypeNames);
+							// update 2026-11-12 列元数据一次构建直传processResultRow新签名(与linkCols预计算
+							// 口径一致):原走废弃桥接签名每次回读逐列重建ResultColumnMeta,自此废弃签名无
+							// 框架内部调用方仅保留对外兼容;USF回读不带列标签(label为null),不参与
+							// 按列名的翻译/解密定位
+							ResultColumnMeta[] usfCols = new ResultColumnMeta[rowCnt];
+							for (int i = 0; i < rowCnt; i++) {
+								String tn = usfTypeNames[i];
+								usfCols[i] = new ResultColumnMeta(null, null, i + 1, tn, tn,
+										ResultColumnMeta.ReadStrategy.of(usfKinds[i]),
+										ResultColumnMeta.ExtType.of(tn), 0, null);
+							}
 							int index = 0;
 							List result = new ArrayList();
 							DataVersionConfig dataVersion = entityMeta.getDataVersion();
@@ -625,11 +637,11 @@ public class DefaultDialectUtils {
 									readRs = rrs;
 								}
 								try {
-									// 重新获得修改后的值(列类型名与读取策略已在循环前查询级预计算,重查
+									// 重新获得修改后的值(列元数据已在循环前查询级一次构建,重查
 									// select列清单与锁查询完全一致,类型名/序号一一对应)
 									result.add(ResultUtils.processResultRow(dbType, typeHandler, dynamicCacheFetch,
-											dynamicCacheHolder, readRs, null, null, rowCnt, null, null, false,
-											usfTypeNames, usfKinds, 0));
+											dynamicCacheHolder, readRs, null, rowCnt, null, null, false,
+											usfCols, 0));
 								} finally {
 									if (reReadPst != null) {
 										// close语句连带关闭其结果集

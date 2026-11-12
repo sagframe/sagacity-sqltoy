@@ -81,10 +81,10 @@ public interface LightDao extends LambdaDao {
 
 	/**
 	 * 提供链式操作模式修改记录
-	 * <li>lightDao.update().dataSource(xxx).forceUpdateProps("status").one(entity)</li>
-	 * <li>lightDao.update().dataSource(xxx).forceUpdateProps("status").many(entities)</li>
-	 * <li>大批量并行:lightDao.update().parallelConfig(ParallelConfig.create().groupSize(5000).maxThreads(10)).forceUpdateProps("status").many(entities)</li>
-	 * 
+	 * <li>lightDao.update().dataSource(xxx).forceUpdateFields("status").one(entity)</li>
+	 * <li>lightDao.update().dataSource(xxx).forceUpdateFields("status").many(entities)</li>
+	 * <li>大批量并行:lightDao.update().parallelConfig(ParallelConfig.create().groupSize(5000).maxThreads(10)).forceUpdateFields("status").many(entities)</li>
+	 *
 	 * @return Update链式操作对象，通过链式配置执行对象修改
 	 */
 	public Update update();

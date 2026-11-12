@@ -151,8 +151,8 @@ public class Update extends BaseLink {
 	 */
 	@Deprecated
 	public Update forceUpdateProps(String... forceUpdateProps) {
-		this.forceUpdateFields = forceUpdateProps;
-		return this;
+		// update 2026-11-12 废弃方法委派至新命名方法,收敛为单一赋值路径
+		return forceUpdateFields(forceUpdateProps);
 	}
 
 	public Update forceUpdateFields(String... forceUpdateFields) {

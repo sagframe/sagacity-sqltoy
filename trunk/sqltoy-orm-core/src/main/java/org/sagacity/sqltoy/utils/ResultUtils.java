@@ -1392,8 +1392,9 @@ public class ResultUtils {
 	/**
 	 * update 2026-9-12
 	 * 处理Result单行数据(旧签名,已废弃):并行数组(labelNames/columnTypeNames/columnKinds)
-	 * 形态已被ResultColumnMeta[]取代,内部桥接转换后委托新签名;既有调用方(USF锁游标回读、
-	 * getMoreLinkResultSet)逐步迁移后移除。
+	 * 形态已被ResultColumnMeta[]取代,内部桥接转换后委托新签名;update 2026-11-12
+	 * 框架内部调用方(USF锁游标回读、getMoreLinkResultSet)已全部迁移至新签名,
+	 * 本签名仅为第三方兼容保留。
 	 */
 	@Deprecated
 	public static List processResultRow(Integer dbType, TypeHandler typeHandler, DynamicCacheFetch dynamicCacheFetch,
