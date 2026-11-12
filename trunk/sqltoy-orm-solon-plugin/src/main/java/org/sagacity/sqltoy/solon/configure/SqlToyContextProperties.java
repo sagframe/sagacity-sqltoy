@@ -11,6 +11,27 @@ public class SqlToyContextProperties implements Serializable {
 	private static final long serialVersionUID = -8313800149129731930L;
 
 	/**
+	 * update 2026-11-12 (同步自6.0的v6.0.8) solon 把 yml 标量绑定到 String[] 时元素可能带上成对引号 (如
+	 * packagesToScan: com.x.entity 绑定为 ["\"com.x.entity\""]),带引号的包名/类名/路径
+	 * 会静默失配(实体扫描为空、拦截器加载失败等),统一剥离首尾成对引号;yaml 列表写法不受影响
+	 */
+	private static String[] stripElementQuotes(String[] values) {
+		if (values == null) {
+			return null;
+		}
+		String[] result = new String[values.length];
+		for (int i = 0; i < values.length; i++) {
+			String value = values[i];
+			if (value != null && value.length() > 1 && ((value.startsWith("\"") && value.endsWith("\""))
+					|| (value.startsWith("'") && value.endsWith("'")))) {
+				value = value.substring(1, value.length() - 1);
+			}
+			result[i] = value;
+		}
+		return result;
+	}
+
+	/**
 	 * 指定sql.xml 文件路径,多个路径用逗号分隔
 	 */
 	private String sqlResourcesDir;
@@ -392,7 +413,7 @@ public class SqlToyContextProperties implements Serializable {
 	 * @param packagesToScan the packagesToScan to set
 	 */
 	public void setPackagesToScan(String[] packagesToScan) {
-		this.packagesToScan = packagesToScan;
+		this.packagesToScan = stripElementQuotes(packagesToScan);
 	}
 
 	/**
@@ -446,7 +467,7 @@ public class SqlToyContextProperties implements Serializable {
 	}
 
 	public void setAnnotatedClasses(String[] annotatedClasses) {
-		this.annotatedClasses = annotatedClasses;
+		this.annotatedClasses = stripElementQuotes(annotatedClasses);
 	}
 
 	public String getEncoding() {
@@ -486,7 +507,7 @@ public class SqlToyContextProperties implements Serializable {
 	}
 
 	public void setSqlResources(String[] sqlResources) {
-		this.sqlResources = sqlResources;
+		this.sqlResources = stripElementQuotes(sqlResources);
 	}
 
 	public String getDefaultDataSource() {
@@ -664,7 +685,7 @@ public class SqlToyContextProperties implements Serializable {
 	}
 
 	public void setSqlInterceptors(String[] sqlInterceptors) {
-		this.sqlInterceptors = sqlInterceptors;
+		this.sqlInterceptors = stripElementQuotes(sqlInterceptors);
 	}
 
 	public boolean isSplitMergeInto() {
