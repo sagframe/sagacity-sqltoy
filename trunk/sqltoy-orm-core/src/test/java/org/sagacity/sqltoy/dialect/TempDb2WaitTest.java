@@ -9,6 +9,11 @@ import org.junit.jupiter.api.Test;
 public class TempDb2WaitTest {
 	@Test
 	public void probe() throws Exception {
+		// update 2026-11-10 探针缺失/库不可达时直接跳过:原逻辑会等待10分钟后抛异常,本机mvn test必然超时染红
+		Properties probeConfig = org.sagacity.sqltoy.support.RealDbProbeSupport.load("db2");
+		org.junit.jupiter.api.Assumptions.assumeTrue(probeConfig != null
+				&& org.sagacity.sqltoy.support.RealDbProbeSupport.isReachable(probeConfig.getProperty("url")),
+				"db2 probe not reachable, skipped (see docker/README.md)");
 		Class.forName("com.ibm.db2.jcc.DB2Driver");
 		Properties p = new Properties();
 		p.load(new java.io.FileInputStream("target/db2-probe.properties"));

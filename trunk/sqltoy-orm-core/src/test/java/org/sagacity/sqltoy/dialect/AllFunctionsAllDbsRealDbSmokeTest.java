@@ -25,10 +25,19 @@ import org.sagacity.sqltoy.plugins.function.FunctionUtils;
  */
 public class AllFunctionsAllDbsRealDbSmokeTest {
 
+	/**
+	 * 真库矩阵守卫:本用例断言"所有库全绿",缺库时会误报失败,故缺任一库即整类跳过;
+	 * CI 需要"缺库即失败"时加 -Dsqltoy.realdb.strict=true(见 docker/README.md)
+	 */
+	@org.junit.jupiter.api.BeforeAll
+	public static void assumeRealDbMatrix() {
+		org.sagacity.sqltoy.support.RealDbProbeSupport.assumeFullMatrix(PROBES);
+	}
+
 	private static final String[][] PROBES = {
 			{ "postgresql", "org.postgresql.Driver", "jdbc:postgresql://localhost:5433/postgres", "postgres",
 					"Sqltoy@2026", "postgresql", "" },
-			{ "kingbase", "com.kingbase8.Driver", "jdbc:kingbase8://localhost:54321/kingbase", "system",
+			{ "kingbase", "com.kingbase8.Driver", "jdbc:kingbase8://[::1]:54321/kingbase", "system",
 					"12345678ab", "kingbase", "" },
 			{ "vastbase", "cn.com.vastbase.Driver", "jdbc:vastbase://localhost:5436/postgres", "sqltoy",
 					"Sqltoy@2026", "vastbase", "" },
@@ -77,7 +86,7 @@ public class AllFunctionsAllDbsRealDbSmokeTest {
 			try (Statement st = conn.createStatement()) {
 				createTable("h2", st, conn);
 			}
-			executed += runBattery("h2", conn, "h2", " from (select 1) x", failures);
+			executed += runBattery("h2", conn, "h2", "", failures);
 		}
 		try (Connection conn = DriverManager.getConnection("jdbc:sqlite::memory:"); Statement st = conn.createStatement()) {
 			st.execute("create table sqltoy_all_t (id int primary key, name varchar(50), score double, "
@@ -86,7 +95,7 @@ public class AllFunctionsAllDbsRealDbSmokeTest {
 			long ms = java.sql.Timestamp.valueOf("2026-03-20 10:30:00").getTime();
 			st.execute("insert into sqltoy_all_t values (1,'admin',88.5," + ms + ",null)");
 			st.execute("insert into sqltoy_all_t values (2,'user',72.0," + ms + ",'r2')");
-			executed += runBattery("sqlite", conn, "sqlite", " from (select 1) x", failures);
+			executed += runBattery("sqlite", conn, "sqlite", "", failures);
 		}
 		assertTrue(failures.isEmpty(),
 				"全函数总扫失败清单(执行" + executed + "例): " + failures.subList(0, Math.min(20, failures.size())));
@@ -118,7 +127,11 @@ public class AllFunctionsAllDbsRealDbSmokeTest {
 				dual = " from (select 1 as one) x";
 				break;
 			default:
-				dual = " from (select 1) x";
+				// update 2026-11-11 mysql系/CH/pg/sqlite/h2均支持无FROM标量,默认不再包派生表:
+				// Doris真库实测 current_date 在 "from (select 1) x" 包装下返回前一天
+				// (2026-11-11 00:04Z 时返回11-10,裸current_date/curdate()均为11-11),属Doris引擎怪异行为,
+				// 按原生无FROM形态执行以测函数本身语义
+				dual = "";
 			}
 			int n = runBattery(label, conn, dialect, dual, failures);
 			try {

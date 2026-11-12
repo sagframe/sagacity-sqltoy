@@ -62,6 +62,40 @@ public class ReservedWordsUtil {
 	}
 
 	/**
+	 * @description update 2026-11-10 移除保留字(与put的累加合并语义对称),用于运行期动态调整保留字集合
+	 *              以及单元测试间恢复全局状态
+	 *
+	 *              <p>
+	 *              起因:convertWord会按方言给保留字加引号(PG/Oracle/DB2/H2等加双引号),测试残留的词会让后续用例 生成
+	 *              "STAFF_NAME" 这类带引号标识符,而PG实际列名为小写staff_name,导致"列不存在"的错误
+	 *
+	 * @param words 逗号分隔的保留字
+	 */
+	public static synchronized void remove(String words) {
+		if (StringUtil.isBlank(words)) {
+			return;
+		}
+		Set<String> remain = new HashSet<String>(reservedWords);
+		for (String str : words.split("\\,")) {
+			String word = str.trim().toLowerCase(Locale.ROOT);
+			if (!"".equals(word)) {
+				remain.remove(word);
+			}
+		}
+		StringBuilder fullRegex = new StringBuilder();
+		for (String word : remain) {
+			if (fullRegex.length() > 0) {
+				fullRegex.append('|');
+			}
+			fullRegex.append(word);
+		}
+		// 与put/clear相同的发布顺序:先集合后正则
+		reservedWords = remain;
+		singlePattern = (fullRegex.length() == 0) ? null
+				: Pattern.compile("(?i)(\\W||\\s)(`|'|\"|\\[)(" + fullRegex + ")(`|'|\"|\\])(\\s||\\W)");
+	}
+
+	/**
 	 * @param sql
 	 * @param dbType
 	 * @return 处理框架基于对象操作生成的简单sql, 对默认[]符号进行数据库转换

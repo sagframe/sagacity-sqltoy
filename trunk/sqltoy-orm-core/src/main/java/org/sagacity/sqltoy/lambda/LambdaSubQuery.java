@@ -82,6 +82,10 @@ public final class LambdaSubQuery<E> extends AbstractWhere<E, LambdaSubQuery<E>>
 	 * @return EXISTS子查询sql:SELECT 1 FROM 表 别名 [WHERE 条件]
 	 */
 	public String existsSql() {
+		// update 2026-11-10 回退take消费语义:LambdaSubQuery的JoinContext是独立构建(不继承外层的
+		// dbType/recursiveMember标记),永不处于DB2隐式模式,take恒为null属死代码;且DB2的-345限制
+		// 针对递归成员fullselect自身,exists子查询(不引用CTE名的独立context)无需隐式改写,
+		// 谓词仍由joinContext.getSql渲染链内的mergeImplicitJoinPredicates单点消费
 		String whereSql = getSqlSegment();
 		return "SELECT 1 FROM " + joinContext.getFromSql()
 				+ (StringUtil.isNotBlank(whereSql) ? " WHERE " + whereSql : "");

@@ -21,6 +21,16 @@ import org.sagacity.sqltoy.utils.StringUtil;
  */
 public class TenantFilterInterceptor implements SqlInterceptor {
 
+	// update 2026-11-12 分页尾缀定位:无where的实体分页SQL已带limit/offset/fetch尾缀,
+	// 租户条件必须插在其前(原实现只考虑group/order by,条件被concat到limit之后报语法错)。
+	// limit后随数字/占位符/命名参数;offset须带rows(sqlserver);fetch须带first/next(oracle/db2),
+	// 规避fetch_size类列名误判;在字面量掩码串上匹配,字面量内的limit不干扰。
+	// update 2026-11-12 评审R1:尾边界用(?=\W|$)零宽前瞻——findTop实体top SQL以"limit <n>"结尾
+	// 无尾随空白,原\W要求会漏配;数字须[0-9]+(单位数字在"limit 10"的1后停下同样漏配)
+	private static final java.util.regex.Pattern PAGE_TAIL_PATTERN = java.util.regex.Pattern
+			.compile("(?i)\\W(limit\\s+(\\?|:[\\w.]+|#\\[?[\\w.]+|[0-9]+)"
+					+ "|offset\\s+(\\?|:[\\w.]+|[0-9]+)\\s+rows" + "|fetch\\s+(first|next))(?=\\W|$)");
+
 	/**
 	 * 对最终执行sql和sql参数进行处理
 	 * 
@@ -127,16 +137,20 @@ public class TenantFilterInterceptor implements SqlInterceptor {
 					int groupByIndex = StringUtil.matchIndex(maskedSql, SqlUtil.GROUP_BY_PATTERN);
 					// \\Worder,匹配到位置要往后移1位
 					int orderByIndex = StringUtil.matchIndex(maskedSql, SqlUtil.ORDER_BY_PATTERN);
-					if (groupByIndex < 0) {
-						if (orderByIndex < 0) {
-							sql = sql.concat(sqlPart);
-						} else {
-							sql = sql.substring(0, orderByIndex + 1).concat(sqlPart)
-									.concat(sql.substring(orderByIndex + 1));
-						}
+					// update 2026-11-12 分页尾缀(limit/offset rows/fetch first)同样须插在其前:
+					// 无where的实体分页SQL已带limit尾缀,原实现concat到末尾致租户条件落在limit之后报语法错
+					int pageTailIndex = StringUtil.matchIndex(maskedSql, PAGE_TAIL_PATTERN);
+					int insertIndex = groupByIndex;
+					if (orderByIndex >= 0 && (insertIndex < 0 || orderByIndex < insertIndex)) {
+						insertIndex = orderByIndex;
+					}
+					if (pageTailIndex >= 0 && (insertIndex < 0 || pageTailIndex < insertIndex)) {
+						insertIndex = pageTailIndex;
+					}
+					if (insertIndex < 0) {
+						sql = sql.concat(sqlPart);
 					} else {
-						sql = sql.substring(0, groupByIndex + 1).concat(sqlPart)
-								.concat(sql.substring(groupByIndex + 1));
+						sql = sql.substring(0, insertIndex + 1).concat(sqlPart).concat(sql.substring(insertIndex + 1));
 					}
 				} else {
 					// update 2026-9-9 按掩码串定位的原位替换where词本身:规避字面量内的where被replaceFirst误替换

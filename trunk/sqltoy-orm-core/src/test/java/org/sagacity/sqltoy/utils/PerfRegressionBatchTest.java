@@ -133,11 +133,11 @@ public class PerfRegressionBatchTest {
 		assertEquals("mysql", DataSourceUtils.getDialect(context, dataSource));
 	}
 
-	// ============ 4. convertSqlMap 容量上限 ============
+	// ============ 4. convertSqlMap 容量上限与超限回收 ============
 
 	@SuppressWarnings("unchecked")
 	@Test
-	public void convertSqlCacheStopsGrowingBeyondLimit() throws Exception {
+	public void convertSqlCacheStaysBoundedAndKeepsWorking() throws Exception {
 		Field field = SqlUtil.class.getDeclaredField("convertSqlMap");
 		field.setAccessible(true);
 		ConcurrentHashMap<String, String> cache = (ConcurrentHashMap<String, String>) field.get(null);
@@ -152,14 +152,16 @@ public class PerfRegressionBatchTest {
 		assertTrue(converted.contains("USER_NAME"), "属性名应转换为列名,实际:" + converted);
 		assertTrue(cache.size() >= 1, "未超限时应当缓存");
 		assertEquals(converted, SqlUtil.convertFieldsToColumns(entityMeta, "userName like :userName"));
-		// 填满至上限后再转换新sql:结果仍正确,但缓存不再增长
+		// 填满至上限后再转换新sql:结果仍正确,缓存总量仍受上限约束
 		for (int i = cache.size(); i < 2000; i++) {
 			cache.put("perf-dummy-" + i, "x");
 		}
 		assertEquals(2000, cache.size());
 		String convertedAgain = SqlUtil.convertFieldsToColumns(entityMeta, "userName like :userName and status=1");
 		assertTrue(convertedAgain.contains("USER_NAME"));
-		assertEquals(2000, cache.size(), "超限后不应再写入缓存");
+		// 旧口径:满容后直接跳过写入,缓存永久失效(每次全量重算);
+		// 现口径:回收约1/4后写入本条,size恒定不突破上限且保留多数既有条目
+		assertEquals(2000 - (2000 >>> 2) + 1, cache.size(), "超限时应回收约1/4后写入,而非不再缓存");
 	}
 
 	// ============ 5. FileUtil 摘要 StringBuilder ============

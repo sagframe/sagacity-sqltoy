@@ -47,14 +47,21 @@ public class PgRealDbSmokeTest {
 	public static void init() throws Exception {
 		File cfg = new File("target/pg-probe.properties");
 		if (!cfg.exists()) {
-			return;
+			// update 2026-11-10 未配置探针即整类跳过:原return后各用例在conn为null上NPE
+			org.junit.jupiter.api.Assumptions.abort("postgresql probe not configured, skipped: " + cfg.getPath());
 		}
 		Properties p = new Properties();
 		try (InputStream in = new FileInputStream(cfg)) {
 			p.load(in);
 		}
 		Class.forName("org.postgresql.Driver");
-		conn = DriverManager.getConnection(p.getProperty("url"), p.getProperty("username"), p.getProperty("password"));
+		try {
+			conn = DriverManager.getConnection(p.getProperty("url"), p.getProperty("username"),
+					p.getProperty("password"));
+		} catch (Exception e) {
+			// update 2026-11-10 探针已配置但库不可达时整类跳过,与"未配置profile则跳过"语义一致
+			org.junit.jupiter.api.Assumptions.abort("postgresql not reachable, skipped: " + e.getMessage());
+		}
 		try (Statement st = conn.createStatement()) {
 			st.execute("drop table if exists sqltoy_probe_t1");
 			st.execute("drop table if exists sqltoy_probe_t2");
@@ -212,6 +219,24 @@ public class PgRealDbSmokeTest {
 		// string_agg原生保留
 		assertEquals("admin-user", querySingle(
 				convert("select string_agg(name,'-') from sqltoy_probe_t1", "postgresql")).toString());
+	}
+
+	@Test
+	public void literalArgsInWeekFunctions() throws Exception {
+		org.junit.jupiter.api.Assumptions.assumeTrue(available, "pg探针环境不可用,跳过");
+		String previousZone = querySingle("show timezone").toString();
+		try (Statement st = conn.createStatement()) {
+			st.execute("set timezone = 'Asia/Shanghai'");
+			assertEquals(45, ((Number) querySingle(convert("select week('2026-11-11')", "postgresql"))).intValue());
+			assertEquals(2, ((Number) querySingle(convert("select weekday('2026-11-11')", "postgresql"))).intValue());
+			assertEquals(4, ((Number) querySingle(convert("select dayofweek('2026-11-11')", "postgresql"))).intValue());
+			assertEquals(1794362400L, ((Number) querySingle(
+					convert("select unix_timestamp('2026-11-11 10:00:00')", "postgresql"))).longValue());
+		} finally {
+			try (Statement st = conn.createStatement()) {
+				st.execute("set timezone = '" + previousZone.replace("'", "''") + "'");
+			}
+		}
 	}
 
 	/** union-all-count真实工厂链路(DialectFactory.getCountBySql,含派生表别名修复) */

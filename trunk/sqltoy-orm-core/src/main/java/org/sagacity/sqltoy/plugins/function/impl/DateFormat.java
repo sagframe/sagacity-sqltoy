@@ -93,15 +93,11 @@ public class DateFormat extends IFunction {
 		case DBType.STARROCKS:
 		case DBType.TIDB:
 		case DBType.MYSQL57: {
-			// 日期
-			// update 2026-10-9
-			// 补大写oracle惯用形态YYYY/YY/DD/MI/SS(与sqlserver分支口径一致,原大写日期token残留字面量致目标库静默输出垃圾文本)
-			format = args[1].replace("yyyy", "%Y").replace("YYYY", "%Y").replace("yy", "%y").replace("YY", "%y")
-					.replace("MM", "%m").replace("dd", "%d").replace("DD", "%d");
-			// update 2026-9-5 时间处理:补java 24小时制HH→%H,需置于hh24/hh映射之后
-			format = format.replace("HH24", "%H").replace("hh24", "%H").replace("hh", "%h").replace("HH", "%H")
-					.replace("mm", "%i").replace("mi", "%i").replace("MI", "%i").replace("ss", "%s")
-					.replace("SS", "%s");
+			// update 2026-11-10 与带引号字面量共用同一token引擎(FunctionUtils.toMySqlFormatTokens):
+			// 原replace链只服务裸格式(占位符/表达式形态,带引号输入已在L52由归一层映射完),两处规则曾分裂——
+			// 裸"HHmmss"被映成%H%m%s,而带引号"HHmmss"经归一层是%H%i%s;引擎对已%风格输入幂等,
+			// 并覆盖大写YYYY/YY/DD/MI/SS与HH24/hh24等既有形态
+			format = FunctionUtils.toMySqlFormatTokens(args[1]);
 			return "date_format(" + args[0] + "," + format + ")";
 		}
 		case DBType.H2: {
@@ -150,12 +146,10 @@ public class DateFormat extends IFunction {
 		case DBType.CLICKHOUSE: {
 			// update 2026-10-9
 			// clickhouse原生支持date_format(formatDateTime的mysql兼容别名,%token同构),仅需将java样式token转%形态
-			// (原default原样输出,java样式格式串在目标库静默失效);补大写oracle形态YYYY/YY/DD/MI/SS(同mysql分支)
-			format = args[1].replace("yyyy", "%Y").replace("YYYY", "%Y").replace("yy", "%y").replace("YY", "%y")
-					.replace("MM", "%m").replace("dd", "%d").replace("DD", "%d");
-			format = format.replace("HH24", "%H").replace("hh24", "%H").replace("hh", "%h").replace("HH", "%H")
-					.replace("mm", "%i").replace("mi", "%i").replace("MI", "%i").replace("ss", "%s")
-					.replace("SS", "%s");
+			// (原default原样输出,java样式格式串在目标库静默失效)
+			// update 2026-11-10 与mysql分支/带引号归一层共用同一token引擎,避免裸格式HHmmss被映成%H%m%s
+			// (与带引号的%H%i%s分裂);引擎对已%风格输入幂等并覆盖大写YYYY/YY/DD/MI/SS形态
+			format = FunctionUtils.toMySqlFormatTokens(args[1]);
 			// update 2026-10-4 补%T(mysql源原生token,时:分:秒),原残留字面%T
 			format = format.replace("%T", "%H:%i:%s");
 			// update 2026-9-11

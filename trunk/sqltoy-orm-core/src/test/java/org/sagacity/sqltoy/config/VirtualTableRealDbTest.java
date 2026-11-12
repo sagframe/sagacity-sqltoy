@@ -50,6 +50,10 @@ public class VirtualTableRealDbTest {
 
 	@BeforeAll
 	public static void init() throws Exception {
+		// update 2026-11-10 真库矩阵守卫:本用例断言"所有库全绿",缺库时会误报失败,故缺任一库即整类跳过;
+		// CI 需要"缺库即失败"时加 -Dsqltoy.realdb.strict=true(见 docker/README.md)。
+		// 必须放在 init 首行(独立@BeforeAll的执行顺序不确定,init 先跑到连接失败就无机会跳过)
+		org.sagacity.sqltoy.support.RealDbProbeSupport.assumeFullMatrix(PROBES);
 		List<String> failures = new ArrayList<String>();
 		for (String[] probe : PROBES) {
 			try (Connection conn = open(probe)) {

@@ -45,7 +45,7 @@ public class FunctionAuditProbeTest {
 		String sql = "select to_char(create_time,'YYYY-MM-DD HH24:MI:SS') from t";
 		assertEquals("select date_format(create_time,'%Y-%m-%d %H:%i:%s') from t",
 				FunctionUtils.getDialectSql(sql, "mysql"), "mysql目标应无字面token残留");
-		assertEquals("select strftime('%Y-%m-%d %H:%M:%S',datetime(create_time/1000,'unixepoch','localtime')) from t",
+		assertEquals("select strftime('%Y-%m-%d %H:%M:%S',case when typeof(create_time) in ('integer','real') then datetime(create_time/1000,'unixepoch','localtime') else datetime(create_time) end) from t",
 				FunctionUtils.getDialectSql(sql, "sqlite"), "sqlite目标应无字面token残留");
 		assertEquals("select date_format(toDateTime(create_time),'%Y-%m-%d %H:%i:%s') from t",
 				FunctionUtils.getDialectSql(sql, "clickhouse"), "clickhouse目标应无字面token残留");

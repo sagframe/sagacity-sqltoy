@@ -310,6 +310,12 @@ public class DDLUtils {
 				typeName = typeName + " WITH TIME ZONE";
 			} else if (dbType == DBType.SQLSERVER) {
 				typeName = setTimePrecision("DATETIMEOFFSET", colMeta);
+			} else if (dbType == DBType.DORIS) {
+				// update 2026-11-10 Doris原生TIMESTAMPTZ(真库实测可建表),保留时区语义
+				typeName = "TIMESTAMPTZ";
+			} else if (dbType == DBType.STARROCKS) {
+				// update 2026-11-10 StarRocks无TIMESTAMPTZ/TIMESTAMP(真库实测语法错),降级DATETIME
+				typeName = "DATETIME";
 			} else {
 				typeName = "TIMESTAMP";
 			}
@@ -378,6 +384,11 @@ public class DDLUtils {
 			// sqlserver的TIMESTAMP是行版本戳(rowversion),不是日期时间类型
 			if (dbType == DBType.SQLSERVER) {
 				typeName = "DATETIME2";
+			} else if (dbType == DBType.DORIS || dbType == DBType.STARROCKS) {
+				// update 2026-11-10 Doris/StarRocks无TIMESTAMP类型:真库实测Doris解析器期望
+				// DATETIME/TIMESTAMPTZ(mismatched input 'TIMESTAMP'),StarRocks报语法错;
+				// LocalDateTime/localdatetime列统一落DATETIME
+				typeName = "DATETIME";
 			} else {
 				typeName = "TIMESTAMP";
 			}

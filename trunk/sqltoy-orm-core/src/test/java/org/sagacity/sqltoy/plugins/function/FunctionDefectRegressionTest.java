@@ -42,7 +42,7 @@ public class FunctionDefectRegressionTest {
 		assertEquals("select date_format(t,'%Y-%m-%d') from t", n(c("select to_char(t,'yyyy-mm-dd') from t", "mysql")));
 		assertEquals("select date_format(toDateTime(t),'%Y-%m-%d') from t",
 				n(c("select to_char(t,'yyyy-mm-dd') from t", "clickhouse")));
-		assertEquals("select strftime('%Y-%m-%d',datetime(t/1000,'unixepoch','localtime')) from t",
+		assertEquals("select strftime('%Y-%m-%d',case when typeof(t) in ('integer','real') then datetime(t/1000,'unixepoch','localtime') else datetime(t) end) from t",
 				n(c("select to_char(t,'yyyy-mm-dd') from t", "sqlite")));
 		assertEquals("select date_format(t,'%Y-%m-%d %H:%i:%s') from t",
 				n(c("select to_char(t,'yyyy-mm-dd hh24:mi:ss') from t", "mysql")));
@@ -55,12 +55,12 @@ public class FunctionDefectRegressionTest {
 	public void hhTwelveHour() {
 		// 裸HH按框架约定=24小时(与DateFormat/Oracle/PG分支一致)
 		assertEquals("select date_format(t,'%H:%i') from t", n(c("select to_char(t,'HH:MI') from t", "mysql")));
-		assertEquals("select strftime('%H:%M',datetime(t/1000,'unixepoch','localtime')) from t",
+		assertEquals("select strftime('%H:%M',case when typeof(t) in ('integer','real') then datetime(t/1000,'unixepoch','localtime') else datetime(t) end) from t",
 				n(c("select to_char(t,'HH:MI') from t", "sqlite")));
 		assertEquals("select STR_TO_DATE(t,'%H:%i') from t", n(c("select to_date(t,'HH:MI') from t", "mysql")));
 		// 小写hh为12小时制
 		assertEquals("select date_format(t,'%h:%i') from t", n(c("select to_char(t,'hh:MI') from t", "mysql")));
-		assertEquals("select strftime('%I:%M',datetime(t/1000,'unixepoch','localtime')) from t",
+		assertEquals("select strftime('%I:%M',case when typeof(t) in ('integer','real') then datetime(t/1000,'unixepoch','localtime') else datetime(t) end) from t",
 				n(c("select to_char(t,'hh:MI') from t", "sqlite")));
 		assertEquals("select STR_TO_DATE(t,'%h:%i') from t", n(c("select to_date(t,'hh:MI') from t", "mysql")));
 		// SQLServer:.NET的HH=24小时,hh=12小时,裸HH不再降级为12小时
@@ -79,7 +79,7 @@ public class FunctionDefectRegressionTest {
 	public void javaTimePattern() {
 		assertEquals("select FORMAT(t,'yyyy-MM-dd HH:mm:ss') from t",
 				n(c("select date_format(t,'yyyy-MM-dd HH:mm:ss') from t", "sqlserver")));
-		assertEquals("select strftime('%Y-%m-%d %H:%M:%S',datetime(t/1000,'unixepoch','localtime')) from t",
+		assertEquals("select strftime('%Y-%m-%d %H:%M:%S',case when typeof(t) in ('integer','real') then datetime(t/1000,'unixepoch','localtime') else datetime(t) end) from t",
 				n(c("select date_format(t,'yyyy-MM-dd HH:mm:ss') from t", "sqlite")));
 		assertEquals("select VARCHAR_FORMAT(t,'yyyy-MM-dd HH24:MI:SS') from t",
 				n(c("select date_format(t,'yyyy-MM-dd HH:mm:ss') from t", "db2")));

@@ -55,6 +55,10 @@ public class HighgoDialectFeatureSmokeTest {
 
 	@BeforeAll
 	public static void init() throws Exception {
+		// update 2026-11-10 无瀚高容器时整类跳过(原直连失败即抛异常,本机mvn test必红)
+		org.junit.jupiter.api.Assumptions.assumeTrue(
+				org.sagacity.sqltoy.support.RealDbProbeSupport.isReachable("jdbc:postgresql://localhost:5867/highgo"),
+				"highgo probe not reachable, skipped (see docker/README.md)");
 		try (Connection c = DriverManager.getConnection("jdbc:postgresql://localhost:5867/highgo", "highgo",
 				"Sqltoy@2026"); Statement st = c.createStatement()) {
 			st.execute("drop table if exists sqltoy_hg_feat");

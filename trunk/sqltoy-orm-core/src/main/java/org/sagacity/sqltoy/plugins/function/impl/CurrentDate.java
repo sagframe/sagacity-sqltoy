@@ -12,7 +12,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  *          CURRENT_DATE);
  *          覆盖mysql的curdate()/current_date()与标准裸关键字current_date两种源形态。
  *          已知边界:裸关键字位于整条SQL末尾无后继字符时\W不命中(与sysdate同款既有限制,
- *          实际SQL不出现);pg系对mysql习惯的current_date()带括号形态不转换(响亮报错,该写法仅mysql合法)。
+ *          实际SQL不出现);mysql习惯的current_date()带括号形态(hasArgs区分)剥括号转裸关键字。
  */
 public class CurrentDate extends IFunction {
 
@@ -48,9 +48,11 @@ public class CurrentDate extends IFunction {
 			return "CAST(GETDATE() AS date)";
 		}
 		// update 2026-10-4
-		// db2对CURRENT_DATE注册专名透传即可;mysql习惯的curdate转db2惯用的带空格关键字形态CURRENT DATE
+		// db2对CURRENT_DATE注册专名透传即可;mysql习惯的curdate转db2惯用的带空格关键字形态CURRENT DATE;
+		// update 2026-11-10 current_date()带括号形态(hasArgs)同样转CURRENT DATE(db2无下划线函数形态,
+		// 透传报-440 SQLERRMC=CURRENT_DATE;FUNCTION,真库实测)
 		if (dialect == DBType.DB2) {
-			return "curdate".equals(functionName.toLowerCase(Locale.ROOT)) ? "CURRENT DATE" : super.IGNORE;
+			return ("curdate".equals(functionName.toLowerCase(Locale.ROOT)) || hasArgs) ? "CURRENT DATE" : super.IGNORE;
 		}
 		// update 2026-10-4
 		// sqlite的CURRENT_DATE关键字为UTC墙钟(东八区晚8小时才算「今天」),与Now的localtime策略一致取本地墙钟
@@ -63,6 +65,12 @@ public class CurrentDate extends IFunction {
 		}
 		// pg系/h2/hana原生支持CURRENT_DATE:同名透传;mysql习惯的curdate()转CURRENT_DATE
 		if ("curdate".equals(functionName.toLowerCase(Locale.ROOT))) {
+			return "CURRENT_DATE";
+		}
+		// update 2026-11-10 current_date()带括号形态(仅mysql合法,hasArgs=true区分裸关键字)剥括号转
+		// 裸CURRENT_DATE——与curdate()转换口径对齐(消除原实现"curdate转/current_date()不转"的不对称),
+		// 裸关键字mysql/标准库双合法
+		if (hasArgs) {
 			return "CURRENT_DATE";
 		}
 		return super.IGNORE;

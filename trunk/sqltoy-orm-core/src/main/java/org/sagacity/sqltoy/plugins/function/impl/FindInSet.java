@@ -117,8 +117,9 @@ public class FindInSet extends IFunction {
 		if (dialect == DBType.H2 || dialect == DBType.DORIS || dialect == DBType.STARROCKS) {
 			return "(instr(concat(','," + list + ",','), concat(','," + str + ",','))" + cmp + ")";
 		}
-		// Oracle语法系(oracle/oracle11/dm):instr(str,sub)同序原生+||拼接
-		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DM) {
+		// Oracle语法系(oracle/oracle11/dm/OB Oracle模式):instr(str,sub)同序原生+||拼接
+		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DM
+				|| dialect == DBType.OCEANBASE) {
 			return "(instr(','||" + list + "||',', ','||" + str + "||',')" + cmp + ")";
 		}
 		// sqlserver:无instr/||,用charindex(sub,str)与'+'拼接
@@ -240,7 +241,8 @@ public class FindInSet extends IFunction {
 		if (dialect == DBType.H2 || dialect == DBType.DORIS || dialect == DBType.STARROCKS) {
 			return "instr(concat(','," + list + ",','), concat(','," + str + ",','))";
 		}
-		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DM) {
+		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DM
+				|| dialect == DBType.OCEANBASE) {
 			return "instr(','||" + list + "||',', ','||" + str + "||',')";
 		}
 		if (dialect == DBType.SQLSERVER) {
@@ -284,8 +286,9 @@ public class FindInSet extends IFunction {
 	}
 
 	private static boolean isMysqlFamily(int dialect) {
-		return dialect == DBType.MYSQL || dialect == DBType.MYSQL57 || dialect == DBType.TIDB
-				|| dialect == DBType.OCEANBASE;
+		// update 2026-11-12 OB移出:框架约定dialect=oceanbase即Oracle模式租户(与DateDiff等一致),
+		// Oracle模式无find_in_set,走Oracle系instr+||组合
+		return dialect == DBType.MYSQL || dialect == DBType.MYSQL57 || dialect == DBType.TIDB;
 	}
 
 	private static boolean isPgFamily(int dialect) {

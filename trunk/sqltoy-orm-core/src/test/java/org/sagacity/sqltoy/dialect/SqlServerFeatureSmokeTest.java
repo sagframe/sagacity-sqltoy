@@ -52,7 +52,13 @@ public class SqlServerFeatureSmokeTest {
 			p.load(in);
 		}
 		Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-		conn = DriverManager.getConnection(p.getProperty("url"), p.getProperty("username"), p.getProperty("password"));
+		try {
+			conn = DriverManager.getConnection(p.getProperty("url"), p.getProperty("username"),
+					p.getProperty("password"));
+		} catch (Exception e) {
+			// update 2026-11-10 探针在但库不可达(容器已停)时整类跳过
+			org.junit.jupiter.api.Assumptions.abort("sqlserver not reachable, skipped: " + e.getMessage());
+		}
 		try (Statement st = conn.createStatement()) {
 			st.execute("if object_id('sqltoy_probe_t1') is not null drop table sqltoy_probe_t1");
 			st.execute("if object_id('sqltoy_probe_tree') is not null drop table sqltoy_probe_tree");
@@ -134,6 +140,45 @@ public class SqlServerFeatureSmokeTest {
 		QueryExecutor queryExecutor = new QueryExecutor(sql);
 		QueryResult random = dialect.getRandomResult(context, config, queryExecutor, null, 2L, 1L, conn, profile(), 500, -1);
 		assertEquals(1, ((java.util.List<?>) random.getRows()).size(), "随机应返回1行");
+	}
+
+	/**
+	 * update 2026-11-10 集合语句(except/intersect)的分页/top/随机回归:
+	 * sqlserver对任何集合语句直接把order by追加在外层会报Msg 104"ORDER BY items must appear in the
+	 * select list if the statement contains a UNION, INTERSECT or EXCEPT operator",必须先包派生表;
+	 * 而findTop未包裹时TOP只作用于第一个分支(except结果会少行甚至为空),故用"集合结果仅1行"做区分断言
+	 */
+	@Test
+	public void exceptIntersectSetQueryPaging() throws Exception {
+		org.junit.jupiter.api.Assumptions.assumeTrue(available, "sqlserver探针环境不可用,跳过");
+		SqlServerDialect dialect = new SqlServerDialect();
+		// 集合结果只有id=2:老实现分页直接追加order by会报Msg 104;老实现top1只取首分支(1)再except→0行
+		String exceptSql = "select id from sqltoy_probe_t1 except select id from sqltoy_probe_t1 where id = 1";
+		SqlToyConfig pageConfig = new SqlToyConfig("sqlserver");
+		pageConfig.setSql(exceptSql);
+		QueryResult page = dialect.findPageBySql(context, pageConfig, new QueryExecutor(exceptSql), null, 1L, 10,
+				conn, profile(), 500, -1);
+		assertEquals(1, ((java.util.List<?>) page.getRows()).size(), "except查询分页应返回1行(id=2)");
+
+		SqlToyConfig topConfig = new SqlToyConfig("sqlserver");
+		topConfig.setSql(exceptSql);
+		QueryResult top = dialect.findTopBySql(context, topConfig, new QueryExecutor(exceptSql), null, 1, conn,
+				profile(), 500, -1);
+		assertEquals(1, ((java.util.List<?>) top.getRows()).size(), "except结果top1应为1行(仅首分支取top时为0行)");
+
+		SqlToyConfig randomConfig = new SqlToyConfig("sqlserver");
+		randomConfig.setSql(exceptSql);
+		QueryResult random = dialect.getRandomResult(context, randomConfig, new QueryExecutor(exceptSql), null, 1L, 1L,
+				conn, profile(), 500, -1);
+		assertEquals(1, ((java.util.List<?>) random.getRows()).size(), "except结果随机取1行");
+
+		// intersect 走同一判定分支:交集仅id=1
+		String intersectSql = "select id from sqltoy_probe_t1 intersect select id from sqltoy_probe_t1 where id = 1";
+		SqlToyConfig intersectConfig = new SqlToyConfig("sqlserver");
+		intersectConfig.setSql(intersectSql);
+		QueryResult intersectPage = dialect.findPageBySql(context, intersectConfig, new QueryExecutor(intersectSql), null,
+				1L, 10, conn, profile(), 500, -1);
+		assertEquals(1, ((java.util.List<?>) intersectPage.getRows()).size(), "intersect查询分页应返回1行(id=1)");
 	}
 
 	/** 锁:lockSql注入with rowlock xlock后真实执行,且hasLock幂等 */

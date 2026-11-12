@@ -420,6 +420,13 @@ public class SqlAnalyzeImpactBroadTest {
 		assertFalse(DialectUtils.hasOrderByOrUnion("select a from t where remark=' ( '"), "字面量括号误报");
 		assertTrue(DialectUtils.hasOrderByOrUnion("select a from t order by id"), "真实order by漏判");
 		assertTrue(DialectUtils.hasOrderByOrUnion("select a from t union all select b from t2"), "真实union漏判");
+		// update 2026-11-10 集合运算(except/intersect/minus)同样必须触发派生表包裹:集合语句上的随机表达式排序
+		// 在DB2(-214/42822)/Oracle(ORA-01785)/PG(invalid UNION/INTERSECT/EXCEPT ORDER BY clause)均非法
+		assertTrue(DialectUtils.hasOrderByOrUnion("select a from t except select b from t2"), "except漏判");
+		assertTrue(DialectUtils.hasOrderByOrUnion("select a from t intersect select b from t2"), "intersect漏判");
+		assertTrue(DialectUtils.hasOrderByOrUnion("select a from t minus select b from t2"), "minus漏判");
+		assertFalse(DialectUtils.hasOrderByOrUnion("select a from t where remark=' except select '"),
+				"字面量except误报");
 		// 子查询内容被剔除,内层order by不影响外层判定(既有语义)
 		assertEquals(legacyClearDisturbSql("select a from t where x=(select b from t2 order by id)"),
 				DialectUtils.clearDisturbSql("select a from t where x=(select b from t2 order by id)"),

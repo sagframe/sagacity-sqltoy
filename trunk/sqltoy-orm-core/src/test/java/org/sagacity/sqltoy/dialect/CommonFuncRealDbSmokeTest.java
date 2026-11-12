@@ -24,12 +24,21 @@ import org.sagacity.sqltoy.plugins.function.FunctionUtils;
  */
 public class CommonFuncRealDbSmokeTest {
 
+	/**
+	 * 真库矩阵守卫:本用例断言"所有库全绿",缺库时会误报失败,故缺任一库即整类跳过;
+	 * CI 需要"缺库即失败"时加 -Dsqltoy.realdb.strict=true(见 docker/README.md)
+	 */
+	@org.junit.jupiter.api.BeforeAll
+	public static void assumeRealDbMatrix() {
+		org.sagacity.sqltoy.support.RealDbProbeSupport.assumeFullMatrix(PROBES);
+	}
+
 	private static final String[][] PROBES = {
 			{ "postgresql", "org.postgresql.Driver", "jdbc:postgresql://localhost:5433/postgres", "postgres",
 					"Sqltoy@2026", "postgresql" },
 			{ "opengauss", "org.opengauss.Driver", "jdbc:opengauss://localhost:5432/postgres", "gaussdb",
 					"Sqltoy@2026", "opengauss" },
-			{ "kingbase", "com.kingbase8.Driver", "jdbc:kingbase8://localhost:54321/kingbase", "system",
+			{ "kingbase", "com.kingbase8.Driver", "jdbc:kingbase8://[::1]:54321/kingbase", "system",
 					"12345678ab", "kingbase" },
 			{ "mysql", "com.mysql.cj.jdbc.Driver",
 					"jdbc:mysql://localhost:3307/sqltoy?useSSL=false&allowPublicKeyRetrieval=true", "root",

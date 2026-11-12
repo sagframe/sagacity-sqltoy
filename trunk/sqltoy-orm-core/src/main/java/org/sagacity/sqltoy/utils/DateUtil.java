@@ -675,7 +675,8 @@ public class DateUtil {
 			}
 			result = LocalDateTime.parse(dateStr, getFormatter(realDF, SqlToyConstants.getLocale()));
 		} catch (Exception e) {
-			logger.error("failed to parse the date string:[{}] with the format:[{}]", realDF, dateStr, e);
+			// update 2026-11-10 修正实参与占位符错位:第一个占位符是date string、第二个是format
+			logger.error("failed to parse the date string:[{}] with the format:[{}]", dateStr, realDF, e);
 		}
 		// 结果为null，格式不为null,通过自动格式匹配模式，进行一次补偿处理
 		if (result == null && hasFmt) {

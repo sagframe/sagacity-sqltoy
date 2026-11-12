@@ -6,6 +6,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -42,9 +43,15 @@ public class MapperUtils {
 	protected final static Logger logger = LoggerFactory.getLogger(MapperUtils.class);
 
 	/**
-	 * 利用缓存来提升匹配效率
+	 * 利用缓存来提升匹配效率 update 2026-11-10 由sourceClass的ClassValue承载(条目挂Class自身,类卸载即回收),
+	 * 内层key仍含resultType Class以保持"类身份"判定,规避类重载场景命中旧加载器的映射
 	 */
-	private static ConcurrentHashMap<String, DTOEntityMapModel> dtoEntityMapperCache = new ConcurrentHashMap<>();
+	private static final ClassValue<ConcurrentHashMap<List, DTOEntityMapModel>> dtoEntityMapperCache = new ClassValue<ConcurrentHashMap<List, DTOEntityMapModel>>() {
+		@Override
+		protected ConcurrentHashMap<List, DTOEntityMapModel> computeValue(Class<?> sourceClass) {
+			return new ConcurrentHashMap<>();
+		}
+	};
 
 	private static ConcurrentHashMap<String, HashMap<String, String>> classHasAliasMap = new ConcurrentHashMap<>();
 
@@ -450,18 +457,19 @@ public class MapperUtils {
 	 */
 	private static DTOEntityMapModel getDTOEntityMap(Class sourceClass, Class resultType,
 			Map<String, String> fieldsNameMap) {
-		String sourceKey = sourceClass.getName();
-		String resultKey = resultType.getName();
-		// 使用TreeMap保证toString()的确定性，避免HashMap因hash桶分布不同导致缓存key不一致
+		// 使用TreeMap保证equals的确定性，避免HashMap因hash桶分布不同导致缓存key不一致
 		String mapKey = (fieldsNameMap == null || fieldsNameMap.isEmpty()) ? ""
 				: new TreeMap<>(fieldsNameMap).toString();
-		String key = "fromClass=".concat(sourceKey).concat(";toClass=").concat(resultKey).concat(";mapKey=")
-				.concat(mapKey);
-		DTOEntityMapModel result = dtoEntityMapperCache.get(key);
+		// update 2026-11-10 key以Class对象为身份组件(List的equals/hashCode逐元素):
+		// 类名拼接键在devtools/OSGi等类重载场景会命中旧加载器构建的字段映射且不自愈;
+		// 缓存改为按sourceClass的ClassValue承载,条目随sourceClass卸载回收,静态结构不再强引用应用类
+		ConcurrentHashMap<List, DTOEntityMapModel> cache = dtoEntityMapperCache.get(sourceClass);
+		List key = Arrays.asList(resultType, mapKey);
+		DTOEntityMapModel result = cache.get(key);
 		if (result == null) {
 			result = sourceMapTarget(sourceClass, resultType, fieldsNameMap);
 			if (result != null) {
-				dtoEntityMapperCache.putIfAbsent(key, result);
+				cache.putIfAbsent(key, result);
 			}
 		}
 		return result;

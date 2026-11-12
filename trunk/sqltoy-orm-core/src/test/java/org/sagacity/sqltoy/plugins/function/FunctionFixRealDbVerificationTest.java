@@ -60,6 +60,13 @@ public class FunctionFixRealDbVerificationTest {
 		Connection conn = null;
 		try (InputStream in = new FileInputStream(cfg)) {
 			p.load(in);
+			// update 2026-11-10 端口不通(容器未起/已停)按"不可用"处理:clickhouse-jdbc等懒连接驱动在
+			// getConnection阶段不报错,会在执行SQL时才抛连接异常,仅靠catch连接异常无法跳过
+			if (!org.sagacity.sqltoy.support.RealDbProbeSupport.isReachable(p.getProperty("url"))) {
+				System.out.println("[probe-skip] " + key + " unreachable");
+				DBS.put(key, new Db(key, null, p.getProperty("url")));
+				return;
+			}
 			Class.forName(driver);
 			conn = DriverManager.getConnection(p.getProperty("url"), p.getProperty("username"),
 					p.getProperty("password"));
@@ -141,6 +148,16 @@ public class FunctionFixRealDbVerificationTest {
 			// sqlite/clickhouse 无简单四参等价物,保持原样(本题不执行)
 			if ("sqlite".equals(key) || "clickhouse".equals(key)) {
 				continue;
+			}
+			// update 2026-11-10 instr四参在SQLServer走REGEXP_INSTR(Instr.java:69),而该函数仅SQLServer 2025+
+			// 提供(2022及更早报Msg 195 'REGEXP_INSTR' is not a recognized built-in function name),
+			// 故按服务端主版本跳过本库(2025=17,2022=16,2019=15);用continue而非assume,避免abort掉后续库的校验
+			if ("sqlserver".equals(key)) {
+				int majorVersion = entry.getValue().conn.getMetaData().getDatabaseMajorVersion();
+				if (majorVersion < 17) {
+					System.out.println("[probe-skip] sqlserver " + majorVersion + " 无REGEXP_INSTR(需2025+),跳过四参instr");
+					continue;
+				}
 			}
 			assertEquals(4, intOf(one(key, c("select instr('abcabc','abc',1,2)" + dualFor(key), key))),
 					key + " instr('abcabc','abc',1,2) 应返回第2次出现的绝对位置4");

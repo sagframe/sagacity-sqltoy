@@ -2,12 +2,11 @@ package org.sagacity.sqltoy.config;
 
 import java.io.File;
 import java.lang.reflect.Modifier;
+import java.net.JarURLConnection;
 import java.net.URI;
 import java.net.URL;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.PathMatcher;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -18,6 +17,7 @@ import java.util.stream.Stream;
 
 import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.SqlToyEntity;
+import org.sagacity.sqltoy.utils.AntPathUtils;
 import org.sagacity.sqltoy.utils.FileUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -130,43 +130,47 @@ public class EntityScanner {
 	private static void scanDirectory(File dir, String basePackage, String relativePattern, List<Class<?>> result,
 			ClassLoader classLoader, boolean entityOnly, boolean recursive) {
 		Path root = dir.toPath();
-		// 构建匹配相对路径的 glob 模式
-		// 只替换包分隔符的 .，保留通配符中的 . 不被替换
-		StringBuilder globBuilder = new StringBuilder();
-		for (String part : relativePattern.split("\\.", -1)) {
-			if (globBuilder.length() > 0) {
-				globBuilder.append("/");
-			}
-			globBuilder.append(part);
-		}
-		String globPattern = globBuilder.toString();
-		if (!globPattern.isEmpty() && !globPattern.endsWith("/")) {
-			globPattern = globPattern + "/";
-		}
-		// 递归时匹配当前目录和子目录;非递归只匹配当前目录,与 recursive 参数语义一致
-		globPattern = globPattern + (recursive ? "{*.class,**/*.class}" : "*.class");
-		PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:" + globPattern);
+		// update 2026-11-11 目录与jar共用同一Ant匹配器:**匹配0层目录,
+		// 原PathMatcher
+		// glob下"com.foo.**.entity"会漏掉"com.foo.entity.X"、"com.foo.**"会漏基包直属类
+		String[] patternParts = buildClassPatternParts(relativePattern, recursive);
 		// 基础包名前缀（用于拼接完整类名）
 		String packagePrefix = basePackage.isEmpty() ? "" : basePackage + ".";
 		try (Stream<Path> paths = Files.walk(root, recursive ? Integer.MAX_VALUE : 1)) {
 			// Files.walk的Stream持有目录句柄,必须关闭避免泄漏
 			paths.filter(Files::isRegularFile).forEach(path -> {
-				try {
-					Path relative = root.relativize(path);
-					// 将Windows反斜杠路径转换为正斜杠，确保与glob模式兼容
-					String relativePath = relative.toString().replace('\\', '/');
-					Path normalizedRelative = FileSystems.getDefault().getPath(relativePath);
-					if (matcher.matches(normalizedRelative)) {
-						String className = packagePrefix + pathToClass(root, path);
-						checkAndAdd(className, result, classLoader, entityOnly);
-					}
-				} catch (Exception e) {
-					logger.debug("Skip unreadable file: {}", path);
+				// 将Windows反斜杠路径转换为正斜杠，确保与模式兼容
+				String relativePath = root.relativize(path).toString().replace('\\', '/');
+				if (AntPathUtils.match(relativePath, patternParts)) {
+					checkAndAdd(packagePrefix + pathToClass(root, path), result, classLoader, entityOnly);
 				}
 			});
 		} catch (Exception e) {
 			logger.debug("Skip directory: {}", root);
 		}
+	}
+
+	/**
+	 * 构建Ant匹配用的模式段:包路径按"."拆分后追加class文件匹配段, 递归时追加"**"(匹配0~n层目录),保证目录与jar两侧语义一致
+	 * 
+	 * @param packagePattern 包模式(目录扫描传相对包模式,jar扫描传完整包模式)
+	 * @param recursive
+	 * @return
+	 */
+	private static String[] buildClassPatternParts(String packagePattern, boolean recursive) {
+		List<String> parts = new ArrayList<String>();
+		if (packagePattern != null && !packagePattern.isEmpty()) {
+			for (String part : packagePattern.split("\\.")) {
+				if (!part.isEmpty()) {
+					parts.add(part);
+				}
+			}
+		}
+		if (recursive) {
+			parts.add("**");
+		}
+		parts.add("*.class");
+		return parts.toArray(new String[0]);
 	}
 
 	/**
@@ -181,9 +185,16 @@ public class EntityScanner {
 	 */
 	private static void scanJar(URL jarUrl, String pattern, List<Class<?>> result, String charset,
 			ClassLoader classLoader, boolean entityOnly, boolean recursive) throws Exception {
-		String jarPath = FileUtil.getJarPath(jarUrl);
-		String antPattern = pattern.replace('.', '/') + (recursive ? "/**/*.class" : "/*.class");
-		try (JarFile jarFile = new JarFile(jarPath)) {
+		String[] patternParts = buildClassPatternParts(pattern, recursive);
+		String url = jarUrl.toExternalForm();
+		// 多个"!"(Spring Boot 3.0/3.1)或nested:协议(3.2+)为嵌套jar,其余为普通jar
+		boolean nestedJar = url.contains("nested:") || url.indexOf("!/") != url.lastIndexOf("!/");
+		// update 2026-11-11 嵌套jar必须经JarURLConnection.getJarFile()取内层jar:
+		// 原实现用FileUtil.getJarPath在第一个"!"处截断,会把BOOT-INF/classes或内层jar错当成外层app.jar,
+		// 导致entry路径与包模式不匹配、实体全量漏扫;普通jar仍按路径打开,避免依赖jar内目录entry是否存在
+		JarFile jarFile = nestedJar ? ((JarURLConnection) jarUrl.openConnection()).getJarFile()
+				: new JarFile(FileUtil.getJarPath(jarUrl));
+		try {
 			Enumeration<JarEntry> entries = jarFile.entries();
 			JarEntry entry;
 			String name;
@@ -191,41 +202,17 @@ public class EntityScanner {
 			while (entries.hasMoreElements()) {
 				entry = entries.nextElement();
 				name = entry.getName();
-				if (name.endsWith(".class") && matchJarPath(name, antPattern)) {
+				if (name.endsWith(".class") && AntPathUtils.match(name, patternParts)) {
 					className = name.replace("/", ".").replace(".class", "");
 					checkAndAdd(className, result, classLoader, entityOnly);
 				}
 			}
+		} finally {
+			// 嵌套jar的JarFile由连接缓存持有,不主动关闭
+			if (!nestedJar) {
+				jarFile.close();
+			}
 		}
-	}
-
-	/**
-	 * jar包路径匹配
-	 * 
-	 * @param path
-	 * @param globPattern
-	 * @return
-	 */
-	private static boolean matchJarPath(String path, String globPattern) {
-		// glob模式转正则
-		// ** 匹配零个或多个目录层级
-		// 关键：/**/ 要匹配零个或多个完整路径段（包括斜杠），避免双斜杠问题
-		// 使用唯一占位符保护正则中的 * 不被后续替换影响
-		String regex = globPattern
-				// 先用占位符保护 **
-				.replace("**", "<<DS>>")
-				// 处理带斜杠的 ** 模式 - 用唯一占位符保护正则中的 *
-				.replace("/<<DS>>/", "<<PATH_SEG>>") // 匹配 /a, /a/b, 或空
-				.replace("/<<DS>>", "<<PATH_END>>") // 末尾的 /** 匹配 /a, /a/b, 或空
-				.replace("<<DS>>/", "<<PATH_START>>") // 开头的 **/ 匹配 a/, a/b/, 或空
-				// 处理其他通配符
-				.replace(".", "\\.").replace("*", "[^/]*").replace("?", ".")
-				// 单独的 ** 匹配任意非斜杠字符（用于文件名）
-				.replace("<<DS>>", "[^/]*")
-				// 替换占位符为实际正则
-				.replace("<<PATH_SEG>>", "(/[^/]*)*").replace("<<PATH_END>>", "(/[^/]*)*")
-				.replace("<<PATH_START>>", "([^/]*/)*");
-		return path.matches(regex);
 	}
 
 	/**

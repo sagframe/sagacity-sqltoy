@@ -32,6 +32,8 @@ import org.sagacity.sqltoy.model.Page;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @description lambda查询构建器,单表与多表join统一入口:单表只是join的退化形态,是否join由是否
@@ -61,6 +63,15 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	 * 绑定的执行dao,为null时终端方法不可用
 	 */
 	private LambdaDao dao;
+
+	/**
+	 * update 2026-11-10 外层组合在<b>渲染期</b>下发的执行库类型:成员经create()构建未bind dao时自身
+	 * resolveDbType为-1,方言分支(DB2递归成员隐式JOIN/ClickHouse UNION
+	 * DISTINCT/RECURSIVE关键字)会静默失配,
+	 * 由外层composeSql下发覆盖本地解析;该值只在一次渲染内有效(composeSql的finally归零),
+	 * 避免成员被复用(独立执行/换dataSource/被另一库组合渲染)时长期用旧库类型
+	 */
+	private Integer propagatedDbType;
 
 	/**
 	 * select指定的查询属性名列表(单表通道直接使用,join通道渲染为别名.列 AS 属性)
@@ -96,6 +107,10 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	private LambdaQuery(Class<T> entityClass, JoinContext joinContext) {
 		super(entityClass, joinContext);
 	}
+
+	private static final Logger logger = LoggerFactory.getLogger(LambdaQuery.class);
+
+	private static volatile boolean unboundDbTypeWarned = false;
 
 	public static <T> LambdaQuery<T> create(Class<T> entityClass) {
 		if (entityClass == null) {
@@ -168,8 +183,9 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 			fastInner.joinContext.getParamSeq().set(Math.max(fastInner.joinContext.getParamSeq().get(), seq));
 			fastInner.assemble(metaLoader);
 			seq = fastInner.joinContext.getParamSeq().get();
-			// @fast派生表:FROM @fast(内层sql),别名由registerFrom(entity,alias)提供
-			joinContext.setFromRawSource("@fast(" + fastInner.getSql() + ")");
+			// @fast派生表的FROM原始源延迟到composeSqlBody渲染:assemble阶段外层dbType尚未下发,
+			// 此处提前getSql()会把未bind内层按-1通用形态冻结进fromRawSource,使DB2递归/CH UNION等
+			// 方言分支失配,且后续propagateDbType无法改写已冻结的字符串(见composeSqlBody)
 		}
 		if (seq > 0) {
 			joinContext.getParamSeq().set(Math.max(joinContext.getParamSeq().get(), seq));
@@ -319,8 +335,48 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		cteQuery.joinContext.forceJoinChannel();
 		joinContext.forceJoinChannel();
 		ctes.add(new CteDef(name, cteQuery, true, null, columns));
+		// update 2026-11-10 递归成员标记移至渲染时动态执行(composeSql对每个递归cte现场标记):
+		// 此处静态标记只覆盖调用时已存在的union成员,之后再对cteQuery.union()追加的成员会被漏标,
+		// DB2据此不做隐式JOIN改写而报SQLCODE=-345
 		composed = true;
 		return this;
+	}
+
+	/**
+	 * @description 递归标记:cteQuery自身是anchor,union拼接的成员及其嵌套组合全部标记为递归成员;
+	 *              被标记成员收集进markedMembers,由composeSql在渲染结束后按作用域复位(避免脏标记残留)
+	 */
+	private void markRecursiveMembers(LambdaQuery<?> cteQuery, List<LambdaQuery<?>> markedMembers,
+			List<Boolean> previousRecursiveFlags) {
+		for (Object[] u : cteQuery.unions) {
+			markRecursiveMemberTree((LambdaQuery<?>) u[1], markedMembers, previousRecursiveFlags);
+		}
+	}
+
+	/**
+	 * update 2026-11-12 递归成员及其嵌套组合的标记树:成员自身的CTE/@fast内层同样属于递归成员
+	 * SQL(DB2同样禁显式JOIN,原实现只遍历unions漏标嵌套场景报SQLCODE=-345);
+	 * 标记前记录旧状态供栈式恢复;身份去重防共享成员重复记录与循环引用
+	 */
+	private void markRecursiveMemberTree(LambdaQuery<?> member, List<LambdaQuery<?>> markedMembers,
+			List<Boolean> previousRecursiveFlags) {
+		if (markedMembers.contains(member)) {
+			return;
+		}
+		previousRecursiveFlags.add(member.joinContext.isRecursiveMember());
+		member.joinContext.markRecursiveMember();
+		markedMembers.add(member);
+		for (CteDef cte : member.ctes) {
+			markRecursiveMemberTree(cte.query, markedMembers, previousRecursiveFlags);
+		}
+		if (member.fastInner != null) {
+			markRecursiveMemberTree(member.fastInner, markedMembers, previousRecursiveFlags);
+		}
+		if (member.composed) {
+			for (Object[] u : member.unions) {
+				markRecursiveMemberTree((LambdaQuery<?>) u[1], markedMembers, previousRecursiveFlags);
+			}
+		}
 	}
 
 	/**
@@ -404,7 +460,14 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 
 	@Override
 	public String getSql() {
-		return composed ? composeSql() : super.getSql();
+		if (composed) {
+			return composeSql();
+		}
+		// 向join渲染层注入执行库类型,供DB2递归成员等方言分支判定;非join通道无需注入
+		if (joinContext != null && joinContext.isJoinChannel()) {
+			joinContext.applyDbType(resolveDbType());
+		}
+		return super.getSql();
 	}
 
 	@Override
@@ -434,19 +497,94 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	 */
 	private String composeSql() {
 		int dbType = resolveDbType();
+		joinContext.applyDbType(dbType);
+		// update 2026-11-10 向成员下发执行库类型,但只允许在本次渲染作用域内有效:
+		// 成员经create()构建未bind dao时自身解析为-1,方言分支(DB2递归成员隐式JOIN/ClickHouse UNION
+		// DISTINCT/RECURSIVE关键字)会静默失配,故由外层下发;但成员实例可能被复用(独立执行、换
+		// dataSource、被另一库的组合再次渲染),长期留在实例上的旧库类型会压过成员自身的dao/dataSource
+		// 解析,因此渲染结束必须归还(见finally)
+		// update 2026-11-12 栈式保存/恢复:成员可能同时被外层union与内层CTE共享引用,内层渲染
+		// 结束须恢复外层已下发的值(而非无条件置null),否则外层随后渲染该成员回落-1方言失配
+		List<LambdaQuery<?>> propagatedMembers = new ArrayList<>(2);
+		List<Integer> previousDbTypes = new ArrayList<>(2);
+		if (dbType >= 0) {
+			// update 2026-11-12 评审R4:同一实例同层同时出现在ctes与unions时按身份去重,
+			// 否则previousDbTypes记录到中间态,正向恢复会残留最后一次下发的dbType
+			for (CteDef cte : ctes) {
+				if (!propagatedMembers.contains(cte.query)) {
+					propagatedMembers.add(cte.query);
+					previousDbTypes.add(cte.query.propagatedDbType);
+					cte.query.propagateDbType(dbType);
+				}
+			}
+			for (Object[] u : unions) {
+				LambdaQuery<?> member = (LambdaQuery<?>) u[1];
+				if (!propagatedMembers.contains(member)) {
+					propagatedMembers.add(member);
+					previousDbTypes.add(member.propagatedDbType);
+					member.propagateDbType(dbType);
+				}
+			}
+			if (fastInner != null && !propagatedMembers.contains(fastInner)) {
+				propagatedMembers.add(fastInner);
+				previousDbTypes.add(fastInner.propagatedDbType);
+				fastInner.propagateDbType(dbType);
+			}
+		}
+		List<LambdaQuery<?>> recursiveMarkedMembers = new ArrayList<>(2);
+		List<Boolean> previousRecursiveFlags = new ArrayList<>(2);
+		try {
+			return composeSqlBody(dbType, recursiveMarkedMembers, previousRecursiveFlags);
+		} finally {
+			for (int i = 0, n = propagatedMembers.size(); i < n; i++) {
+				propagatedMembers.get(i).propagatedDbType = previousDbTypes.get(i);
+			}
+			// 递归成员标记与dbType下发同为渲染作用域:成员可能被复用为独立DB2外连接查询,
+			// 残留的recursiveMember会误触隐式JOIN守卫(外连接抛错/内连接静默改逗号连接),故渲染结束复位;
+			// 共享成员被内层标记时恢复外层标记前的状态(栈式),不能无条件清除外层已下发的标记
+			for (int i = 0, n = recursiveMarkedMembers.size(); i < n; i++) {
+				if (previousRecursiveFlags.get(i)) {
+					recursiveMarkedMembers.get(i).joinContext.markRecursiveMember();
+				} else {
+					recursiveMarkedMembers.get(i).joinContext.clearRecursiveMember();
+				}
+			}
+		}
+	}
+
+	/**
+	 * @description 组合sql渲染主体,dbType已由{@link #composeSql()}解析并向成员下发
+	 * @param dbType 本次渲染使用的执行库类型
+	 * @param recursiveMarkedMembers 收集本次渲染标记的递归成员,供composeSql在finally按作用域复位
+	 */
+	private String composeSqlBody(int dbType, List<LambdaQuery<?>> recursiveMarkedMembers,
+			List<Boolean> previousRecursiveFlags) {
+		// @fast内层SQL在下发作用域内惰性渲染:此时fastInner.propagatedDbType已由外层置好,
+		// 未bind内层据外层执行库类型渲染方言分支(DB2递归成员隐式JOIN/CH UNION DISTINCT/RECURSIVE关键字)
+		if (fastInner != null) {
+			joinContext.setFromRawSource("@fast(" + fastInner.getSql() + ")");
+		}
 		StringBuilder sb = new StringBuilder();
 		if (!ctes.isEmpty()) {
 			// WITH必须位于语句位置0:sqltoy靠SqlWithAnalysis/hasWith从文本检测WITH以在count/分页时把WITH剥离到包裹外,
 			// 前导分号会破坏该检测;SQLServer单条语句以WITH开头本就不需要前置分号(分号要求仅针对WITH前尚有未结束语句的批处理)
 			sb.append("WITH ");
 			boolean anyRecursive = ctes.stream().anyMatch(c -> c.recursive);
-			if (anyRecursive && dbType != DBType.ORACLE && dbType != DBType.ORACLE11 && dbType != DBType.SQLSERVER) {
+			// DB2(20)不支持RECURSIVE关键字,递归CTE只能用WITH t(cols)
+			// AS(...)(真库实测SQLCODE=-104/SQLSTATE=42601)
+			if (anyRecursive && dbType != DBType.ORACLE && dbType != DBType.ORACLE11 && dbType != DBType.SQLSERVER
+					&& dbType != DBType.DB2) {
 				sb.append("RECURSIVE ");
 			}
 			for (int i = 0; i < ctes.size(); i++) {
 				CteDef cte = ctes.get(i);
 				if (i > 0) {
 					sb.append(", ");
+				}
+				// update 2026-11-10 渲染时动态标记递归成员(markRecursiveMember幂等):
+				// 覆盖withRecursive调用之后追加的union成员,否则DB2隐式JOIN改写漏标
+				if (cte.recursive) {
+					markRecursiveMembers(cte.query, recursiveMarkedMembers, previousRecursiveFlags);
 				}
 				sb.append(cte.name);
 				// 递归CTE列清单(H2等强制):WITH RECURSIVE t(a,b) AS
@@ -480,7 +618,14 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 			if (unionQuery.hasOrderByOrLastSql() || unionQuery.hasCte()) {
 				branchSql = wrapUnionBranch(unionQuery, branchSql, branchIndex, dbType);
 			}
-			sb.append(" ").append(u[0]).append(" ").append(branchSql);
+			// ClickHouse 26 的 union_default_mode 为空设置,裸 UNION
+			// 被拒(EXPECTED_ALL_OR_DISTINCT,真库实测),
+			// 需显式渲染 UNION DISTINCT;UNION ALL 语义不受影响
+			String connector = (String) u[0];
+			if (dbType == DBType.CLICKHOUSE && "UNION".equals(connector)) {
+				connector = "UNION DISTINCT";
+			}
+			sb.append(" ").append(connector).append(" ").append(branchSql);
 		}
 		if (hasTail) {
 			sb.append(" ").append(getOrderByTailSql());
@@ -508,12 +653,36 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	 * @return 执行库类型(未绑定dao时-1,WITH按通用形态渲染)
 	 */
 	private int resolveDbType() {
+		// update 2026-11-10 渲染作用域内由外层组合下发的执行库类型优先:成员与外层在同一连接上执行,
+		// 外层解析出的dbType对成员同样成立(且覆盖成员自身未bind的-1);作用域外该值为null,回落自身解析
+		if (propagatedDbType != null) {
+			return propagatedDbType;
+		}
 		if (dao == null) {
+			// update 2026-11-10 未bind dao时执行库类型未知,方言分支(RECURSIVE关键字/DB2递归成员隐式JOIN/
+			// ClickHouse UNION DISTINCT等)按非特殊库兜底渲染;执行链路必须bind(bind后dbType注入),
+			// 一次性warn提示避免静默
+			if (!unboundDbTypeWarned) {
+				unboundDbTypeWarned = true;
+				logger.warn("LambdaQuery created via create() without bind(dao): dbType is unknown, "
+						+ "dialect-specific rendering (RECURSIVE keyword/DB2 recursive member implicit join/"
+						+ "ClickHouse UNION DISTINCT) falls back to default; bind before execute");
+			}
 			return -1;
 		}
 		// 显式dataSource优先:多数据源/异构库场景下WITH RECURSIVE与MATERIALIZED的门禁必须按实际执行库判断
 		DataSource target = (dataSource != null) ? dataSource : dao.getDataSource();
 		return DataSourceUtils.getDBType(dao.getSqlToyContext(), target);
+	}
+
+	/**
+	 * @description update 2026-11-10 外层组合在渲染期向成员下发执行库类型:成员可能经create()构建未bind dao
+	 *              (assemble级联了metaLoader但dao/dbType不级联),其resolveDbType为-1会使方言分支
+	 *              (DB2递归成员隐式JOIN/ClickHouse UNION DISTINCT)静默失配;成员自身的composeSql会
+	 *              继续向更深层成员下发(递归覆盖)。调用方(composeSql)负责渲染结束后将值归零, 不得在渲染作用域外长期保留
+	 */
+	private void propagateDbType(int dbType) {
+		this.propagatedDbType = dbType;
 	}
 
 	/**

@@ -48,6 +48,13 @@ public class FunctionUtils {
 			// update 2026-10-11 left/right、lpad/rpad、EXTRACT/date_part源、日期截断族(A方案)
 			funPackage.concat("LeftRight"), funPackage.concat("Pad"), funPackage.concat("Extract"),
 			funPackage.concat("DateTrunc"),
+			// update 2026-11-10
+			// 常用MySQL函数补齐:substring_index(分段截取)/unix_timestamp(epoch秒)/truncate(数值截断)
+			funPackage.concat("SubstringIndex"), funPackage.concat("UnixTimestamp"), funPackage.concat("Truncate"),
+			// update 2026-11-10 第二批:from_unixtime(epoch逆)/week族(week/weekday/dayofweek);
+			// locate撤回——Instr.java六源合一(instr|charindex|position|strpos|locate|posstr)已覆盖
+			// (2026-10-11实现并真库验证,hana反序/db2 posstr/CH position分支齐全),重复注册致行为不确定
+			funPackage.concat("FromUnixTime"), funPackage.concat("Week"),
 			// update 2026-10-11 mod取模(18环境仅sqlserver无mod函数,转%运算符)
 			funPackage.concat("Mod") };
 
@@ -529,95 +536,139 @@ public class FunctionUtils {
 		if (content.indexOf('%') >= 0) {
 			return formatArg;
 		}
-		StringBuilder out = new StringBuilder(content.length() + 8);
-		for (int i = 0; i < content.length();) {
-			char c = content.charAt(i);
+		String mapped = toMySqlFormatTokens(content);
+		return mapped.equals(content) ? formatArg : "'" + mapped + "'";
+	}
+
+	/**
+	 * @description update 2026-11-10
+	 *              格式串token归一(入参即格式串内容,不含引号判定):Oracle/Java风格token转MySQL
+	 *              %token,供带引号字面量({@link #toMySqlFormat(String)})与DateFormat的mysql/clickhouse分支
+	 *              (裸格式:占位符/表达式形态)共用
+	 *
+	 *              <p>
+	 *              抽出的原因:两处规则曾分裂——裸"HHmmss"经DateFormat分支replace链映成%H%m%s,而带引号经本类归一层是%H%i%s。
+	 *              现统一由本方法承载token映射,口径单一;已是%风格的内容原样保留(幂等)。
+	 *
+	 * @param format 格式串(不含外层引号)
+	 * @return 归一后的MySQL % 风格格式串
+	 */
+	public static String toMySqlFormatTokens(String format) {
+		if (format == null || format.isEmpty()) {
+			return format;
+		}
+		StringBuilder out = new StringBuilder(format.length() + 8);
+		// 最近一个格式directive(如%H/%h/%Y/%d),字面分隔符不更新它;供小写mm判定是否仍处24小时上下文
+		String lastDirective = null;
+		for (int i = 0; i < format.length();) {
+			char c = format.charAt(i);
 			// Oracle/MySQL格式串中的双引号字面量片段原样保留
 			if (c == '"') {
-				int end = content.indexOf('"', i + 1);
+				int end = format.indexOf('"', i + 1);
 				if (end < 0) {
-					out.append(content.substring(i));
+					out.append(format.substring(i));
 					break;
 				}
-				out.append(content, i, end + 1);
+				out.append(format, i, end + 1);
 				i = end + 1;
 				continue;
 			}
-			String rest = content.substring(i);
+			String rest = format.substring(i);
 			String lower = rest.toLowerCase(Locale.ROOT);
 			if (lower.startsWith("hh24")) {
 				out.append("%H");
+				lastDirective = "%H";
 				i += 4;
 				continue;
 			}
 			// java风格时间:HH=24小时、hh=12小时、mm=分钟
 			if (rest.startsWith("HH:mm:ss")) {
 				out.append("%H:%i:%s");
+				lastDirective = "%s";
 				i += 9;
 				continue;
 			}
 			if (rest.startsWith("HH:mm")) {
 				out.append("%H:%i");
+				lastDirective = "%i";
 				i += 5;
 				continue;
 			}
 			if (rest.startsWith("hh:mm:ss")) {
 				out.append("%h:%i:%s");
+				lastDirective = "%s";
 				i += 9;
 				continue;
 			}
 			if (rest.startsWith("hh:mm")) {
 				out.append("%h:%i");
+				lastDirective = "%i";
 				i += 5;
 				continue;
 			}
 			if (lower.startsWith("yyyy")) {
 				out.append("%Y");
+				lastDirective = "%Y";
 				i += 4;
 				continue;
 			}
 			if (lower.startsWith("yy")) {
 				out.append("%y");
+				lastDirective = "%y";
 				i += 2;
 				continue;
 			}
-			// 非时间上下文的mm为Oracle的月份
+			// update 2026-11-11 mm语义按大小写分治(先大小写不敏感命中,再按原串大小写决定%m/%i):
+			// - 大写MM恒为月份(java的月份也是MM,殊途同归)
+			// - 小写mm仅最近一个directive为%H(HH/HH24/hh24,java 24小时上下文)时为分钟,字面分隔符不切断该上下文
+			// (HHmmss/HHmm/HH时mm分/HH-mm/HH mm);其余(小写hh后/串首/日期后)为Oracle月份
+			// (Oracle格式token大小写不敏感,hhmm=小时+月份)
+			// - 混合大小写(Mm/mM)与两种纯大小写同义归月,不能落到逐字符输出(否则MySQL把"M"/"m"当字面量输出)
+			// 分钟的Oracle正写仍为mi/MI,java 12小时+分钟的hhmm形态按Oracle解释(取舍声明见方法注释)
 			if (lower.startsWith("mm")) {
-				out.append("%m");
+				boolean upper = rest.startsWith("MM");
+				boolean after24Hour = !upper && "%H".equals(lastDirective);
+				String directive = after24Hour ? "%i" : "%m";
+				out.append(directive);
+				lastDirective = directive;
 				i += 2;
 				continue;
 			}
 			if (lower.startsWith("mi")) {
 				out.append("%i");
+				lastDirective = "%i";
 				i += 2;
 				continue;
 			}
 			if (lower.startsWith("dd")) {
 				out.append("%d");
+				lastDirective = "%d";
 				i += 2;
 				continue;
 			}
 			if (lower.startsWith("ss")) {
 				out.append("%s");
+				lastDirective = "%s";
 				i += 2;
 				continue;
 			}
 			// 裸HH按Java习惯24小时,裸hh按12小时
 			if (rest.startsWith("HH")) {
 				out.append("%H");
+				lastDirective = "%H";
 				i += 2;
 				continue;
 			}
 			if (rest.startsWith("hh")) {
 				out.append("%h");
+				lastDirective = "%h";
 				i += 2;
 				continue;
 			}
 			out.append(c);
 			i++;
 		}
-		String mapped = out.toString();
-		return mapped.equals(content) ? formatArg : "'" + mapped + "'";
+		return out.toString();
 	}
 
 	/**
@@ -694,7 +745,16 @@ public class FunctionUtils {
 		if (tmp.indexOf('(') >= 0) {
 			return tmp;
 		}
-		return "datetime(" + tmp + "/1000,'unixepoch','localtime')";
+		// update 2026-11-10 裸标识符(列名)维持/1000包裹:sqlite列的日期形态存在真歧义——JDBC
+		// setTimestamp绑定(sqltoy ORM主流链路)存毫秒Long,/1000正确;SQL字面量insert存TEXT,
+		// /1000会算出1970。无法静态消解,跟随JDBC绑定主流;字面量/函数/TEXT列场景请以表达式形态
+		// (如date('...'))传入即走透传分支
+		// update 2026-11-11 TEXT/INTEGER 双形态运行时判别:毫秒INTEGER(ORM setTimestamp写入,真库实证
+		// typeof=integer)走/1000归一;TEXT列(外部工具写入或DDL声明TEXT)按本地墙钟文本原样解析。
+		// 原实现对TEXT列把 '2026-11-11 10:00:00'/1000 数值化成2,导致week/weekday/dayofweek/
+		// unix_timestamp 全部静默错值(真库实测:week=0/weekday=3/dow=5/unix=2,正确45/2/4/1794391200)
+		return "case when typeof(" + tmp + ") in ('integer','real') then datetime(" + tmp
+				+ "/1000,'unixepoch','localtime') else datetime(" + tmp + ") end";
 	}
 
 	/**

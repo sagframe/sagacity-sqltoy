@@ -77,7 +77,13 @@ public class SqlServerSequencePkSmokeTest {
 			p.load(in);
 		}
 		Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-		conn = DriverManager.getConnection(p.getProperty("url"), p.getProperty("username"), p.getProperty("password"));
+		try {
+			conn = DriverManager.getConnection(p.getProperty("url"), p.getProperty("username"),
+					p.getProperty("password"));
+		} catch (Exception e) {
+			// update 2026-11-10 探针在但库不可达(容器已停)时整类跳过
+			org.junit.jupiter.api.Assumptions.abort("sqlserver not reachable, skipped: " + e.getMessage());
+		}
 		try (Statement st = conn.createStatement()) {
 			// sqlserver2016+支持DROP IF EXISTS,防御式清理规避重复运行时已存在报错
 			st.execute("drop table if exists sqltoy_probe_seq_t");

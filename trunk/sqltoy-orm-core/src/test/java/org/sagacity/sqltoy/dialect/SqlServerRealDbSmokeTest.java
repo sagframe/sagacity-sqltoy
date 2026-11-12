@@ -33,14 +33,21 @@ public class SqlServerRealDbSmokeTest {
 	public static void init() throws Exception {
 		File cfg = new File("target/sqlserver-probe.properties");
 		if (!cfg.exists()) {
-			return;
+			// update 2026-11-10 未配置探针即整类跳过:原return后各用例在conn为null上NPE
+			org.junit.jupiter.api.Assumptions.abort("sqlserver probe not configured, skipped: " + cfg.getPath());
 		}
 		Properties p = new Properties();
 		try (InputStream in = new FileInputStream(cfg)) {
 			p.load(in);
 		}
 		Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-		conn = DriverManager.getConnection(p.getProperty("url"), p.getProperty("username"), p.getProperty("password"));
+		try {
+			conn = DriverManager.getConnection(p.getProperty("url"), p.getProperty("username"),
+					p.getProperty("password"));
+		} catch (Exception e) {
+			// update 2026-11-10 探针已配置但库不可达时整类跳过,与"未配置profile则跳过"语义一致
+			org.junit.jupiter.api.Assumptions.abort("sqlserver not reachable, skipped: " + e.getMessage());
+		}
 		try (Statement st = conn.createStatement()) {
 			st.execute("if object_id('sqltoy_probe_t1') is not null drop table sqltoy_probe_t1");
 			st.execute("if object_id('sqltoy_probe_t2') is not null drop table sqltoy_probe_t2");

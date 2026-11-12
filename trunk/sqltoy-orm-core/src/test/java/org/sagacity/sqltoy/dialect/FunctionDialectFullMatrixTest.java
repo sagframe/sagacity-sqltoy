@@ -221,7 +221,7 @@ public class FunctionDialectFullMatrixTest {
 				{ "date_format ch原生别名", "select date_format(create_time,'%Y-%m-%d') from t", "clickhouse", EXACT,
 						"select date_format(toDateTime(create_time),'%Y-%m-%d') from t" },
 				{ "date_format sqlite转strftime", "select date_format(create_time,'%Y-%m-%d') from t", "sqlite",
-						EXACT, "select strftime('%Y-%m-%d',datetime(create_time/1000,'unixepoch','localtime')) from t" },
+						EXACT, "select strftime('%Y-%m-%d',case when typeof(create_time) in ('integer','real') then datetime(create_time/1000,'unixepoch','localtime') else datetime(create_time) end) from t" },
 				{ "date_format大写模型sqlserver", "select date_format(create_time,'YYYY-MM-DD HH24:MI:SS') from t",
 						"sqlserver", EXACT, "select FORMAT(create_time,'yyyy-MM-dd HH:mm:ss') from t" },
 				// ---------------- Now ----------------
@@ -313,7 +313,7 @@ public class FunctionDialectFullMatrixTest {
 				{ "to_char dm原生透传", "select to_char(create_time,'yyyy-MM-dd') from t", "dm", EXACT,
 						"select to_char(create_time,'yyyy-MM-dd') from t" },
 				{ "to_char sqlite转strftime", "select to_char(create_time,'yyyy-MM-dd') from t", "sqlite", EXACT,
-						"select strftime('%Y-%m-%d',datetime(create_time/1000,'unixepoch','localtime')) from t" },
+						"select strftime('%Y-%m-%d',case when typeof(create_time) in ('integer','real') then datetime(create_time/1000,'unixepoch','localtime') else datetime(create_time) end) from t" },
 				{ "to_char数值模型sqlite响亮保留", "select to_char(score,'999.99') from t", "sqlite", EXACT,
 						"select to_char(score,'999.99') from t" },
 				{ "to_char数值模型sqlserver零占位", "select to_char(score,'999.99') from t", "sqlserver", EXACT,

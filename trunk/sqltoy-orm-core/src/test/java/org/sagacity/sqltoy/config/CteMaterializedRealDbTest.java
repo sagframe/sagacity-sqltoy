@@ -32,6 +32,15 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  */
 public class CteMaterializedRealDbTest {
 
+	/**
+	 * 真库矩阵守卫:本用例断言"所有库全绿",缺库时会误报失败,故缺任一库即整类跳过;
+	 * CI 需要"缺库即失败"时加 -Dsqltoy.realdb.strict=true(见 docker/README.md)
+	 */
+	@org.junit.jupiter.api.BeforeAll
+	public static void assumeRealDbMatrix() {
+		org.sagacity.sqltoy.support.RealDbProbeSupport.assumeFullMatrix(PROBES);
+	}
+
 	// { 名称, 驱动, url, 用户, 密码, sqltoy方言名 }
 	private static final String[][] PROBES = {
 			{ "mysql9", "com.mysql.cj.jdbc.Driver",

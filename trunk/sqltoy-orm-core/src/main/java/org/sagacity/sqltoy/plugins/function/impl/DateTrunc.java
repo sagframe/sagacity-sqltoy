@@ -56,12 +56,24 @@ public class DateTrunc extends IFunction {
 		}
 		String unit = normalizeUnit(unitWord);
 		if (unit == null) {
-			// 数值截断trunc(123.45,2)或罕见单位:响亮保留
+			// update 2026-11-10 数值截断trunc(123.45,2):转发数值映射(Oracle/PG系用户写法在
+			// MySQL系/doris等得到truncate等价形态,真库实测doris无trunc透传报can not found function);
+			// 罕见日期单位仍null响亮
+			// update 2026-11-10 转发须先甄别"看起来像数值位数"的入参,否则两类日期写法会被静默误转:
+			// ①date_trunc('hour',ts)的第一参恒为单位,第二参是日期表达式,转发会产出truncate(ts,ts);
+			// ②Oracle的TRUNC(ts,'HH')(时间截断)单位表未收录,转发会产出truncate(ts,'HH')(MySQL把'HH'
+			// 当0位小数,静默截掉时分秒)。故date_trunc源不转发,trunc/truncate源仅当第二参是日期单位才不转发;
+			// 双引号按目标方言分流(MySQL系=字符串,非数值即日期单位;其余=标识符放行),单引号数值('2')放行
+			if (!"date_trunc".equals(funLow) && !Truncate.isDateUnitArg(dialect, args[1].trim())) {
+				String numeric = Truncate.numericTrunc(dialect, funLow, base, args[1].trim());
+				return (numeric == null) ? super.IGNORE : numeric;
+			}
 			return super.IGNORE;
 		}
 		// ---- 原生透传族 ----
 		// oracle兼容格式模型;无date_trunc函数由下方转换族承担)
 		boolean truncNative = dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DM
+				|| dialect == DBType.OCEANBASE
 				|| dialect == DBType.DB2 || dialect == DBType.OPENGAUSS || dialect == DBType.GAUSSDB
 				|| dialect == DBType.MOGDB || dialect == DBType.OSCAR || dialect == DBType.STARDB
 				|| dialect == DBType.VASTBASE || dialect == DBType.KINGBASE;
@@ -105,8 +117,9 @@ public class DateTrunc extends IFunction {
 			return "date_trunc('" + unit.toLowerCase(Locale.ROOT) + "'," + FunctionUtils.castLiteralTimestamp(base)
 					+ ")";
 		}
-		// mysql语法族(含OB/tidb/starrocks):组合形态
-		if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57 || dialect == DBType.OCEANBASE
+		// mysql语法族(含tidb/starrocks):组合形态
+		// update 2026-11-12 OB移出:框架约定dialect=oceanbase即Oracle模式租户,归truncNative族
+		if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57
 				|| dialect == DBType.TIDB || dialect == DBType.STARROCKS) {
 			switch (unit) {
 			case "DAY":

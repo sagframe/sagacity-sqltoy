@@ -46,11 +46,18 @@ public class MySqlDDLGenerator implements DialectDDLGenerator {
 			}
 			tableSql.append("KEY ").append(indexName).append(" (");
 			String[] cols = indexModel.getColumns();
+			// update 2026-11-11 索引方向保真:IndexModel.sortTypes(DESC/ASC)此前在本自有KEY路径被丢弃,
+			// 回灌索引变全ASC——与DDLUtils.wrapTableIndexes共享路径的既有行为对齐(quickvo端信息完整,消费端不得丢弃)
+			String[] sortTypes = indexModel.getSortTypes();
+			int typeLen = (sortTypes == null) ? 0 : sortTypes.length;
 			for (int i = 0; i < cols.length; i++) {
 				if (i > 0) {
 					tableSql.append(",");
 				}
 				tableSql.append(StringUtil.toLowerOrUpper(cols[i], upperOrLower));
+				if (i < typeLen && StringUtil.isNotBlank(sortTypes[i])) {
+					tableSql.append(" ").append(sortTypes[i]);
+				}
 			}
 			tableSql.append(")");
 		}

@@ -37,6 +37,7 @@ import org.sagacity.sqltoy.dao.impl.DefaultLightDaoImpl;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.lambda.join.JoinCol;
 import org.sagacity.sqltoy.model.Page;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
 /**
  * @description lambda缺陷回归测试:覆盖无条件DML守卫、组合查询通道与参数续号、嵌套exists、
@@ -87,6 +88,34 @@ public class LambdaDefectRegressionTest {
 			index += token.length();
 		}
 		return count;
+	}
+
+	/** 模拟外层组合在渲染作用域内向查询下发执行库类型(null表示归还),用于无真实异构库时验证方言分支 */
+	private static void forceDbType(LambdaQuery<?> query, Integer dbType) throws Exception {
+		Field field = LambdaQuery.class.getDeclaredField("propagatedDbType");
+		field.setAccessible(true);
+		field.set(query, dbType);
+	}
+
+	/** 读取成员joinContext上的递归成员标记(joinContext声明在父类AbstractWhere,需沿继承链查找) */
+	private static boolean recursiveMemberFlag(LambdaQuery<?> query) throws Exception {
+		Class<?> clazz = query.getClass();
+		Field joinContextField = null;
+		while (clazz != null && joinContextField == null) {
+			try {
+				joinContextField = clazz.getDeclaredField("joinContext");
+			} catch (NoSuchFieldException e) {
+				clazz = clazz.getSuperclass();
+			}
+		}
+		if (joinContextField == null) {
+			throw new NoSuchFieldException("joinContext");
+		}
+		joinContextField.setAccessible(true);
+		Object joinContext = joinContextField.get(query);
+		Field flag = joinContext.getClass().getDeclaredField("recursiveMember");
+		flag.setAccessible(true);
+		return flag.getBoolean(joinContext);
 	}
 
 	// ==================== 测试实体 ====================
@@ -477,6 +506,55 @@ public class LambdaDefectRegressionTest {
 						"外层表已取别名d1,OuterRef不得再引用原表名,实际SQL=" + sql),
 				() -> assertTrue(sql.contains("d1.DEPTID"),
 						"OuterRef应渲染为d1.DEPTID,实际SQL=" + sql));
+	}
+
+	@Test
+	@DisplayName("P1-6 @fast内层须随外层执行库渲染,不得在assemble期按-1冻结方言分支")
+	public void p1FastInnerDbTypeMustFollowOuterPropagation() throws Exception {
+		LambdaQuery<DefUser> branch = LambdaQuery.create(DefUser.class).from(DefUser.class)
+				.select(JoinCol.of(DefUser::getId).as("id")).eq(DefUser::getStatus, 2);
+		// 内层含dedup union:ClickHouse须渲染UNION DISTINCT,通用形态渲染裸UNION,以此观测内层实际执行库
+		LambdaQuery<DefUser> fastInner = LambdaQuery.create(DefUser.class).from(DefUser.class)
+				.select(JoinCol.of(DefUser::getId).as("id")).eq(DefUser::getStatus, 1).union(branch);
+		LambdaQuery<DefUser> outer = LambdaQuery.create(DefUser.class).fromFast(fastInner, "f");
+		outer.assemble(META);
+		// 下发ClickHouse:@fast内层须按外层执行库渲染UNION DISTINCT(修复前assemble期已按-1冻结为裸UNION)
+		forceDbType(outer, DBType.CLICKHOUSE);
+		String chSql = norm(outer.getSql());
+		assertTrue(chSql.contains("@fast("), chSql);
+		assertTrue(chSql.contains("UNION DISTINCT"),
+				"@fast内层须随外层ClickHouse渲染UNION DISTINCT,实际SQL=" + chSql);
+		// 归还后再次渲染:内层回到裸UNION,证明字符串未被冻结、每次渲染随当前dbType重算
+		forceDbType(outer, null);
+		String genericSql = norm(outer.getSql());
+		assertTrue(genericSql.contains(" UNION "), genericSql);
+		assertFalse(genericSql.contains("UNION DISTINCT"),
+				"通用形态不应渲染DISTINCT(内层须重新按当前dbType渲染),实际SQL=" + genericSql);
+	}
+
+	@Test
+	@DisplayName("P1-7 递归成员标记仅限渲染作用域:复用为DB2外连接查询不得误触隐式JOIN守卫")
+	public void p1RecursiveMemberFlagMustBeScopedToRender() throws Exception {
+		LambdaQuery<DefUser> base = LambdaQuery.create(DefUser.class).from(DefUser.class)
+				.select(JoinCol.of(DefUser::getId).as("id")).eq(DefUser::getStatus, 1);
+		// 递归分支自带LEFT JOIN:通用形态下作为CTE成员可正常渲染;若渲染后残留recursiveMember标记,
+		// 被复用为独立DB2查询时会误触隐式JOIN守卫(外连接抛DataAccessException)
+		LambdaQuery<DefUser> recursive = LambdaQuery.create(DefUser.class).from(DefUser.class)
+				.leftJoin(DefDept.class).on(DefUser::getDeptId, DefDept::getDeptId)
+				.select(JoinCol.of(DefUser::getId).as("id")).eq(DefUser::getStatus, 2);
+		LambdaQuery<DefUser> outer = LambdaQuery.create(DefUser.class)
+				.withRecursive("tree", base.unionAll(recursive), "id").fromCte("tree");
+		outer.assemble(META);
+		String cteSql = norm(outer.getSql());
+		assertTrue(cteSql.contains("WITH RECURSIVE tree"), cteSql);
+		// 渲染作用域结束:递归成员标记必须复位
+		assertFalse(recursiveMemberFlag(recursive),
+				"渲染结束后递归成员标记必须归零,否则复用为DB2外连接查询会误触隐式JOIN守卫");
+		// 行为验证:同一成员复用为独立DB2外连接查询,不得因脏标记抛错
+		forceDbType(recursive, DBType.DB2);
+		recursive.assemble(META);
+		assertDoesNotThrow(() -> recursive.getSql(),
+				"复位后的递归成员复用为DB2外连接查询应正常渲染LEFT JOIN,不得误触隐式JOIN守卫");
 	}
 
 	// ==================== P2 参数、渲染与解析 ====================

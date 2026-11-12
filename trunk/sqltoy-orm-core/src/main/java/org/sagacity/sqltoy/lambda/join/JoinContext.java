@@ -20,6 +20,7 @@ import org.sagacity.sqltoy.lambda.LambdaFn;
 import org.sagacity.sqltoy.lambda.LambdaUtils;
 import org.sagacity.sqltoy.lambda.engine.SqlKeyword;
 import org.sagacity.sqltoy.lambda.toolkit.FieldNature;
+import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -105,6 +106,21 @@ public class JoinContext {
 	 * 表步骤序列:FROM、JOIN、ON按声明顺序排列
 	 */
 	private final List<TableStep> tableSteps = new ArrayList<>();
+
+	/**
+	 * 执行库类型:由外层LambdaQuery在组装前注入,未注入为-1
+	 */
+	private int dbType = -1;
+
+	/**
+	 * 递归CTE递归成员标记:仅withRecursive的union递归成员置true,anchor不标记
+	 */
+	private boolean recursiveMember = false;
+
+	/**
+	 * 隐式JOIN模式下从ON收集的关联谓词(DB2递归成员),随WHERE一并输出
+	 */
+	private final List<String> implicitJoinPredicates = new ArrayList<>();
 
 	/**
 	 * select列定义
@@ -640,8 +656,9 @@ public class JoinContext {
 			sql.append(SqlKeyword.SELECT.getSqlSegment()).append(" ").append(distinct ? "DISTINCT " : "")
 					.append(buildSelectSql()).append(" ").append(SqlKeyword.FROM.getSqlSegment()).append(" ")
 					.append(buildTableSql());
-			if (StringUtil.isNotBlank(whereSql)) {
-				sql.append(" ").append(SqlKeyword.WHERE.getSqlSegment()).append(" ").append(whereSql);
+			String effectiveWhere = mergeImplicitJoinPredicates(whereSql);
+			if (StringUtil.isNotBlank(effectiveWhere)) {
+				sql.append(" ").append(SqlKeyword.WHERE.getSqlSegment()).append(" ").append(effectiveWhere);
 			}
 			if (StringUtil.isNotBlank(groupByColumns)) {
 				sql.append(" ").append(SqlKeyword.GROUP_BY.getSqlSegment()).append(" ").append(groupByColumns);
@@ -747,6 +764,44 @@ public class JoinContext {
 	}
 
 	/**
+	 * 注入执行库类型,供方言分支判定
+	 */
+	public void applyDbType(int dbType) {
+		this.dbType = dbType;
+	}
+
+	/**
+	 * 标记为递归CTE的递归成员
+	 */
+	public void markRecursiveMember() {
+		this.recursiveMember = true;
+	}
+
+	/**
+	 * update 2026-11-12 当前递归成员标记状态:供外层渲染栈式保存/恢复(共享成员被内层
+	 * 组合渲染时,内层结束须恢复外层已下发的标记而非无条件清除)
+	 */
+	public boolean isRecursiveMember() {
+		return recursiveMember;
+	}
+
+	/**
+	 * 复位递归成员标记:标记仅限单次组合渲染作用域,渲染结束由外层composeSql调用,
+	 * 避免成员被复用为独立查询时残留旧标记误触DB2隐式JOIN守卫
+	 */
+	public void clearRecursiveMember() {
+		this.recursiveMember = false;
+	}
+
+	/**
+	 * @return DB2递归成员的隐式JOIN模式:DB2拒绝递归成员中的显式JOIN(真库实测SQLCODE=-345/SQLSTATE=42836),
+	 *         需把JOIN渲染为逗号表、ON条件并入WHERE
+	 */
+	private boolean implicitJoinMode() {
+		return recursiveMember && dbType == DBType.DB2;
+	}
+
+	/**
 	 * @return 表关联sql片段(含别名),供exists子查询拼装 SELECT 1 FROM ...
 	 */
 	public String getFromSql() {
@@ -762,24 +817,57 @@ public class JoinContext {
 	private String buildTableSql() {
 		StringBuilder tableSql = new StringBuilder();
 		boolean pendingOn = false;
+		boolean implicitMode = implicitJoinMode();
+		implicitJoinPredicates.clear();
 		for (TableStep step : tableSteps) {
 			if (step instanceof FromStep) {
 				tableSql.append(tableName(((FromStep) step).entity)).append(" ")
 						.append(aliasMap.get(((FromStep) step).entity));
 			} else if (step instanceof JoinStep) {
 				JoinStep joinStep = (JoinStep) step;
-				tableSql.append(" ").append(joinStep.joinKeyword.getSqlSegment()).append(" ")
-						.append(tableName(joinStep.entity)).append(" ").append(aliasMap.get(joinStep.entity));
+				if (implicitMode) {
+					// 逗号隐式JOIN表达不了外连接,DB2递归成员也无其他等价写法,硬守卫避免静默出错误结果
+					if (joinStep.joinKeyword != SqlKeyword.INNER_JOIN) {
+						throw new DataAccessException(
+								"DB2 recursive CTE member does not support outer joins (SQLCODE=-345); "
+										+ "restructure with an inner join or move the join outside the recursion");
+					}
+					tableSql.append(", ").append(tableName(joinStep.entity)).append(" ")
+							.append(aliasMap.get(joinStep.entity));
+				} else {
+					tableSql.append(" ").append(joinStep.joinKeyword.getSqlSegment()).append(" ")
+							.append(tableName(joinStep.entity)).append(" ").append(aliasMap.get(joinStep.entity));
+				}
 				pendingOn = true;
 			} else if (step instanceof OnStep) {
 				OnStep onStep = (OnStep) step;
-				tableSql.append(" ").append(pendingOn ? SqlKeyword.ON : SqlKeyword.AND).append(" ")
-						.append(columnName(onStep.columnA.entityClass(), onStep.columnA.fieldName())).append(" = ")
-						.append(columnName(onStep.columnB.entityClass(), onStep.columnB.fieldName()));
+				String predicate = columnName(onStep.columnA.entityClass(), onStep.columnA.fieldName()) + " = "
+						+ columnName(onStep.columnB.entityClass(), onStep.columnB.fieldName());
+				if (implicitMode) {
+					// ON谓词改道WHERE(裸列等值,无绑定参数,不影响参数续号)
+					implicitJoinPredicates.add(predicate);
+				} else {
+					tableSql.append(" ").append(pendingOn ? SqlKeyword.ON : SqlKeyword.AND).append(" ")
+							.append(predicate);
+				}
 				pendingOn = false;
 			}
 		}
 		return tableSql.toString();
+	}
+
+	/**
+	 * @description 把DB2递归成员收集的隐式JOIN谓词并入WHERE:用户条件保持原样并整体加括号, 无用户条件时JOIN谓词独立成块
+	 */
+	private String mergeImplicitJoinPredicates(String whereSql) {
+		if (implicitJoinPredicates.isEmpty()) {
+			return whereSql;
+		}
+		String joinPart = implicitJoinPredicates.stream().collect(Collectors.joining(" AND "));
+		if (StringUtil.isNotBlank(whereSql)) {
+			return "(" + whereSql + ") AND (" + joinPart + ")";
+		}
+		return joinPart;
 	}
 
 	private String tableName(Class<?> entityClass) {

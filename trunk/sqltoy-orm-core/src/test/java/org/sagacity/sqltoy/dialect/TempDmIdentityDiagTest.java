@@ -48,6 +48,10 @@ public class TempDmIdentityDiagTest {
 
 	@Test
 	public void diag() throws Exception {
+		// update 2026-11-10 无达梦容器时跳过(原直连失败即报错,本机mvn test必红)
+		org.junit.jupiter.api.Assumptions.assumeTrue(
+				org.sagacity.sqltoy.support.RealDbProbeSupport.isReachable("jdbc:dm://localhost:5236"),
+				"dm probe not reachable, skipped (see docker/README.md)");
 		EntityManager em = new EntityManager();
 		EntityMeta meta = em.parseEntityMeta(new SqlToyContext(), DiagVO.class, true, false);
 		System.out.println("[Diag] idStrategy=" + meta.getIdStrategy()

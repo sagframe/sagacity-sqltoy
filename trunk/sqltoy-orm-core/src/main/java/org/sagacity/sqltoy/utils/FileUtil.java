@@ -1041,7 +1041,8 @@ public class FileUtil {
 			return path;
 		}
 		try {
-			return URLDecoder.decode(path, StandardCharsets.UTF_8.name());
+			// update 2026-11-11 URL路径中的+是字面加号,不是表单编码空格;先保护+再解码%XX
+			return URLDecoder.decode(path.replace("+", "%2B"), StandardCharsets.UTF_8.name());
 		} catch (Exception e) {
 			return path;
 		}
@@ -1066,7 +1067,9 @@ public class FileUtil {
 		// 直接获取路径，不经过 URI，# 不会被截断！
 		String path = jarUrl.getPath();
 		// 先解码！顺序绝对不能错
-		path = URLDecoder.decode(path, StandardCharsets.UTF_8.name());
+		// update 2026-11-11 jar文件路径中的+是字面加号,URLDecoder默认把+当空格会导致a+b.jar→a b.jar;
+		// 先把+保护为%2B,只让%XX参与解码
+		path = URLDecoder.decode(path.replace("+", "%2B"), StandardCharsets.UTF_8.name());
 		// 去掉 file: 前缀
 		if (path.startsWith("file:")) {
 			path = path.substring(5);

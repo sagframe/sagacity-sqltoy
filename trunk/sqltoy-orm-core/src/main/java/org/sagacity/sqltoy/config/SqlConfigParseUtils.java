@@ -164,6 +164,17 @@ public class SqlConfigParseUtils {
 	// update set 语法
 	public final static Pattern UPDATE_SET_PATTERN = Pattern.compile("(?i)\\Wset\\s*$");
 
+	// update 2026-11-11 括号组内悬挂and/or清理(预编译复用,原每轮replaceAll隐式编译)
+	private final static Pattern DANGLING_CONNECTOR_LEFT = Pattern.compile("(?i)\\(\\s*(and|or)\\b");
+	private final static Pattern DANGLING_CONNECTOR_RIGHT = Pattern.compile("(?i)\\b(and|or)\\s*\\)");
+	// update 2026-11-11 大小写不敏感的起始匹配版本:WHERE_CLOSE_PATTERN需先toLowerCase整串再匹配,
+	// 多条件动态sql会对整个尾部反复做小写拷贝
+	private final static Pattern WHERE_CLOSE_START_PATTERN = Pattern
+			.compile("(?i)^((order|group)\\s+by|(inner|left|right|full)\\s+join|having|union|limit)\\W");
+	// 末尾窗口匹配长度:WHERE_END/WHERE_ONE_EQUAL/UPDATE_SET均为$锚定,无需扫描整段前缀;
+	// 取256以容纳换行、大段空白等格式化sql,避免窗口过小漏匹配
+	private final static int END_WINDOW = 256;
+
 	// sqlId 必须是字母数字和-和_符号组成的字符串
 	public final static Pattern SQL_ID_PATTERN = Pattern.compile("^[A-Za-z_0-9\\-]+$");
 
@@ -347,7 +358,7 @@ public class SqlConfigParseUtils {
 			boolean backslashEscape = isBackslashEscapeDialect(resolveDbType(dialect));
 			// 字面量内的?替换为占位符(参数位的?保留),规避字面量?干扰#[]/in(?)/null替换等阶段的参数对位
 			sql = escapeQuestionMarkInLiterals(sql, backslashEscape);
-			int paramCnt = StringUtil.matchCnt(sql, ARG_NAME_PATTERN, 0);
+			int paramCnt = countArgMarks(sql);
 			// 只有单个? 参数、传递的参数长度大于1、且是 in (?),则将参数转成长度为1的二维数组new Object[]{Object[]} 模式
 			if (paramCnt == 1 && paramsValue.length > 1 && StringUtil.matches(sql, IN_PATTERN)) {
 				paramsValue = new Object[] { paramsValue };
@@ -615,6 +626,96 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
+	 * 对^锚定模式做起始匹配:与find()等价(^只可能命中位置0),但避免对大字符串做全串扫描
+	 * 
+	 * @param text
+	 * @param startPattern 以^开头的模式
+	 * @return
+	 */
+	private static boolean matchesAtStart(String text, Pattern startPattern) {
+		if (StringUtil.isBlank(text)) {
+			return false;
+		}
+		return startPattern.matcher(text).lookingAt();
+	}
+
+	/**
+	 * 仅对字符串末尾窗口做$锚定正则匹配(WHERE_END/WHERE_1=1/UPDATE_SET等), 避免多条件动态sql每轮对整段前缀重复扫描
+	 * 
+	 * @param sql
+	 * @param endPattern 以$结尾的模式
+	 * @param lastChar   模式最后一个单词的末字符(如where→e、1=1→1、set→t),不匹配直接返回
+	 * @return 匹配起始下标(绝对位置),未匹配返回-1
+	 */
+	private static int matchIndexAtEnd(String sql, Pattern endPattern, char lastChar) {
+		if (sql == null || sql.isEmpty()) {
+			return -1;
+		}
+		int lastIndex = sql.length() - 1;
+		while (lastIndex >= 0 && isSqlSpace(sql.charAt(lastIndex))) {
+			lastIndex--;
+		}
+		// 末字符先做一次廉价判断,绝大多数sql可直接判否
+		if (lastIndex < 0 || Character.toLowerCase(sql.charAt(lastIndex)) != lastChar) {
+			return -1;
+		}
+		Matcher matcher = endPattern.matcher(sql);
+		int from = Math.max(0, lastIndex + 1 - END_WINDOW);
+		matcher.region(from, sql.length());
+		if (matcher.find()) {
+			return matcher.start();
+		}
+		// 窗口未命中且起点>0:可能是超长空白/换行跨出窗口,退回全串再找一次,
+		// 保证与"整串find"严格等价(仅在末字符命中提示时会走到这里,代价可控)
+		if (from > 0) {
+			matcher.region(0, sql.length());
+			return matcher.find() ? matcher.start() : -1;
+		}
+		return -1;
+	}
+
+	/**
+	 * 统计sql中"?"占位符个数(ARG_NAME_PATTERN即"\\?"):逐字符计数与正则计数结果完全等价,
+	 * 避免多条件动态sql对前缀反复执行正则扫描
+	 * 
+	 * @param sql
+	 * @return
+	 */
+	private static int countArgMarks(String sql) {
+		if (sql == null) {
+			return 0;
+		}
+		int count = 0;
+		for (int i = 0, len = sql.length(); i < len; i++) {
+			if (sql.charAt(i) == '?') {
+				count++;
+			}
+		}
+		return count;
+	}
+
+	/**
+	 * 统计sql指定区间[0,endIndex)内的"?"个数
+	 * 
+	 * @param sql
+	 * @param endIndex
+	 * @return
+	 */
+	private static int countArgMarks(String sql, int endIndex) {
+		if (sql == null || endIndex <= 0) {
+			return 0;
+		}
+		int count = 0;
+		int end = Math.min(endIndex, sql.length());
+		for (int i = 0; i < end; i++) {
+			if (sql.charAt(i) == '?') {
+				count++;
+			}
+		}
+		return count;
+	}
+
+	/**
 	 * 判断条件是否为null,过滤sql的组合查询条件 example:
 	 * <p>
 	 * select t1.* from xx_table t1 where #[t1.status=?] #[and t1.auditTime=?]
@@ -681,13 +782,13 @@ public class SqlConfigParseUtils {
 			}
 			tailSql = queryStr.substring(endMarkIndex + SQL_PSEUDO_END_MARK_LENGTH);
 			// 在#[前的参数个数
-			preParamCnt = StringUtil.matchCnt(preSql, ARG_NAME_PATTERN, 0);
+			preParamCnt = countArgMarks(preSql);
 			markContentSql = processIfLogic(markContentSql, SQL_PSEUDO_START_MARK, SQL_PSEUDO_END_MARK,
 					ARG_NAME_PATTERN, paramValuesList, preSql, preParamCnt, ifLogicCnt, 0, 0);
 			// 没有if逻辑,#[sqlPart] 中间的sqlPart中无参数,整体剔除，有参数则判断参数是否有为null的决定是否剔除sqlPart
 			if (ifLogicCnt == 0) {
 				isEndWithAndOr = StringUtil.matches(markContentSql, SqlToyConstants.AND_OR_END);
-				paramCnt = StringUtil.matchCnt(markContentSql, ARG_NAME_PATTERN, 0);
+				paramCnt = countArgMarks(markContentSql);
 				markContentSql = (paramCnt == 0) ? BLANK
 						: processMarkContent(markContentSql, ARG_NAME_PATTERN, paramValuesList, preParamCnt, paramCnt,
 								true);
@@ -696,7 +797,7 @@ public class SqlConfigParseUtils {
 				// #[sqlPart] 中sqlPart里面没有#[]
 				if (!isDynamicSql) {
 					isEndWithAndOr = StringUtil.matches(markContentSql, SqlToyConstants.AND_OR_END);
-					paramCnt = StringUtil.matchCnt(markContentSql, ARG_NAME_PATTERN, 0);
+					paramCnt = countArgMarks(markContentSql);
 					// 判断sqlPart中参数是否为null，决定是否剔除sqlPart
 					markContentSql = processMarkContent(markContentSql, ARG_NAME_PATTERN, paramValuesList, preParamCnt,
 							paramCnt, true);
@@ -705,7 +806,7 @@ public class SqlConfigParseUtils {
 					String clearSymMarkStr = StringUtil.clearSymMarkContent(markContentSql, SQL_PSEUDO_START_MARK,
 							SQL_PSEUDO_END_MARK);
 					// 剩余sql中的动态参数个数
-					int clearAfterArgCnt = StringUtil.matchCnt(clearSymMarkStr, ARG_NAME_PATTERN, 0);
+					int clearAfterArgCnt = countArgMarks(clearSymMarkStr);
 					// 动态参数大于0,类似 and status=:status #[xxx] 有:status参数，则变成#[and status=:status
 					// #[xxx]]继续利用sqltoy的判空剔除规则
 					if (clearAfterArgCnt > 0) {
@@ -739,13 +840,78 @@ public class SqlConfigParseUtils {
 		}
 		String result = sql;
 		while (true) {
-			String cleaned = result.replaceAll("(?i)\\(\\s*(and|or)\\b", "(").replaceAll("(?i)\\b(and|or)\\s*\\)", ")");
+			// update 2026-11-11 先探测再替换:绝大多数sql不含悬挂连接符。
+			// 用逐字符扫描替代正则探测,避免多条件动态sql每轮对整串执行大小写不敏感的正则搜索
+			if (!hasDanglingConnector(result)) {
+				break;
+			}
+			String cleaned = DANGLING_CONNECTOR_RIGHT.matcher(DANGLING_CONNECTOR_LEFT.matcher(result).replaceAll("("))
+					.replaceAll(")");
 			if (cleaned.equals(result)) {
 				break;
 			}
 			result = cleaned;
 		}
 		return result;
+	}
+
+	/**
+	 * 探测括号组内悬挂的and/or连接符(如"( and"、"or )"),语义等价于DANGLING_CONNECTOR_EXISTS正则
+	 * 
+	 * @param sql
+	 * @return
+	 */
+	private static boolean hasDanglingConnector(String sql) {
+		int len = sql.length();
+		for (int i = 0; i < len; i++) {
+			char c = sql.charAt(i);
+			if (c == '(') {
+				int begin = i + 1;
+				while (begin < len && isSqlSpace(sql.charAt(begin))) {
+					begin++;
+				}
+				if (matchWordAt(sql, begin, "and") || matchWordAt(sql, begin, "or")) {
+					return true;
+				}
+			} else if (c == ')') {
+				int end = i - 1;
+				while (end >= 0 && isSqlSpace(sql.charAt(end))) {
+					end--;
+				}
+				if (matchWordEndingAt(sql, end, "and") || matchWordEndingAt(sql, end, "or")) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	private static boolean matchWordAt(String sql, int index, String word) {
+		int end = index + word.length();
+		if (end > sql.length() || !sql.regionMatches(true, index, word, 0, word.length())) {
+			return false;
+		}
+		// 对应正则中的\b:单词后必须是边界
+		return end >= sql.length() || !isWordChar(sql.charAt(end));
+	}
+
+	private static boolean matchWordEndingAt(String sql, int endIndex, String word) {
+		int start = endIndex - word.length() + 1;
+		if (start < 0 || !sql.regionMatches(true, start, word, 0, word.length())) {
+			return false;
+		}
+		return start == 0 || !isWordChar(sql.charAt(start - 1));
+	}
+
+	// 与Java正则\s保持一致的空白判断
+	private static boolean isSqlSpace(char c) {
+		return c == ' ' || c == '\t' || c == '\n' || c == '\u000B' || c == '\f' || c == '\r';
+	}
+
+	// update 2026-11-11 与Java正则\b口径一致:Java的\b按Character.isLetterOrDigit(Unicode)判定词字符
+	// (与\w的ASCII口径不同),故CJK/重音字母均视为词内字符,等价性由SqlConfigParseUtilsEquivalenceTest锁定
+	private static boolean isWordChar(char c) {
+		return Character.isLetterOrDigit(c) || c == '_';
 	}
 
 	/**
@@ -872,7 +1038,7 @@ public class SqlConfigParseUtils {
 				paramValueList = CollectionUtil.arrayToList(sqlToyResult.getParamsValue());
 			}
 			index = m.start();
-			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), ARG_NAME_PATTERN, 0);
+			paramCnt = countArgMarks(queryStr, index);
 			// 剔除参数@blank(?) 对应的参数值
 			paramValueList.remove(paramCnt - blankCnt);
 			blankCnt++;
@@ -925,7 +1091,7 @@ public class SqlConfigParseUtils {
 					splitRegex = splitRegex.substring(1, splitRegex.length() - 1);
 				}
 			}
-			paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), ARG_NAME_PATTERN, 0);
+			paramCnt = countArgMarks(queryStr, index);
 			paramValue = paramValueList.get(paramCnt);
 			// 切割成数组重新放入参数集合中
 			if (paramValue != null && paramValue instanceof String) {
@@ -1005,7 +1171,7 @@ public class SqlConfigParseUtils {
 			index = m.start();
 			// @value(?)
 			if (m.group().contains(ARG_NAME)) {
-				paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), ARG_NAME_PATTERN, 0);
+				paramCnt = countArgMarks(queryStr, index);
 				// 用参数的值直接覆盖@value(:name)
 				paramValue = paramValueList.get(paramCnt - atValueCnt);
 				// update 2024-03-03 强化对数组、枚举、日期等类型的输出
@@ -1096,7 +1262,7 @@ public class SqlConfigParseUtils {
 			boolean consumeParam = ARG_NAME.equals(firstArg);
 			if (consumeParam) {
 				// 位置参数形态:按宏之前出现的 ? 个数定位,减去已消费的宏数
-				paramCnt = StringUtil.matchCnt(queryStr.substring(0, index), ARG_NAME_PATTERN, 0);
+				paramCnt = countArgMarks(queryStr, index);
 				if (paramCnt - atJoinFieldsCnt >= paramValueList.size()) {
 					throw new IllegalArgumentException(
 							"@joinFields can not find the parameter at index:" + (paramCnt - atJoinFieldsCnt)
@@ -1391,7 +1557,7 @@ public class SqlConfigParseUtils {
 		boolean supportEscapeClause = dbType != DBType.CLICKHOUSE && dbType != DBType.IMPALA
 				&& dbType != DBType.TDENGINE && dbType != DBType.STARROCKS && dbType != DBType.DORIS;
 		while (m.find()) {
-			paramCnt = StringUtil.matchCnt(maskedSql.substring(0, m.start()), ARG_NAME_PATTERN, 0);
+			paramCnt = countArgMarks(maskedSql, m.start());
 			likeValStr = (sqlToyResult.getParamsValue()[paramCnt] == null) ? null
 					: sqlToyResult.getParamsValue()[paramCnt].toString();
 			if (null == likeValStr) {
@@ -1754,7 +1920,7 @@ public class SqlConfigParseUtils {
 			String tailSql) {
 		String subStr = markContentSql.concat(tailSql);
 		String tmp = subStr.trim();
-		int index = StringUtil.matchIndex(preSql, WHERE_END_PATTERN);
+		int index = matchIndexAtEnd(preSql, WHERE_END_PATTERN, 'e');
 		// 前部分sql以where 结尾，后部分sql以and 或 or 开头的拼接,剔除or 和and
 		if (index >= 0) {
 			// where 后面拼接的条件语句是空白,剔除where
@@ -1762,9 +1928,9 @@ public class SqlConfigParseUtils {
 				return preSql.substring(0, index + 1).concat(" ");
 			}
 			// and 概率更高优先判断，剔除and 或 or
-			if (StringUtil.matches(tmp, AND_START_PATTERN)) {
+			if (matchesAtStart(tmp, AND_START_PATTERN)) {
 				return preSql.concat(" ").concat(subStr.trim().substring(3)).concat(" ");
-			} else if (StringUtil.matches(tmp, OR_START_PATTERN)) {
+			} else if (matchesAtStart(tmp, OR_START_PATTERN)) {
 				return preSql.concat(" ").concat(subStr.trim().substring(2)).concat(" ");
 			} else if ("".equals(markContentSql.trim())) {
 				String tailTrim = tailSql.trim();
@@ -1773,7 +1939,7 @@ public class SqlConfigParseUtils {
 				if (tailTrim.startsWith(")")) {
 					return preSql.substring(0, index + 1).concat(" ").concat(tailSql).concat(" ");
 				} // where 后面跟order by、group by、left join、right join、full join、having、union、limit
-				else if (StringUtil.matches(tailTrim.toLowerCase(Locale.ROOT), WHERE_CLOSE_PATTERN)) {
+				else if (matchesAtStart(tailTrim, WHERE_CLOSE_START_PATTERN)) {
 					// 删除掉where
 					return preSql.substring(0, index + 1).concat(" ").concat(tailSql).concat(" ");
 				} // where 后面非关键词增加1=1
@@ -1789,21 +1955,21 @@ public class SqlConfigParseUtils {
 			}
 		}
 		// update 2017-12-4 where 1=1 结尾
-		index = StringUtil.matchIndex(preSql, WHERE_ONE_EQUAL_PATTERN);
+		index = matchIndexAtEnd(preSql, WHERE_ONE_EQUAL_PATTERN, '1');
 		if (index >= 0) {
 			// 剔除1=1 进行sql拼接
-			if (StringUtil.matches(tmp, AND_START_PATTERN)) {
+			if (matchesAtStart(tmp, AND_START_PATTERN)) {
 				// index+1 因为正则表达式是\\Wwhere,保留where前的非字母字
 				return preSql.substring(0, index + 1).concat(" where ").concat(subStr.trim().substring(3)).concat(" ");
-			} else if (StringUtil.matches(tmp, OR_START_PATTERN)) {
+			} else if (matchesAtStart(tmp, OR_START_PATTERN)) {
 				return preSql.substring(0, index + 1).concat(" where ").concat(subStr.trim().substring(2)).concat(" ");
 			} else if (tmp.startsWith(")")) {
 				return preSql.substring(0, index + 1).concat(subStr).concat(" ");
-			} else if (StringUtil.matches(tmp.toLowerCase(Locale.ROOT), WHERE_CLOSE_PATTERN)) {
+			} else if (matchesAtStart(tmp, WHERE_CLOSE_START_PATTERN)) {
 				return preSql.substring(0, index + 1).concat(subStr).concat(" ");
 			} else if (!"".equals(markContentSql.trim())) {
 				// @blank开头，保持1=1
-				if (StringUtil.matches(tmp, BLANK_START_PATTERN)) {
+				if (matchesAtStart(tmp, BLANK_START_PATTERN)) {
 					return preSql.concat(" ").concat(subStr).concat(" ");
 				} else {
 					return preSql.substring(0, index + 1).concat(" where ").concat(subStr).concat(" ");
@@ -1812,7 +1978,7 @@ public class SqlConfigParseUtils {
 		}
 		// update 语句 set 后面连接逗号"," 情况下去除逗号
 		// modify 2019-7-16
-		if (StringUtil.matches(preSql, UPDATE_SET_PATTERN) && tmp.startsWith(",")) {
+		if (matchIndexAtEnd(preSql, UPDATE_SET_PATTERN, 't') >= 0 && tmp.startsWith(",")) {
 			return preSql.concat(" ").concat(subStr.trim().substring(1)).concat(" ");
 		}
 		return preSql.concat(" ").concat(subStr);

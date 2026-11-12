@@ -50,8 +50,13 @@ public class OracleRealDbSmokeTest {
 		try (InputStream in = new FileInputStream(cfg)) {
 			p.load(in);
 		}
-		Class.forName("oracle.jdbc.driver.OracleDriver");
-		conn = DriverManager.getConnection(p.getProperty("url"), p.getProperty("username"), p.getProperty("password"));
+		try {
+			Class.forName("oracle.jdbc.driver.OracleDriver");
+			conn = DriverManager.getConnection(p.getProperty("url"), p.getProperty("username"), p.getProperty("password"));
+		} catch (Exception e) {
+			// 探针在但库不可达(容器已停)时整类跳过,与兄弟真库用例一致,兑现"连接失败自动跳过"承诺
+			org.junit.jupiter.api.Assumptions.abort("oracle not reachable, skipped: " + e.getMessage());
+		}
 		try (Statement st = conn.createStatement()) {
 			dropProbeTables(st);
 			st.execute("create table sqltoy_probe_t1 (id number(10) primary key, name varchar2(100), "
@@ -121,6 +126,41 @@ public class OracleRealDbSmokeTest {
 				dropProbeTables(st);
 			}
 			conn.close();
+		}
+	}
+
+	/**
+	 * update 2026-11-11 Oracle放开epoch族(会话时区偏移补偿)后的往返一致性:
+	 * from_unixtime(unix_timestamp(x)) 应回到 x(秒级)。在库内用 DATE 差值比较,
+	 * 避免"无时区DATE ↔ JVM绝对时刻"的时区错配;对称性正确则差值恒为0,与服务器/会话时区无关
+	 */
+	@Test
+	public void epochRoundTripCompensated() throws Exception {
+		org.junit.jupiter.api.Assumptions.assumeTrue(available, "oracle探针环境不可用,跳过");
+		String sql = convert("select abs((cast(sysdate as date) - cast(from_unixtime(unix_timestamp(cast(sysdate as date))) as date)) * 86400) from dual",
+				"oracle");
+		assertEquals(0.0, ((Number) querySingle(sql)).doubleValue(), 1.0, "epoch往返应回到原值(秒级): " + sql);
+	}
+
+	@Test
+	public void epochNoArgAndHistoricalDst() throws Exception {
+		org.junit.jupiter.api.Assumptions.assumeTrue(available, "oracle探针环境不可用,跳过");
+		long actualNow = ((Number) querySingle(convert("select unix_timestamp() from dual", "oracle"))).longValue();
+		assertEquals(java.time.Instant.now().getEpochSecond(), actualNow, 2.0);
+
+		String previousZone = querySingle("select sessiontimezone from dual").toString();
+		try (Statement st = conn.createStatement()) {
+			st.execute("alter session set time_zone = 'America/New_York'");
+			String summer = "to_date('2026-07-01 12:00:00','YYYY-MM-DD HH24:MI:SS')";
+			assertEquals(1782921600L,
+					((Number) querySingle(convert("select unix_timestamp(" + summer + ") from dual", "oracle")))
+							.longValue());
+			assertEquals("2026-07-01 12:00:00",
+					queryDateStr(convert("select from_unixtime(1782921600) from dual", "oracle")));
+		} finally {
+			try (Statement st = conn.createStatement()) {
+				st.execute("alter session set time_zone = '" + previousZone.replace("'", "''") + "'");
+			}
 		}
 	}
 

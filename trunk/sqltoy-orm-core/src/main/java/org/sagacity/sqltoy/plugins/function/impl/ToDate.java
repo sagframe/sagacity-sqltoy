@@ -19,8 +19,10 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  */
 public class ToDate extends IFunction {
 	// update 2026-10-11
-	// 补str_to_date源拼写(mysql用户写法):mysql系原生透传,其余库将%token反转为oracle风格格式模型后按to_date两参路径转换
-	private static Pattern regex = Pattern.compile("(?i)\\W(to_date|str_to_date)\\(");
+	// 补str_to_date源拼写(mysql用户写法):mysql系原生透传,其余库将%token反转为oracle风格格式模型后按to_date两参路径转换;
+	// update 2026-11-10 补to_timestamp双参源(PG/Oracle的字符串解析习惯,序同to_date):单参为epoch语义
+	// 归FromUnixTime承接(此处对单参IGNORE让位,注册序在前其IGNORE后FromUnixTime接力)
+	private static Pattern regex = Pattern.compile("(?i)\\W(to_date|str_to_date|to_timestamp)\\(");
 
 	/*
 	 * (non-Javadoc)
@@ -48,6 +50,17 @@ public class ToDate extends IFunction {
 			return super.IGNORE;
 		}
 		String funLow = functionName.toLowerCase(java.util.Locale.ROOT);
+		// update 2026-11-10 to_timestamp单参为epoch语义(PG习惯),让位FromUnixTime接力转换
+		if ("to_timestamp".equals(funLow) && args.length < 2) {
+			return super.IGNORE;
+		}
+		// update 2026-11-10 to_timestamp双参在oracle/db2是原生且更强:返回TIMESTAMP类型(而非DATE)、
+		// 支持FF小数秒模型(真库实测db2:to_timestamp('..','YYYY-MM-DD HH24:MI:SS.FF3')保留.123)。
+		// 转to_date会静默丢类型/精度,FF模型更会直接报格式错(ORA-01821),故原生库一律透传
+		if ("to_timestamp".equals(funLow)
+				&& (dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DB2)) {
+			return super.IGNORE;
+		}
 		// java风格HH:mm归一为Oracle的hh24:mi,后续按Oracle模型映射,避免mm(月)被当分钟
 		if (args.length > 1) {
 			args[1] = FunctionUtils.normalizeJavaTimePattern(args[1]);
@@ -129,10 +142,14 @@ public class ToDate extends IFunction {
 			// 补oracle风格令牌映射:入参'hh24:mi:ss'的hh24/mi为oracle模型,h2 PARSEDATETIME用java令牌
 			// (HH=24小时,mm=分钟),原样透传真库实测报Error parsing;口径:裸HH保持H2的java HH(24小时),
 			// 小写hh为12小时;24小时token先占位、最后还原,MI/mi归一到java分钟mm
+			// update 2026-11-10 补大写日期token归一:oracle的YYYY/DD在java模型为yyyy/dd
+			// (真库实测to_timestamp('2026-11-10','YYYY-MM-DD')报Error parsing)
 			String fmt = args[1].replace("HH24", "@H24@").replace("hh24", "@H24@");
+			fmt = fmt.replace("YYYY", "@Y4@").replace("DD", "@D2@");
 			fmt = fmt.replace("mm", "MM");
 			fmt = fmt.replace("MI", "@M1@").replace("mi", "@M1@");
 			fmt = fmt.replace("@H24@", "HH").replace("@M1@", "mm").replace("SS", "ss");
+			fmt = fmt.replace("@Y4@", "yyyy").replace("@D2@", "dd");
 			return "parsedatetime(" + args[0] + "," + fmt + ")";
 		}
 		// update 2026-9-14 补KINGBASE(KingbaseES基于PG,函数语法归PG系)
@@ -142,6 +159,10 @@ public class ToDate extends IFunction {
 				|| dialect == DBType.HIGHGO) {
 			// pg系2参to_date(text,text)原生支持,原样保留;1参转CAST AS date
 			// (str_to_date源换名to_date,pg无str_to_date)
+			// update 2026-11-10 to_timestamp双参源为pg原生,直接透传(避免换名to_date丢失timestamp类型)
+			if ("to_timestamp".equals(funLow)) {
+				return super.IGNORE;
+			}
 			if (args.length > 1) {
 				// update 2026-10-20
 				// pg的to_date只返回date,时间部分被静默截断;格式含时间token时改to_timestamp(真库实测14:30:45可保留)

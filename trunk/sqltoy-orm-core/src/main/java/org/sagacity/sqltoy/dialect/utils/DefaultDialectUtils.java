@@ -31,9 +31,9 @@ import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.GeneratedType;
 import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
+import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
-import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.DBProfile;
@@ -41,6 +41,7 @@ import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
+import org.sagacity.sqltoy.model.ResultColumnMeta;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.plugins.IUnifyFieldsHandler;
 import org.sagacity.sqltoy.plugins.TypeHandler;
@@ -151,7 +152,27 @@ public class DefaultDialectUtils {
 			useDefault = false;
 		}
 		StringBuilder sql = DialectUtils.openFastWrap(sqlToyConfig, dialect);
-		sql.append(innerSql);
+		// update 2026-11-10 集合语句先包派生表再limit/offset:CH的limit/offset在集合运算尾部绑定右侧SELECT
+		// (分页页行数与偏移整体失效);Impala同族行为——官方UNION文档明确"要让ORDER BY/LIMIT作用于整个结果集,
+		// 须把UNION整条包成子查询再在外层排序/限制",即裸挂LIMIT只作用于最后一个SELECT。
+		// update 2026-11-12 Impala的WITH不支持出现在子查询块内(必须位于最外层语句开头),包裹前先剥离置前,
+		// 与SqlServer分支口径一致;CH对子查询内CTE与外层WITH均合法(26.8真库实测),统一上提无副作用
+		// 其余库(DB2/Hana/PG/MySQL/SQLite等标准语义)保持原形态,避免多包一层派生表改变执行计划;
+		// 别名复用SqlToyConstants.INTERMEDIATE_TABLE与其他包裹路径统一
+		if ((dbType == DBType.CLICKHOUSE || dbType == DBType.IMPALA) && SqlUtil.hasSetOperation(innerSql, true)) {
+			if (sqlToyConfig.isHasWith()) {
+				SqlWithAnalysis sqlWith = new SqlWithAnalysis(innerSql);
+				String withSql = sqlWith.getWithSql();
+				// 防御:hasWith标记与传入innerSql不一致时getWithSql可能为空,不能append(null)产出"null"文本
+				if (StringUtil.isNotBlank(withSql)) {
+					sql.append(withSql);
+				}
+				innerSql = sqlWith.getRejectWithSql();
+			}
+			sql.append("select * from (").append(innerSql).append(") ").append(SqlToyConstants.INTERMEDIATE_TABLE);
+		} else {
+			sql.append(innerSql);
+		}
 		sql.append(" limit ");
 		sql.append(isNamed ? ":" + SqlToyConstants.PAGE_FIRST_PARAM_NAME : "?");
 		sql.append(useDefault ? " offset " : " , ");
@@ -190,10 +211,30 @@ public class DefaultDialectUtils {
 	public static QueryResult findTopBySql(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig,
 			QueryExecutor queryExecutor, final DecryptHandler decryptHandler, Integer topSize, Connection conn,
 			DBProfile profile, final int fetchSize, final int maxRows) throws Exception {
+		Integer dbType = profile.getDbType();
 		String dialect = profile.getDialect();
 		String innerSql = DialectUtils.markInnerSql(sqlToyConfig, dialect);
 		StringBuilder sql = DialectUtils.openFastWrap(sqlToyConfig, dialect);
-		sql.append(innerSql);
+		// update 2026-11-10 集合语句先包派生表再limit:CH的limit在集合运算尾部绑定右侧SELECT
+		// (A except B limit N的N修饰B,整体不截断,真库实测top2返回全量);Impala同族行为(官方UNION文档:
+		// 要让ORDER BY/LIMIT作用于整体须把UNION包成子查询)。
+		// update 2026-11-12 WITH先剥离置前再包裹:Impala不支持子查询块内CTE(同findPageBySql,SqlServer同口径)
+		// 其余库保持原形态(标准语义,无需多包一层)。
+		// 别名复用SqlToyConstants.INTERMEDIATE_TABLE
+		if ((dbType == DBType.CLICKHOUSE || dbType == DBType.IMPALA) && SqlUtil.hasSetOperation(innerSql, true)) {
+			if (sqlToyConfig.isHasWith()) {
+				SqlWithAnalysis sqlWith = new SqlWithAnalysis(innerSql);
+				String withSql = sqlWith.getWithSql();
+				// 防御:hasWith标记与传入innerSql不一致时getWithSql可能为空,不能append(null)产出"null"文本
+				if (StringUtil.isNotBlank(withSql)) {
+					sql.append(withSql);
+				}
+				innerSql = sqlWith.getRejectWithSql();
+			}
+			sql.append("select * from (").append(innerSql).append(") ").append(SqlToyConstants.INTERMEDIATE_TABLE);
+		} else {
+			sql.append(innerSql);
+		}
 		sql.append(" limit ");
 		sql.append(topSize);
 		DialectUtils.closeFastWrap(sqlToyConfig, dialect, sql);
@@ -440,6 +481,17 @@ public class DefaultDialectUtils {
 							// oracle的vector/json列getObject直接报ORA-17004,TEXT_READ预分类改走getString)
 							String[] usfTypeNames = ResultUtils.readColumnTypeNames(finalRs, rowCnt);
 							int[] usfKinds = ResultUtils.buildColumnKinds(dbType, usfTypeNames);
+							// update 2026-11-12 列元数据一次构建直传processResultRow新签名(与linkCols预计算
+							// 口径一致):原走废弃桥接签名每次回读逐列重建ResultColumnMeta,自此废弃签名无
+							// 框架内部调用方仅保留对外兼容;USF回读不带列标签(label为null),不参与
+							// 按列名的翻译/解密定位
+							ResultColumnMeta[] usfCols = new ResultColumnMeta[rowCnt];
+							for (int i = 0; i < rowCnt; i++) {
+								String tn = usfTypeNames[i];
+								usfCols[i] = new ResultColumnMeta(null, null, i + 1, tn, tn,
+										ResultColumnMeta.ReadStrategy.of(usfKinds[i]),
+										ResultColumnMeta.ExtType.of(tn), 0, null);
+							}
 							int index = 0;
 							List result = new ArrayList();
 							DataVersionConfig dataVersion = entityMeta.getDataVersion();
@@ -567,8 +619,12 @@ public class DefaultDialectUtils {
 								// update 2026-9-14 oracle系(ojdbc)/DM真库实测:autocommit=false时updateRow后
 								// 当前行缓存不反映本次修改(标签/序号update均陈旧,refreshRow/滚动集亦无效),
 								// 直接回读当前行得到旧值致返回实体失真;以独立语句重查回读(行锁已由本事务
-								// 持有,同事务可见自身修改);其余库驱动updateRow后当前行即新值,维持原形态;
-								// g8的updateRow经代理转独立UPDATE,当前行同样陈旧,纳入本重查回读
+								// 持有,同事务可见自身修改);其余库驱动updateRow后当前行即新值,维持原形态
+								// update 2026-11-9 真库复测(26ai Free 23.26.3.0.0 与 21c XE 21.3.0.0.0 表现一致;
+								// ojdbc11 23.26.4 / ojdbc8 19.33 / ojdbc8 19.3 三档驱动一致):
+								// 若回调只改普通列、不碰库里会被触发器/默认值改写的列,updateRow后立即回读即新值;
+								// 但只要把这些列的实体旧值一并updateXxx回写(本方法逐列resultUpdate的真实形态),回读仍是旧值,
+								// 而独立select证实库内已是新值,refreshRow亦无效(实测0/100修复)——26ai未改变该驱动行为,本重查不可省
 								ResultSet readRs = finalRs;
 								PreparedStatement reReadPst = null;
 								if (hasUpdateRow && (dbType == DBType.ORACLE || dbType == DBType.ORACLE11
@@ -581,11 +637,11 @@ public class DefaultDialectUtils {
 									readRs = rrs;
 								}
 								try {
-									// 重新获得修改后的值(列类型名与读取策略已在循环前查询级预计算,重查
+									// 重新获得修改后的值(列元数据已在循环前查询级一次构建,重查
 									// select列清单与锁查询完全一致,类型名/序号一一对应)
 									result.add(ResultUtils.processResultRow(dbType, typeHandler, dynamicCacheFetch,
-											dynamicCacheHolder, readRs, null, null, rowCnt, null, null, false,
-											usfTypeNames, usfKinds, 0));
+											dynamicCacheHolder, readRs, null, rowCnt, null, null, false,
+											usfCols, 0));
 								} finally {
 									if (reReadPst != null) {
 										// close语句连带关闭其结果集

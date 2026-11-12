@@ -11,6 +11,8 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Properties;
 
 import org.junit.jupiter.api.AfterAll;
@@ -22,8 +24,8 @@ import org.sagacity.sqltoy.plugins.function.FunctionUtils;
  * HANA真实库冒烟:验证hana目标函数映射在真实hana(HXE 2.0 SPS08)上的语法与语义。
  * 重点覆盖近期改动:now/sysdate/getdate/systimestamp→CURRENT_TIMESTAMP、
  * strpos→locate(与instr同序,haystack在前)、nvl2/isnull单参判空、concat_ws转||逐段跳null、
- * group_concat→string_agg。连接配置从target/hana-probe.properties读取(不入库);
- * 探针表sqltoy_probe_t1测完即删。
+ * group_concat→string_agg、unix_timestamp/from_unixtime当前固定偏移口径及往返。
+ * 连接配置从target/hana-probe.properties读取(不入库);探针表sqltoy_probe_t1测完即删。
  */
 public class HanaRealDbSmokeTest {
 
@@ -35,14 +37,21 @@ public class HanaRealDbSmokeTest {
 	public static void init() throws Exception {
 		File cfg = new File("target/hana-probe.properties");
 		if (!cfg.exists()) {
-			return;
+			// update 2026-11-10 未配置探针即整类跳过:原return后各用例在conn为null上NPE,本机mvn test必红
+			org.junit.jupiter.api.Assumptions.abort("hana probe not configured, skipped: " + cfg.getPath());
 		}
 		Properties p = new Properties();
 		try (InputStream in = new FileInputStream(cfg)) {
 			p.load(in);
 		}
 		Class.forName("com.sap.db.jdbc.Driver");
-		conn = DriverManager.getConnection(p.getProperty("url"), p.getProperty("username"), p.getProperty("password"));
+		try {
+			conn = DriverManager.getConnection(p.getProperty("url"), p.getProperty("username"),
+					p.getProperty("password"));
+		} catch (Exception e) {
+			// update 2026-11-10 探针已配置但库不可达(容器未启动/端口未映射)时整类跳过,与"未配置profile则跳过"语义一致
+			org.junit.jupiter.api.Assumptions.abort("hana not reachable, skipped: " + e.getMessage());
+		}
 		try (Statement st = conn.createStatement()) {
 			// 首次运行表不存在时忽略报错(hana旧版本不支持DROP TABLE IF EXISTS)
 			try {
@@ -172,5 +181,32 @@ public class HanaRealDbSmokeTest {
 		// 非负起点substr为hana原生(SUBSTRING别名),保持透传
 		assertEquals("adm", querySingle(convert("select substr(name,1,3) from sqltoy_probe_t1 where id=1", "hana"))
 				.toString(), "非负起点substr应原生透传");
+	}
+
+	/**
+	 * update 2026-11-11 epoch族按数据库实际当前偏移验证,不假设服务器为+08。
+	 * 该用例只锁定固定偏移口径及双向往返,不把当前偏移公式当作历史DST支持。
+	 */
+	@Test
+	public void epochConversionsUseCurrentOffset() throws Exception {
+		long offsetSeconds = ((Number) querySingle(
+				"select seconds_between(current_utctimestamp,current_timestamp) from dummy")).longValue();
+		long utcWallClock = LocalDateTime.of(2026, 1, 15, 10, 30, 0).toEpochSecond(ZoneOffset.UTC);
+		long expectedEpoch = utcWallClock - offsetSeconds;
+		assertEquals(expectedEpoch, ((Number) querySingle(convert(
+				"select unix_timestamp(timestamp '2026-01-15 10:30:00') from dummy", "hana"))).longValue(),
+				"unix_timestamp应按HANA实际当前偏移把本地墙钟转为绝对epoch");
+		assertEquals("2026-01-15 10:30:00", querySingle(convert(
+				"select to_char(from_unixtime(" + expectedEpoch + "),'yyyy-mm-dd hh24:mi:ss') from dummy", "hana"))
+				.toString(), "from_unixtime应按同一当前偏移呈现本地墙钟");
+		assertEquals(expectedEpoch, ((Number) querySingle(convert(
+				"select unix_timestamp(from_unixtime(" + expectedEpoch + ")) from dummy", "hana"))).longValue(),
+				"HANA epoch双向转换应保持绝对时刻不变");
+		long databaseNow = ((Number) querySingle(
+				"select seconds_between('1970-01-01 00:00:00',current_utctimestamp) from dummy")).longValue();
+		long actualNow = ((Number) querySingle(convert("select unix_timestamp() from dummy", "hana"))).longValue();
+		long nowDiff = Math.abs(actualNow - databaseNow);
+		org.junit.jupiter.api.Assertions.assertTrue(nowDiff <= 5,
+				"无参unix_timestamp应返回数据库当前绝对epoch,实际差秒=" + nowDiff);
 	}
 }

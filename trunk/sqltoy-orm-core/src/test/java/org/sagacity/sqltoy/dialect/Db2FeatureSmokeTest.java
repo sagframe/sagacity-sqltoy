@@ -51,7 +51,13 @@ public class Db2FeatureSmokeTest {
 			p.load(in);
 		}
 		Class.forName("com.ibm.db2.jcc.DB2Driver");
-		conn = DriverManager.getConnection(p.getProperty("url"), p.getProperty("username"), p.getProperty("password"));
+		try {
+			conn = DriverManager.getConnection(p.getProperty("url"), p.getProperty("username"),
+					p.getProperty("password"));
+		} catch (Exception e) {
+			// update 2026-11-10 探针在但库不可达(容器已停)时整类跳过
+			org.junit.jupiter.api.Assumptions.abort("db2 not reachable, skipped: " + e.getMessage());
+		}
 		try (Statement st = conn.createStatement()) {
 			tryDrop(st, "drop table sqltoy_probe_t1");
 			tryDrop(st, "drop table sqltoy_probe_tree");

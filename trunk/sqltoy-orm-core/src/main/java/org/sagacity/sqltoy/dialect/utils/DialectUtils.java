@@ -110,6 +110,18 @@ public class DialectUtils {
 	// union 匹配模式
 	public static final Pattern UNION_PATTERN = Pattern.compile("(?i)\\W+union\\W+");
 
+	/**
+	 * 集合操作匹配模式:update 2026-11-10 count改写器此前的union守卫不识别minus/except/intersect,
+	 * 裸集合查询走fast-path后count(1)被塞进第一个分支参与集合运算,分页记录数静默失真
+	 * (h2真库复现:except实际3行、count读出0);命中即改走包裹路径
+	 * update 2026-11-12 与SqlUtil.SET_OPERATION_PATTERN口径对齐:排除函数调用形态
+	 * (minus(a,b)是ClickHouse算术函数,关键字后紧跟"("且括号内非select时不命中),
+	 * 否则count改写/top/random链路误包派生表(旧版CH子查询重复列名报Duplicate column name);
+	 * except(select ...)等集合运算紧贴括号写法仍命中
+	 */
+	public static final Pattern SET_OPERATION_PATTERN = Pattern
+			.compile("(?i)\\W+(minus|except|intersect)(?!\\s*\\((?!\\s*select))(\\W+|$)");
+
 	public static final Pattern ORDER_BY_PATTERN = Pattern.compile("(?i)\\Worder\\s+by\\W");
 
 	public static final Pattern GROUP_BY_PATTERN = Pattern.compile("(?i)\\Wgroup\\s+by\\W");
@@ -521,7 +533,8 @@ public class DialectUtils {
 					query_tmp = query_tmp.substring(0, orderByIndex + 1);
 				} else {
 					// 剔除掉order by 后面语句对称的() 内容
-					String orderJudgeSql = clearDisturbSql(maskedSql.substring(orderByIndex + 1));
+					// 入参片段来自maskedSql截取,传preMasked=true跳过重复全量掩码
+					String orderJudgeSql = clearDisturbSql(maskedSql.substring(orderByIndex + 1), true);
 					// 在order by 不在子查询内,说明可以整体切除掉order by
 					if (orderJudgeSql.indexOf(")") == -1) {
 						orderBySql = query_tmp.substring(orderByIndex + 1);
@@ -538,7 +551,11 @@ public class DialectUtils {
 			// 外层group by 必须要进行包裹(update by chenrenfei 2016-4-21)
 			boolean isInnerGroup = false;
 			if (groupIndex != -1) {
-				isInnerGroup = clearDisturbSql(maskedSql.substring(groupIndex + 1)).lastIndexOf(")") != -1;
+				// update 2026-11-10 改为括号深度扫描:group by之后的片段存在无对应'('的孤立')'
+				// 才说明group by位于外层括号内(真内层分组)。原clearDisturbSql先删首个select..from对称段,
+				// having子查询的开括号随之消失而留下孤立')',顶层group by被误判为内层,count改写
+				// 保留group by/having后每组一行、只读第一行,记录数失真(h2真库复现)
+				isInnerGroup = hasUnmatchedCloseParen(maskedSql.substring(groupIndex + 1));
 			}
 			final StringBuilder countQueryStr = new StringBuilder();
 			// update 2024-2-1 是否包含union,每次都判断,避免极端情况
@@ -546,6 +563,7 @@ public class DialectUtils {
 			// 不包含distinct和group by 等,则剔除[select * ] from 变成select count(1) from
 			// 性能最优
 			if (!StringUtil.matches(maskedSql.trim(), DISTINCT_PATTERN) && !hasUnion
+					&& !StringUtil.matches(maskedSql, SET_OPERATION_PATTERN)
 					&& (groupIndex == -1 || (groupIndex < lastBracketIndex && isInnerGroup))) {
 				int selectIndex = StringUtil.matchIndex(maskedSql.toLowerCase(Locale.ROOT), SELECT_REGEX);
 				// 截取出select 和from之间的语句(取掩码串,规避字面量内的count/sum等统计词误判)
@@ -3693,12 +3711,39 @@ public class DialectUtils {
 
 	/**
 	 * @param sql
-	 * @return 判断是否有order by 和union 逻辑语句
+	 * @return 判断是否含order by
+	 *         或集合运算(union/except/intersect/minus)语句:方言的top/random派生表包裹判定
+	 *         依赖此方法——集合语句上追加随机表达式排序(rand()/random()/dbms_random)在DB2/Oracle/PG/SQLServer
+	 *         均非法(SQLCODE=-214/ORA-01785/只允许结果列名/Msg 104),必须先包派生表
 	 */
 	public static boolean hasOrderByOrUnion(String sql) {
 		String unDisturbSql = clearDisturbSql(sql);
-		if (StringUtil.matches(unDisturbSql, UNION_PATTERN) || StringUtil.matches(unDisturbSql, ORDER_BY_PATTERN)) {
+		// update 2026-11-10 补集合运算判定:原仅union,导致except/intersect/minus的随机查询不包裹派生表,
+		// 真库实测DB2(-214/42822)、Oracle(ORA-01785)、PG(invalid UNION/INTERSECT/EXCEPT ORDER
+		// BY clause)均报错
+		if (StringUtil.matches(unDisturbSql, UNION_PATTERN) || StringUtil.matches(unDisturbSql, SET_OPERATION_PATTERN)
+				|| StringUtil.matches(unDisturbSql, ORDER_BY_PATTERN)) {
 			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * @param maskedFragment 字面量已掩码的sql片段
+	 * @return 片段中是否存在无对应'('的孤立')'(存在即说明该片段整体位于某个外层括号之内)
+	 */
+	private static boolean hasUnmatchedCloseParen(String maskedFragment) {
+		int depth = 0;
+		for (int i = 0, n = maskedFragment.length(); i < n; i++) {
+			char ch = maskedFragment.charAt(i);
+			if (ch == '(') {
+				depth++;
+			} else if (ch == ')') {
+				depth--;
+				if (depth < 0) {
+					return true;
+				}
+			}
 		}
 		return false;
 	}
@@ -3709,8 +3754,17 @@ public class DialectUtils {
 	 *         字面量内容不参与判定:先将'...'字面量内部掩为等长空白,规避字面量内的'('、')'干扰括号剔除
 	 */
 	public static String clearDisturbSql(String sql) {
+		return clearDisturbSql(sql, false);
+	}
+
+	/**
+	 * @param preMasked update 2026-11-10
+	 *                  true时入参已经过maskLiterals掩码(getCountBySql在maskedSql上
+	 *                  截取的片段),跳过重复的全量掩码拷贝
+	 */
+	public static String clearDisturbSql(String sql, boolean preMasked) {
 		// 字面量内容掩为等长空白,掩码串与原串等长,位置偏移不受影响
-		String maskedSql = SqlConfigParseUtils.maskLiterals(sql, false);
+		String maskedSql = preMasked ? sql : SqlConfigParseUtils.maskLiterals(sql, false);
 		StringBuilder lastSql = new StringBuilder(maskedSql);
 		// 找到第一个select 所对称的from位置，排除掉子查询中的内容
 		int fromIndex = StringUtil.getSymMarkMatchIndex(SELECT_REGEX, FROM_REGEX, maskedSql.toLowerCase(Locale.ROOT),

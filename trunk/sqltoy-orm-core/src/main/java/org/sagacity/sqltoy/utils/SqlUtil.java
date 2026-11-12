@@ -122,6 +122,12 @@ public class SqlUtil {
 
 	// union 匹配模式
 	public static final Pattern UNION_PATTERN = Pattern.compile("(?i)\\W+union\\W+");
+	// 集合运算匹配模式:union/intersect/except/minus(分页派生表包裹判定,与 UNION_PATTERN 同风格)
+	// update 2026-11-12 排除函数调用形态:minus(a,b)是ClickHouse常用算术函数,关键字后紧跟"("且
+	// 括号内非select时按函数处理不命中(否则CH分页误包派生表,内层重复列名报Duplicate column name);
+	// except(select ...)等关键字紧贴括号的集合运算写法仍正常命中
+	public static final Pattern SET_OPERATION_PATTERN = Pattern
+			.compile("(?i)\\W+(union|intersect|except|minus)(?!\\s*\\((?!\\s*select))\\W+");
 	public final static String BLANK = " ";
 	// 为了便于sql调试(@fast不方便调试)利用/*@fast_start*/代替@fast标记位置
 	private final static String[] FAST_START_REGEXS = { "(?i)\\-{2}\\s+\\@fast\\_start",
@@ -1253,7 +1259,10 @@ public class SqlUtil {
 				Array array = conn.createArrayOf("FLOAT", (Float[]) paramValue);
 				pst.setArray(paramIndex, array);
 			} else if (paramValue instanceof Long[]) {
-				Array array = conn.createArrayOf("INTEGER", (Long[]) paramValue);
+				// update 2026-11-10
+				// INTEGER→BIGINT:与SqlUtilsExt.setArray(ResultSet回写路径)及BigInteger[]口径对齐,
+				// openGauss真库实测int4数组无法承载long范围值(4000000000报out of range),回写路径BIGINT则成功
+				Array array = conn.createArrayOf("BIGINT", (Long[]) paramValue);
 				pst.setArray(paramIndex, array);
 			} else {
 				pst.setObject(paramIndex, paramValue, java.sql.Types.ARRAY);
@@ -1479,7 +1488,9 @@ public class SqlUtil {
 		int fieldCnt = rsmd.getColumnCount();
 		String[][] columnLabelAndTypes = new String[2][fieldCnt];
 		for (int i = 1; i < fieldCnt + 1; i++) {
-			columnLabelAndTypes[0][i - 1] = rsmd.getColumnLabel(i);
+			// update 2026-11-12 防御驱动null列标签(MySQL对select ''返回null),下游toLowerCase会NPE,归一为空串
+			String colLabel = rsmd.getColumnLabel(i);
+			columnLabelAndTypes[0][i - 1] = (colLabel == null) ? "" : colLabel;
 			columnLabelAndTypes[1][i - 1] = rsmd.getColumnTypeName(i);
 		}
 		return columnLabelAndTypes;
@@ -1887,20 +1898,32 @@ public class SqlUtil {
 			final HashMap<String, String> colFieldMap, final int fetchSize, final int maxRows,
 			final Integer queryTimeout) throws Exception {
 		ResultSet rs = null;
-		PreparedStatement pst = conn.prepareStatement(queryStr, ResultSet.TYPE_FORWARD_ONLY,
-				ResultSet.CONCUR_READ_ONLY);
-		if (fetchSize > 0) {
-			pst.setFetchSize(fetchSize);
-		}
-		if (maxRows > 0) {
-			pst.setMaxRows(maxRows);
-		}
-		if (queryTimeout != null && queryTimeout > 0) {
-			pst.setQueryTimeout(queryTimeout);
-		}
-		// 设置全局statementTimeout，默认为null
-		else if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
-			pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
+		PreparedStatement pst = null;
+		try {
+			pst = conn.prepareStatement(queryStr, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+			if (fetchSize > 0) {
+				pst.setFetchSize(fetchSize);
+			}
+			if (maxRows > 0) {
+				pst.setMaxRows(maxRows);
+			}
+			if (queryTimeout != null && queryTimeout > 0) {
+				pst.setQueryTimeout(queryTimeout);
+			}
+			// 设置全局statementTimeout，默认为null
+			else if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
+				pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
+			}
+		} catch (Exception e) {
+			// update 2026-11-10 setter阶段异常时关闭已创建的statement:
+			// 此前创建到收口(preparedStatementProcess的finally)之间有裸露窗口,异常路径依赖连接归还被池淘汰时兜底回收
+			if (pst != null) {
+				try {
+					pst.close();
+				} catch (Exception ignore) {
+				}
+			}
+			throw e;
 		}
 		Integer dbType = profile.getDbType();
 		List result = (List) preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
@@ -2956,7 +2979,31 @@ public class SqlUtil {
 	 * @return true表示存在union查询
 	 */
 	public static boolean hasUnion(String sql, boolean clearMistyChar, boolean backslashEscape) {
-		if (!StringUtil.matches(sql, UNION_PATTERN)) {
+		return hasSetKeyword(sql, clearMistyChar, backslashEscape, UNION_PATTERN);
+	}
+
+	/**
+	 * 判断是否包含任意集合运算(union/intersect/except/minus),口径与 hasUnion 一致: 剔除
+	 * with、子查询与括号、掩码字面量后只判定最外层是否出现集合关键字。
+	 *
+	 * @param sql            sql语句
+	 * @param clearMistyChar true剔除子查询和括号内容后再判断(只判断最外层)
+	 * @return true表示存在集合运算查询
+	 */
+	public static boolean hasSetOperation(String sql, boolean clearMistyChar) {
+		return hasSetOperation(sql, clearMistyChar, SqlConfigParseUtils.isBackslashEscape(null));
+	}
+
+	public static boolean hasSetOperation(String sql, boolean clearMistyChar, boolean backslashEscape) {
+		return hasSetKeyword(sql, clearMistyChar, backslashEscape, SET_OPERATION_PATTERN);
+	}
+
+	/**
+	 * 集合关键字通用判定:hasUnion 与 hasSetOperation 共用同一套剔除/掩码逻辑, 仅匹配的关键字模式不同。
+	 */
+	private static boolean hasSetKeyword(String sql, boolean clearMistyChar, boolean backslashEscape,
+			Pattern keywordPattern) {
+		if (!StringUtil.matches(sql, keywordPattern)) {
 			return false;
 		}
 		// 存在with as ，先剔除(hasWith基于字面量掩码串判定,字面量内的with xx as (不触发剔除)
@@ -2964,7 +3011,10 @@ public class SqlUtil {
 			SqlWithAnalysis sqlWith = new SqlWithAnalysis(sql);
 			sql = sqlWith.getRejectWithSql();
 		}
-		String tmpSql = BLANK + (clearMistyChar ? clearMistyChars(sql, BLANK) : sql);
+		// update 2026-11-10 首尾各补空白:尾部补空白保证集合关键字紧邻括号(如 except(select ...))时,
+		// 括号内容被剔除后关键字落在串尾仍满足模式的尾部\W边界(原实现只补首部,该写法漏判为无集合运算,
+		// 使sqlserver分页仍把order by直接追加在except之后报Msg 104);尾部补空白不改变任何向前偏移
+		String tmpSql = BLANK + (clearMistyChar ? clearMistyChars(sql, BLANK) : sql) + BLANK;
 		// 字面量内容掩为等长空白,掩码串与原串等长,位置偏移不受影响
 		tmpSql = SqlConfigParseUtils.maskLiterals(tmpSql, backslashEscape);
 		StringBuilder lastSql = new StringBuilder(tmpSql);
@@ -2985,7 +3035,7 @@ public class SqlUtil {
 				break;
 			}
 		}
-		if (StringUtil.matches(lastSql.toString(), UNION_PATTERN)) {
+		if (StringUtil.matches(lastSql.toString(), keywordPattern)) {
 			return true;
 		}
 		return false;
@@ -3091,10 +3141,9 @@ public class SqlUtil {
 				}
 			}
 		}
-		// 放入缓存(key含动态拼接的sql条件,设置容量上限防止无界增长,超限后不再缓存直接计算)
-		if (convertSqlMap.size() < CONVERT_SQL_CACHE_MAX_SIZE) {
-			convertSqlMap.put(key, realSql);
-		}
+		// update 2026-11-10 放入缓存(key含动态拼接的sql条件,设容量上限防止无界增长):
+		// 超限时回收约1/4后继续写入,避免"超限即永久不缓存"让动态sql每次重算的性能悬崖
+		CollectionUtil.putBounded(convertSqlMap, key, realSql, CONVERT_SQL_CACHE_MAX_SIZE);
 		return realSql;
 	}
 

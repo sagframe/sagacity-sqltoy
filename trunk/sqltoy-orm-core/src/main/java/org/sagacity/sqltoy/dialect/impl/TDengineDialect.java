@@ -28,26 +28,29 @@ import org.slf4j.LoggerFactory;
  *              <ul>
  *              <li><b>查询</b>:findBySql/findPageBySql/findTopBySql/getRandomResult/getCountBySql/load/loadAll
  *              均委托 DefaultDialect 走通用路径,实测可用——分页 {@code limit ? offset ?}、
- *              {@code count(1)}、随机查询 {@code order by rand()} TDengine 3.x 均支持。</li>
+ *              {@code count(1)}、随机查询 {@code order by rand()} TDengine 3.x
+ *              均支持。</li>
  *              <li><b>对象插入</b>:save/saveAll 生成标准单表列清单 insert,写已存在子表/普通表可用。
- *              时序库典型的“自动建子表 + 标签”写入({@code insert into :tb using 超表 tags(...) values(...)})
- *              与多表批量,经 sql xml 命名参数 + executeSql/batchUpdate 透传即可,实测全链路打通
- *              (:tb 经命名参数转 ? 后由 JDBC 驱动正确绑定表名,支持 addBatch 跨子表自动建表)。</li>
+ *              时序库典型的“自动建子表 +
+ *              标签”写入({@code insert into :tb using 超表 tags(...) values(...)})
+ *              与多表批量,经 sql xml 命名参数 + executeSql/batchUpdate 透传即可,实测全链路打通 (:tb
+ *              经命名参数转 ? 后由 JDBC 驱动正确绑定表名,支持 addBatch 跨子表自动建表)。</li>
  *              </ul>
  *
  *              <p>
  *              使用约束:
  *              <ul>
  *              <li>实体主键必须是时间戳列且用 <b>ASSIGN</b> 策略——TDengine 无自增/序列,
- *              {@code getGeneratedKeys} 不支持(实测报 "this operation is NOT supported")。</li>
+ *              {@code getGeneratedKeys} 不支持(实测报 "this operation is NOT
+ *              supported")。</li>
  *              <li>子表名(:tb)由驱动内联进 SQL,务必在 service 层做白名单校验防注入。</li>
  *              </ul>
  *
  *              <p>
- *              以下操作为 <b>TDengine 引擎本身不具备</b>的语义(非框架缺陷),统一抛明确异常说明原因与替代方案:
- *              UPDATE 语句、行级锁(SELECT ... FOR UPDATE)、存储过程、saveOrUpdate/UPSERT、INSERT IGNORE。
- *              时序库为追加写(append-only)模型:数据更新以“相同时间戳重新 INSERT 覆盖”实现(3.x 为列级合并),
- *              数据过期用库级 KEEP 策略,删除用 DELETE(主要按时间范围)或 sql xml 手写。
+ *              以下操作为 <b>TDengine 引擎本身不具备</b>的语义(非框架缺陷),统一抛明确异常说明原因与替代方案: UPDATE
+ *              语句、行级锁(SELECT ... FOR UPDATE)、存储过程、saveOrUpdate/UPSERT、INSERT
+ *              IGNORE。 时序库为追加写(append-only)模型:数据更新以“相同时间戳重新 INSERT 覆盖”实现(3.x
+ *              为列级合并), 数据过期用库级 KEEP 策略,删除用 DELETE(主要按时间范围)或 sql xml 手写。
  *
  * @author zhongxuchen
  * @version v1.0,Date:2022-09-13
@@ -63,8 +66,8 @@ public class TDengineDialect extends DefaultDialect {
 	protected final Logger logger = LoggerFactory.getLogger(TDengineDialect.class);
 
 	/**
-	 * TDengine 无行级锁(实测 SELECT ... FOR UPDATE 报 syntax error near "for update", code 9728)。
-	 * 读操作忽略锁模式并告警,避免 DefaultDialect 拼出 " for update" 坏 SQL;时序库读取本就无需加锁。
+	 * TDengine 无行级锁(实测 SELECT ... FOR UPDATE 报 syntax error near "for update", code
+	 * 9728)。 读操作忽略锁模式并告警,避免 DefaultDialect 拼出 " for update" 坏 SQL;时序库读取本就无需加锁。
 	 *
 	 * @param lockMode 调用方请求的锁模式(null 表示未请求锁)
 	 * @param operate  操作名(用于日志)
@@ -81,8 +84,7 @@ public class TDengineDialect extends DefaultDialect {
 	public boolean isUnique(SqlToyContext sqlToyContext, Serializable entity, String[] paramsNamed, Connection conn,
 			DBProfile profile, String tableName, final Integer queryTimeout) {
 		// TDengine 以时间戳为主键、重复时间戳为覆盖写,无关系库的唯一约束校验语义
-		throw new UnsupportedOperationException(
-				"TDengine 无唯一约束校验语义(时序库以时间戳为主键,重复时间戳为覆盖写),isUnique 不适用!");
+		throw new UnsupportedOperationException("TDengine 无唯一约束校验语义(时序库以时间戳为主键,重复时间戳为覆盖写),isUnique 不适用!");
 	}
 
 	@Override
@@ -164,31 +166,27 @@ public class TDengineDialect extends DefaultDialect {
 	public Long update(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields, boolean cascade,
 			Class[] forceCascadeClass, HashMap<Class, String[]> subTableForceUpdateProps, Connection conn,
 			DBProfile profile, String tableName) throws Exception {
-		throw new UnsupportedOperationException(
-				"TDengine 无 UPDATE 语句(时序库追加写模型),更新请用相同时间戳重新 INSERT 覆盖(3.x 为列级合并)!");
+		throw new UnsupportedOperationException("TDengine 无 UPDATE 语句(时序库追加写模型),更新请用相同时间戳重新 INSERT 覆盖(3.x 为列级合并)!");
 	}
 
 	@Override
 	public Serializable updateSaveFetch(SqlToyContext sqlToyContext, Serializable entity,
 			UpdateRowHandler updateRowHandler, int lockWaitTimeout, String[] uniqueProps, Connection conn,
 			DBProfile profile, String tableName) throws Exception {
-		throw new UnsupportedOperationException(
-				"TDengine 无 UPDATE 语句且无行级锁,updateSaveFetch 不适用;更新请用相同时间戳重新 INSERT 覆盖!");
+		throw new UnsupportedOperationException("TDengine 无 UPDATE 语句且无行级锁,updateSaveFetch 不适用;更新请用相同时间戳重新 INSERT 覆盖!");
 	}
 
 	@Override
 	public Long updateAll(SqlToyContext sqlToyContext, List<?> entities, int batchSize, String[] uniqueFields,
 			String[] forceUpdateFields, ReflectPropsHandler reflectPropsHandler, Connection conn, DBProfile profile,
 			Boolean autoCommit, String tableName) throws Exception {
-		throw new UnsupportedOperationException(
-				"TDengine 无 UPDATE 语句(时序库追加写模型),更新请用相同时间戳重新 INSERT 覆盖(3.x 为列级合并)!");
+		throw new UnsupportedOperationException("TDengine 无 UPDATE 语句(时序库追加写模型),更新请用相同时间戳重新 INSERT 覆盖(3.x 为列级合并)!");
 	}
 
 	@Override
 	public Long saveOrUpdate(SqlToyContext sqlToyContext, Serializable entity, String[] forceUpdateFields,
 			Connection conn, DBProfile profile, Boolean autoCommit, String tableName) throws Exception {
-		throw new UnsupportedOperationException(
-				"TDengine 无 UPDATE/UPSERT 语句,saveOrUpdate 不适用;如需覆盖写请用相同时间戳重新 INSERT!");
+		throw new UnsupportedOperationException("TDengine 无 UPDATE/UPSERT 语句,saveOrUpdate 不适用;如需覆盖写请用相同时间戳重新 INSERT!");
 	}
 
 	@Override
@@ -225,8 +223,7 @@ public class TDengineDialect extends DefaultDialect {
 	public QueryResult updateFetch(SqlToyContext sqlToyContext, SqlToyConfig sqlToyConfig, String sql,
 			Object[] paramValues, UpdateRowHandler updateRowHandler, Connection conn, DBProfile profile,
 			LockMode lockMode, int lockWaitTimeout, int fetchSize, int maxRows) throws Exception {
-		throw new UnsupportedOperationException(
-				"TDengine 无 UPDATE 语句且无行级锁(SELECT ... FOR UPDATE 报错),updateFetch 不适用!");
+		throw new UnsupportedOperationException("TDengine 无 UPDATE 语句且无行级锁(SELECT ... FOR UPDATE 报错),updateFetch 不适用!");
 	}
 
 	@Override

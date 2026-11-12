@@ -380,8 +380,8 @@ public class SqlUtilConvertFieldsEdgeTest {
 	}
 
 	/**
-	 * D4: 容量上限——缓存满后put跳过,转换结果仍正确且size不增;finally清空恢复
-	 * (避免像PerfRegressionBatchTest那样留满缓存影响后续依赖写入的用例)
+	 * D4: 容量上限——缓存满后按约1/4回收后再写入,转换结果正确且size始终不突破上限;
+	 * finally清空恢复(避免像PerfRegressionBatchTest那样留满缓存影响后续依赖写入的用例)
 	 */
 	@Test
 	public void testD4_cacheCapacityLimit() throws Exception {
@@ -394,7 +394,8 @@ public class SqlUtilConvertFieldsEdgeTest {
 			}
 			EntityMeta meta = buildStaffMeta("staff_cfe_d4");
 			assertEquals("STAFF_NAME=1", SqlUtil.convertFieldsToColumns(meta, "staffName=1").trim());
-			assertEquals(2000, cache.size(), "超限后不应再写入缓存");
+			// 旧口径:超限即跳过写入(缓存永久失效);现口径:回收1/4后写入本条
+			assertEquals(2000 - (2000 >>> 2) + 1, cache.size(), "超限时应回收约1/4后写入,而非不再缓存");
 		} finally {
 			cache.clear();
 		}

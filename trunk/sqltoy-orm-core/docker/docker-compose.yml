@@ -1,0 +1,112 @@
+# 真库测试容器矩阵(本地/CI 通用)
+#
+# 用法:
+#   docker compose -f docker/docker-compose.yml up -d          # 首次拉起(DB2 初始化最慢,约 2-5 分钟)
+#   docker compose -f docker/docker-compose.yml ps             # 查看状态/健康
+#   docker compose -f docker/docker-compose.yml down           # 停止(不删数据卷)
+#
+# 镜像源:默认使用官方仓库;国内/受限网络可用镜像前缀(如 1panel 镜像加速):
+#   REGISTRY_PREFIX=docker.1panel.live/ docker compose -f docker/docker-compose.yml up -d
+# 注意 REGISTRY_PREFIX 只作用于 Docker Hub 镜像;DB2(icr.io)与 SQL Server(mcr)保持原样。
+#
+# 拉起后按 docker/README.md 把 docker/probe-properties/*.properties 复制到 target/,
+# 再执行 mvn test;未启动的库对应探针缺失,相关用例自动跳过(见 RealDbProbeSupport)。
+#
+# 端口刻意与仓库内既有真库用例(多库矩阵 sweep)的硬编码 URL 对齐:
+#   mysql 3307 / postgresql 5433 / clickhouse 8123 / oracle 1521 / db2 50000 / sqlserver 1434
+name: sqltoy-realdb
+
+services:
+  mysql:
+    image: ${REGISTRY_PREFIX:-}mysql:8.4
+    container_name: sqltoy-mysql
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: Sqltoy@2026
+      MYSQL_DATABASE: sqltoy
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_general_ci"]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-pSqltoy@2026"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  postgresql:
+    image: ${REGISTRY_PREFIX:-}postgres:17
+    container_name: sqltoy-postgres
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Sqltoy@2026
+      POSTGRES_DB: sqltoy_verify
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d sqltoy_verify"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  clickhouse:
+    image: ${REGISTRY_PREFIX:-}clickhouse/clickhouse-server:25.3
+    container_name: sqltoy-clickhouse
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    environment:
+      # 与 sweep 用例 URL(jdbc:clickhouse://localhost:8123/default?user=sqltoy&password=Sqltoy@2026)一致
+      CLICKHOUSE_USER: sqltoy
+      CLICKHOUSE_PASSWORD: Sqltoy@2026
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--user", "sqltoy", "--password", "Sqltoy@2026", "--query", "select 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  oracle:
+    image: ${REGISTRY_PREFIX:-}gvenzl/oracle-free:23-slim
+    container_name: sqltoy-oracle
+    ports:
+      - "1521:1521"
+    environment:
+      # system 口令,与 sweep 用例(jdbc:oracle:thin:@//localhost:1521/FREEPDB1)一致
+      ORACLE_PASSWORD: Sqltoy@2026
+    healthcheck:
+      test: ["CMD-SHELL", "healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 60
+
+  db2:
+    image: icr.io/db2_community/db2:11.5.9.0
+    container_name: sqltoy-db2
+    # DB2 社区镜像要求特权模式
+    privileged: true
+    ports:
+      - "50000:50000"
+    environment:
+      LICENSE: accept
+      DB2INST1_PASSWORD: Sqltoy@2026
+      # 与 sweep 用例(jdbc:db2://localhost:50000/SQLTOYDB)一致
+      DBNAME: SQLTOYDB
+      PERSISTENT_HISTORY: "false"
+    healthcheck:
+      test: ["CMD-SHELL", "su - db2inst1 -c \"db2 connect to SQLTOYDB >/dev/null 2>&1\""]
+      interval: 15s
+      timeout: 10s
+      retries: 60
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqltoy-sqlserver
+    ports:
+      - "1434:1433"
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: Sqltoy@2026
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Sqltoy@2026' -C -Q 'select 1' -h -1 -W"]
+      interval: 10s
+      timeout: 5s
+      retries: 30

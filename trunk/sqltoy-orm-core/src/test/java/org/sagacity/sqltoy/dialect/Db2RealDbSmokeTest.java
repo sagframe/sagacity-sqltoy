@@ -41,7 +41,13 @@ public class Db2RealDbSmokeTest {
 			p.load(in);
 		}
 		Class.forName("com.ibm.db2.jcc.DB2Driver");
-		conn = DriverManager.getConnection(p.getProperty("url"), p.getProperty("username"), p.getProperty("password"));
+		try {
+			conn = DriverManager.getConnection(p.getProperty("url"), p.getProperty("username"),
+					p.getProperty("password"));
+		} catch (Exception e) {
+			// update 2026-11-10 探针在但库不可达(容器已停)时整类跳过
+			org.junit.jupiter.api.Assumptions.abort("db2 not reachable, skipped: " + e.getMessage());
+		}
 		try (Statement st = conn.createStatement()) {
 			// db2的DROP TABLE不支持IF EXISTS,首次运行表不存在时忽略-204
 			try {
@@ -109,6 +115,22 @@ public class Db2RealDbSmokeTest {
 		org.junit.jupiter.api.Assumptions.assumeTrue(available, "db2探针环境不可用,跳过");
 		assertEquals(5, ((Number) querySingle(convert("select lengthb(name) from sqltoy_probe_t1 where id=1",
 				"db2"))).intValue(), "lengthb应转octet_length");
+	}
+
+	@Test
+	public void epochTimezoneDurationUsesHhmmss() throws Exception {
+		org.junit.jupiter.api.Assumptions.assumeTrue(available, "db2探针环境不可用,跳过");
+		String fromEpoch = convert("select from_unixtime(0) from sysibm.sysdummy1", "db2");
+		assertEquals(java.sql.Timestamp.valueOf("1970-01-01 08:00:00"),
+				querySingle(fromEpoch.replace("current timezone", "80000")));
+		assertEquals(java.sql.Timestamp.valueOf("1969-12-31 18:30:00"),
+				querySingle(fromEpoch.replace("current timezone", "-53000")));
+
+		String toEpoch = convert("select unix_timestamp(timestamp '1970-01-01 08:00:00') from sysibm.sysdummy1",
+				"db2");
+		assertEquals(0L, ((Number) querySingle(toEpoch.replace("current timezone", "80000"))).longValue());
+		toEpoch = convert("select unix_timestamp(timestamp '1969-12-31 18:30:00') from sysibm.sysdummy1", "db2");
+		assertEquals(0L, ((Number) querySingle(toEpoch.replace("current timezone", "-53000"))).longValue());
 	}
 
 	private String convert(String sql, String dialect) {

@@ -59,7 +59,9 @@ public class DB2DDLGenerator implements DialectDDLGenerator {
 					tableSql.append("'").append(colMeta.getDefaultValue()).append("'");
 				}
 			}
-			if (!colMeta.isNullable()) {
+			// update 2026-11-10 DB2要求主键列必须显式NOT NULL,否则建表报SQLCODE=-542/SQLSTATE=42831
+			// (真库实测:id BIGINT + PRIMARY KEY(id) 直接失败;identity列隐含NOT NULL故跳过)
+			if (!colMeta.isNullable() || (colMeta.isPK() && !colMeta.isAutoIncrement())) {
 				tableSql.append(" NOT NULL");
 			}
 			index++;

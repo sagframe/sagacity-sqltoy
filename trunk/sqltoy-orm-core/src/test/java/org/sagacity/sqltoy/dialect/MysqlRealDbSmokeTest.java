@@ -53,7 +53,13 @@ public class MysqlRealDbSmokeTest {
 			p.load(in);
 		}
 		Class.forName("com.mysql.cj.jdbc.Driver");
-		conn = DriverManager.getConnection(p.getProperty("url"), p.getProperty("username"), p.getProperty("password"));
+		try {
+			conn = DriverManager.getConnection(p.getProperty("url"), p.getProperty("username"),
+					p.getProperty("password"));
+		} catch (Exception e) {
+			// update 2026-11-10 探针在但库不可达(容器已停)时整类跳过,与"未配置profile则跳过"语义一致
+			org.junit.jupiter.api.Assumptions.abort("mysql not reachable, skipped: " + e.getMessage());
+		}
 		try (Statement st = conn.createStatement()) {
 			st.execute("drop table if exists sqltoy_probe_t1");
 			st.execute("drop table if exists sqltoy_probe_t2");

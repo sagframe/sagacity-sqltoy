@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.sagframe</groupId>
-	<version>6.0.9</version>
+	<version>6.0.10</version>
 
 	<artifactId>sagacity-sqltoy-solon-plugin</artifactId>
 	<name>sagacity-sqltoy-solon-plugin</name>
@@ -17,13 +17,12 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<solon.version>4.1.1</solon.version>
-		<sqltoy.version>6.0.9</sqltoy.version>
+		<sqltoy.version>6.0.10</sqltoy.version>
 		<redisx.version>1.8.6</redisx.version>
-		<mongo.version>5.13.0</mongo.version>
-		<slf4j.version>2.0.20</slf4j.version>
-		<lombok.version>1.18.48</lombok.version>
+		<mongo.version>5.14.0</mongo.version>
 		<HikariCP.version>7.1.0</HikariCP.version>
-		<mysql.version>9.7.0</mysql.version>
+		<mysql.version>26.10.0</mysql.version>
+		<byte-buddy.version>1.18.17</byte-buddy.version>
 	</properties>
 
 	<licenses>
@@ -125,7 +124,7 @@
 		<dependency>
 			<groupId>net.bytebuddy</groupId>
 			<artifactId>byte-buddy</artifactId>
-			<version>1.18.15</version>
+			<version>${byte-buddy.version}</version>
 			<optional>true</optional>
 		</dependency>
 	</dependencies>

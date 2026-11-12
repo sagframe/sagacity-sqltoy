@@ -21,6 +21,7 @@ import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
 import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
 import org.sagacity.sqltoy.plugins.id.macro.impl.Include;
+import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils.Dialect;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
@@ -383,8 +384,11 @@ public class SqlScriptLoader {
 				}
 				// 限制数量的原因是存在部分代码中的sql会拼接条件参数值，导致不同的sql无限增加
 				// 非@include(:paramName)模式才可以缓存
-				if (!isParamInclude && codeSqlCache.size() < SqlToyConstants.getMaxCodeSqlCount()) {
-					codeSqlCache.put(codeSqlKey, result);
+				// update 2026-11-10 超限改putBounded回收约1/4后继续写入:原size()<max守卫在写满后
+				// 永久停缓存,动态拼接SQL每次全量重新parseSqlToyConfig(性能断崖,第三处同款);
+				// 配置<=0保留旧语义(关闭缓存),避免putBounded"<=0不限制"造成无界增长
+				if (!isParamInclude && SqlToyConstants.getMaxCodeSqlCount() > 0) {
+					CollectionUtil.putBounded(codeSqlCache, codeSqlKey, result, SqlToyConstants.getMaxCodeSqlCount());
 				}
 			}
 		}

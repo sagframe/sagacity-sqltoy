@@ -49,7 +49,7 @@ public class FunctionRetestProbeTest {
 				FunctionUtils.getDialectSql("select to_char(t,'yyyy-MM-dd HH:mm:ss') from t", "postgresql"),
 				"to_char的java风格时间token应归一");
 		// sqlite:归一后HH:mm:ss完整映射为%H:%M:%S(24小时)
-		assertEquals("select strftime('%Y-%m-%d %H:%M:%S',datetime(t/1000,'unixepoch','localtime')) from t",
+		assertEquals("select strftime('%Y-%m-%d %H:%M:%S',case when typeof(t) in ('integer','real') then datetime(t/1000,'unixepoch','localtime') else datetime(t) end) from t",
 				FunctionUtils.getDialectSql("select to_char(t,'yyyy-MM-dd HH:mm:ss') from t", "sqlite"),
 				"sqlite的java风格时间token应完整映射");
 		// oracle原生形态(含裸mm=月)不受归一影响

@@ -52,14 +52,21 @@ public class Oracle11gFeatureSmokeTest {
 	public static void init() throws Exception {
 		File cfg = new File("target/oracle-probe.properties");
 		if (!cfg.exists()) {
-			return;
+			// update 2026-11-10 未配置探针即整类跳过:原return后各用例在conn为null上NPE
+			org.junit.jupiter.api.Assumptions.abort("oracle probe not configured, skipped: " + cfg.getPath());
 		}
 		Properties p = new Properties();
 		try (InputStream in = new FileInputStream(cfg)) {
 			p.load(in);
 		}
 		Class.forName("oracle.jdbc.driver.OracleDriver");
-		conn = DriverManager.getConnection(p.getProperty("url"), p.getProperty("username"), p.getProperty("password"));
+		try {
+			conn = DriverManager.getConnection(p.getProperty("url"), p.getProperty("username"),
+					p.getProperty("password"));
+		} catch (Exception e) {
+			// update 2026-11-10 探针已配置但库不可达时整类跳过,与"未配置profile则跳过"语义一致
+			org.junit.jupiter.api.Assumptions.abort("oracle not reachable, skipped: " + e.getMessage());
+		}
 
 		try (Statement st = conn.createStatement()) {
 			// 11g不支持drop table if exists,首跑表不存在时忽略

@@ -34,7 +34,10 @@ public class DialectEdgeBatchTest {
 			assertTrue(sql.contains("[STAFF_NAME]"), "非主键保留字列应被[]包裹,实际:" + sql);
 			assertTrue(sql.toLowerCase().contains("insert"), "实际:" + sql);
 		} finally {
-			// ReservedWordsUtil为合并语义,保留字staff_name对其他测试无影响(仅SqlServer方言转换)
+			// update 2026-11-10 必须清理全局保留字:convertWord对PG/Oracle/DB2/H2等方言会加双引号,
+			// 残留staff_name会让后续用例(如LambdaRealDbSmokeTest)把STAFF_NAME渲染成"STAFF_NAME",
+			// 而PG实际列名为小写staff_name,报列不存在(原注释"对其他测试无影响"的假设不成立)
+			ReservedWordsUtil.remove("staff_name");
 		}
 	}
 

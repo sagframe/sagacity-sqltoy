@@ -234,8 +234,10 @@ public class CommonFuncDialectTest {
 		assertEquals("select day(create_time) from t", c("select dayofmonth(create_time) from t", "sqlserver"));
 		assertEquals("select EXTRACT(DAY FROM create_time) from t",
 				c("select dayofmonth(create_time) from t", "oracle"));
-		// sqlite的hour:cast+strftime(数值语义)
-		assertEquals("select cast(strftime('%H',datetime(create_time/1000,'unixepoch','localtime')) as integer) from t",
+		// sqlite的hour:cast+strftime(数值语义);update 2026-11-11 列先按typeof双形态归一(INTEGER毫秒/TEXT墙钟)
+		assertEquals(
+				"select cast(strftime('%H',case when typeof(create_time) in ('integer','real') then "
+						+ "datetime(create_time/1000,'unixepoch','localtime') else datetime(create_time) end) as integer) from t",
 				c("select hour(create_time) from t", "sqlite"));
 	}
 
@@ -412,6 +414,10 @@ public class CommonFuncDialectTest {
 				c("select date_trunc('month', create_time) from t", "oracle"));
 		assertEquals("select TRUNC(create_time,'Q') from t",
 				c("select date_trunc('quarter', create_time) from t", "dm"));
+		// update 2026-11-12 OB归Oracle系:trunc原生透传,date_trunc源转TRUNC码形态
+		assertEquals("select trunc(create_time,'MM') from t", c("select trunc(create_time,'MM') from t", "oceanbase"));
+		assertEquals("select TRUNC(create_time,'MM') from t",
+				c("select date_trunc('month', create_time) from t", "oceanbase"));
 		assertEquals("select date_trunc('month',create_time) from t",
 				c("select trunc(create_time,'MM') from t", "postgresql"));
 		// mysql系/mysql语法族:组合形态
@@ -427,12 +433,17 @@ public class CommonFuncDialectTest {
 		// hana:TO_DATE+TO_CHAR组合
 		assertEquals("select TO_DATE(TO_CHAR(create_time,'YYYY-MM'),'YYYY-MM') from t",
 				c("select trunc(create_time,'MM') from t", "hana"));
-		// sqlite:修饰符链(季截断printf形态)
-		assertEquals("select date(datetime(create_time/1000,'unixepoch','localtime'),'start of month') from t",
+		// sqlite:修饰符链(季截断printf形态);update 2026-11-11 列先按typeof双形态归一
+		assertEquals(
+				"select date(case when typeof(create_time) in ('integer','real') then "
+						+ "datetime(create_time/1000,'unixepoch','localtime') else datetime(create_time) end,'start of month') from t",
 				c("select trunc(create_time,'MM') from t", "sqlite"));
-		// 安全边界:1参trunc全库透传;数值trunc响亮
+		// 安全边界:1参trunc全库透传(日期/数值歧义无法静态消解);
+		// update 2026-11-10 数值trunc(score,2)不再响亮:DateTrunc单位归一失败转发Truncate.numericTrunc,
+		// Oracle/PG系写法在MySQL系得到truncate等价(doris真库实测无trunc透传报错)
 		assertEquals("select trunc(create_time) from t", c("select trunc(create_time) from t", "mysql"));
-		assertEquals("select trunc(score,2) from t", c("select trunc(score,2) from t", "mysql"));
+		assertEquals("select truncate(score,2) from t", c("select trunc(score,2) from t", "mysql"));
+		assertEquals("select trunc(score,2) from t", c("select truncate(score,2) from t", "oracle"));
 	}
 
 

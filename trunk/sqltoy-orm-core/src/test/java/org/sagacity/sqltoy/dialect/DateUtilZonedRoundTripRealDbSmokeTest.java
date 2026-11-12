@@ -27,6 +27,15 @@ import org.sagacity.sqltoy.utils.DateUtil;
  */
 public class DateUtilZonedRoundTripRealDbSmokeTest {
 
+	/**
+	 * 真库矩阵守卫:本用例断言"所有库全绿",缺库时会误报失败,故缺任一库即整类跳过;
+	 * CI 需要"缺库即失败"时加 -Dsqltoy.realdb.strict=true(见 docker/README.md)
+	 */
+	@org.junit.jupiter.api.BeforeAll
+	public static void assumeRealDbMatrix() {
+		org.sagacity.sqltoy.support.RealDbProbeSupport.assumeFullMatrix(PROBES);
+	}
+
 	/** {标签, 驱动类, url, 用户, 密码, 时间列DDL} 连接信息源:sqltoy-verify的application-*.yml */
 	private static final String[][] PROBES = {
 			{ "postgresql", "org.postgresql.Driver", "jdbc:postgresql://localhost:5433/postgres", "postgres",
@@ -48,7 +57,7 @@ public class DateUtilZonedRoundTripRealDbSmokeTest {
 					null, null, "DateTime64(3)" },
 			{ "opengauss", "org.opengauss.Driver", "jdbc:opengauss://localhost:5432/postgres", "gaussdb",
 					"Sqltoy@2026", "timestamp" },
-			{ "kingbase", "com.kingbase8.Driver", "jdbc:kingbase8://localhost:54321/kingbase", "system",
+			{ "kingbase", "com.kingbase8.Driver", "jdbc:kingbase8://[::1]:54321/kingbase", "system",
 					"12345678ab", "timestamp" }, };
 
 	/** 样本:覆盖今日改动的裸Z/z与既有±HH:mm/[时区ID]形态,毫秒位验证精度无损 */

@@ -22,7 +22,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * @version v1.0,Date:2026-10-11
  */
 public class Extract extends IFunction {
-	private static Pattern regex = Pattern.compile("(?i)\\W(extract|date_part)\\(");
+	private static Pattern regex = Pattern.compile("(?i)\\W(extract|date_part|datepart)\\(");
 
 	// extract(x from y)参数内的分量 FROM 分隔
 	private static Pattern FROM_PATTERN = Pattern.compile("(?i)^(\\w+)\\s+from\\s+(.+)$");
@@ -45,7 +45,9 @@ public class Extract extends IFunction {
 		String funLow = functionName.toLowerCase(Locale.ROOT);
 		String part;
 		String base;
-		if ("date_part".equals(funLow)) {
+		// update 2026-11-10 补datepart源(sqlserver习惯):与date_part同序(part,base),part为裸
+		// 标识符(不带引号),replace后同路径;sqlserver特有分量(dw/wk)未在归一表走default响亮
+		if ("date_part".equals(funLow) || "datepart".equals(funLow)) {
 			if (args.length < 2) {
 				return super.IGNORE;
 			}
