@@ -13,6 +13,9 @@ import org.sagacity.sqltoy.plugins.id.macro.impl.SqlLoop;
 
 import com.alibaba.fastjson2.JSON;
 
+/**
+ * 主键宏 @loop(SqlLoop)处理的单元测试
+ */
 public class SqlLoopTest {
 	@Test
 	public void testSqlLoop() {

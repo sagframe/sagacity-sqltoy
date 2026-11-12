@@ -5,6 +5,9 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.translate.TranslateConfigParse;
 
+/**
+ * TranslateConfigParse 缓存翻译配置解析的单元测试
+ */
 public class TranslateConfigTest {
 	@Test
 	public void getTranslateFile() throws Exception {

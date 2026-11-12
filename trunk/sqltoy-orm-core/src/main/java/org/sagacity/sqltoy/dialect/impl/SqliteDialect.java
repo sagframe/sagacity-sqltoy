@@ -126,12 +126,9 @@ public class SqliteDialect implements Dialect {
 			final int fetchSize, final int maxRows) throws Exception {
 		Integer dbType = profile.getDbType();
 		String realSql = sql.concat(getLockSql(sql, dbType, lockMode));
-		// sqlite 不支持设置锁时长，用queryTimeout代替
-		if (lockMode != null && lockMode == LockMode.UPGRADE && queryExecutorExtend.lockWaitTimeout > 0) {
-			if (queryExecutorExtend.timeout == null || queryExecutorExtend.timeout <= 0) {
-				queryExecutorExtend.timeout = queryExecutorExtend.lockWaitTimeout;
-			}
-		}
+		// update 2026-11-10 删除lockWaitTimeout→queryTimeout的转换分支:sqlite无行锁,getLockSql对
+		// UPGRADE/UPGRADE_NOWAIT/UPGRADE_SKIPLOCK一律返回空串(全部降级为无锁读,不抛异常),
+		// 无"设置锁等待时长"的对象,转换无意义(原分支实际不可达)
 		return DialectUtils.findBySql(sqlToyContext, sqlToyConfig, realSql, paramsValue, queryExecutorExtend,
 				decryptHandler, conn, profile, 0, fetchSize, maxRows);
 	}
@@ -411,9 +408,8 @@ public class SqliteDialect implements Dialect {
 	}
 
 	private String getLockSql(String sql, Integer dbType, LockMode lockMode) {
-		// update 2026-11-10 sqlite 不支持行锁:任意 lockMode(UPGRADE/UPGRADE_NOWAIT/UPGRADE_SKIPLOCK)均降级为
-		// 无锁读,返回空串不报错——此前拼" for update SKIP LOCKED "产出非法SQL直接报错;
-		// sqlite单写者模型下锁谓词恒为假,乐观锁CAS由UPDATE...WHERE天然承担
+		// sqlite 不支持行锁:任意
+		// lockMode(UPGRADE/UPGRADE_NOWAIT/UPGRADE_SKIPLOCK)均降级为无锁读,返回空串不报错
 		return "";
 	}
 }

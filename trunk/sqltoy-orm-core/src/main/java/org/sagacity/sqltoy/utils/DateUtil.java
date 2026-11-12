@@ -54,8 +54,9 @@ public class DateUtil {
 			.compile("[\\s\\u00A0\\u202F\\u3000]+");
 
 	private static final java.util.regex.Pattern SPACE_PATTERN = java.util.regex.Pattern.compile("\\s+");
-	// update 2026-9-14 ISO日期时间中日期与时间的分隔符T:原dateStr.replaceFirst("(?i)T"," ")每次解析
-	// 隐式编译,ISO日期时间(2026-09-14T10:00:00)是逐行读取的常见形态,预编译为静态Pattern
+	// update 2026-9-14 ISO日期时间中日期与时间的分隔符T:dateStr.replaceFirst(「(?i)T」,「
+	// 」)每次解析隐式编译,
+	// ISO日期时间(2026-09-14T10:00:00)是逐行读取的常见形态,预编译为静态Pattern
 	private final static Pattern ISO_T_PATTERN = Pattern.compile("(?i)T");
 	/**
 	 * 定义日志
@@ -85,8 +86,8 @@ public class DateUtil {
 	private static final String[] WEEK_ENGLISH_NAKE = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
 	private final static Pattern WEEK_PATTERN = Pattern.compile("(?i)(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\\s");
 	private final static Pattern DAY_PATTERN = Pattern.compile("(?i)\\s\\d{1,2}(st|th|nd|rd)?\\s");
-	// update 2026-9-14 parseEnglishDate的月/星期名替换预编译:此前按名称动态compile("(?i)"+name)共23次,
-	// 英文日期(如"14 Sep 2026")在文件导入等场景逐行解析时开销显著;各替换保持原有先后次序
+	// update 2026-9-14 parseEnglishDate的月/星期名替换预编译:按名称动态compile(「(?i)」+name)共23次,
+	// 英文日期(如「14 Sep 2026」)在文件导入等场景逐行解析时开销显著;各替换保持原有先后次序
 	private static final Pattern[] MONTH_ENGLISH_PATTERNS = compileInsensitive(MONTH_ENGLISH_NAME);
 	private static final Pattern[] WEEK_ENGLISH_PATTERNS = compileInsensitive(WEEK_ENGLISH_NAME);
 	private final static Pattern SEPT_PATTERN = Pattern.compile("(?i)Sept\\s");
@@ -126,8 +127,10 @@ public class DateUtil {
 	private final static Pattern DAYTH_PATTERN = Pattern.compile("(?i)\\s\\d{1,2}(st|th|nd|rd)\\s");
 	private final static Pattern TIME_PATTERN = Pattern.compile("\\d{1,2}\\:\\d{1,2}");
 	private final static Pattern TIME_DOT_PATTERN = Pattern.compile("\\d\\.\\d");
+	// 末尾时区信息：±HH:mm(可带[时区ID]) 或 ISO-8601 的 UTC 标识 Z；
+	// 裸 Z 若不剥离会残留在符号剥离后的数字串里，被补零成"Z00000"导致解析失败
 	private final static Pattern ZONED_TIME_PATTERN = Pattern
-			.compile("(\\+|\\-)\\d{1,2}\\:\\d{2}(\\[[a-z|A-Z|\\/|\\_]+\\])?$");
+			.compile("((\\+|\\-)\\d{1,2}\\:\\d{2}(\\[[a-z|A-Z|\\/|\\_]+\\])?|[Zz])$");
 
 	// 日期分隔符(-、/、.)后跟单位数月或日(如2024/1/5、2024.1.5)时用于补零，时间部分的:和小数秒不受影响
 	private final static Pattern DATE_PATTERN = Pattern.compile("(\\d{2,4})[-/.](\\d)(?=[-/.])|[-/.](\\d)(?=\\s)");
@@ -240,8 +243,8 @@ public class DateUtil {
 		if (dateVar == null) {
 			return null;
 		}
-		// 空白归一化:各类空白(含全角空格、不间断空格等非标准空白)统一压缩为单空格,容忍复制粘贴产生的不规范空格
-		// update 2026-9-8 正则预编译(原String.replaceAll每次隐式编译)
+		// update 2026-9-8 空白归一化:各类空白(含全角空格、不间断空格等非标准空白)统一压缩为单空格,容忍复制粘贴产生的不规范空格
+		// 正则预编译(避免String.replaceAll每次隐式编译)
 		String dateStr = BLANK_NORMALIZE_PATTERN.matcher(dateVar).replaceAll(" ").trim();
 		if ("".equals(dateStr) || dateStr.toLowerCase(Locale.ROOT).equals("null")) {
 			return null;
@@ -303,9 +306,9 @@ public class DateUtil {
 						dateStr = dateStr.substring(0, tmpBlankIndex + 1).concat(paddedTime.toString());
 					}
 				}
-				// 统一格式(去除掉日期中的符号变成全数字),update 2019-08-12 支持jdk8日期
-				// 时间部分不含小数秒且为1~5位奇数(如"20240105 304")时补前导0，避免单位数小时导致格式判断错位；
-				// 含小数秒(如"123030.123345321")时的奇数位来自小数部分，7位及以上按高精度解释，补零会破坏格式匹配
+				// update 2019-08-12 统一格式(去除掉日期中的符号变成全数字),支持jdk8日期
+				// 时间部分不含小数秒且为1~5位奇数(如「20240105 304」)时补前导0，避免单位数小时导致格式判断错位；
+				// 含小数秒(如「123030.123345321」)时的奇数位来自小数部分，7位及以上按高精度解释，补零会破坏格式匹配
 				boolean hasFraction = dateStr.indexOf(".", dateStr.indexOf(" ")) != -1;
 				dateStr = dateStr.replace("-", "").replace(".", "").replace(":", "").replace("/", "");
 				int blankIndex = dateStr.indexOf(" ");
@@ -409,8 +412,8 @@ public class DateUtil {
 				realDF = hasBlank ? "yyyy-MM-dd HH:mm:ss" : "yyyy-MM-dd";
 			}
 		}
-		// 针对高精度进行特殊处理
-		// update 2026-9-9 复用FORMATTER_CACHE(原每次ofPattern现场解析格式串,解析路径高频)
+		// update 2026-9-9 针对高精度进行特殊处理
+		// 复用FORMATTER_CACHE(避免每次ofPattern现场解析格式串,解析路径高频)
 		if (isLocalTime) {
 			LocalTime time = LocalTime.parse(dateStr, getFormatter(realDF, locale));
 			return asDate(time);
@@ -459,8 +462,10 @@ public class DateUtil {
 			if (baseDate == null) {
 				return null;
 			}
-			// 提取偏差hour
-			String timeZone = m.group();
+			// update 2026-10-9 提取偏差hour
+			// 小写z归一为大写Z:ZONED_TIME_PATTERN的[Zz]放行小写z,
+			// 而ZoneOffset.of仅认大写Z,原样传入抛DateTimeException(实测)
+			String timeZone = m.group().replace("z", "Z");
 			if (timeZone.contains("[") && timeZone.contains("]")) {
 				// 时区，如Asia/Shanghai
 				timeZone = timeZone.substring(timeZone.indexOf("[") + 1, timeZone.indexOf("]"));
@@ -483,8 +488,8 @@ public class DateUtil {
 		if (dateVar == null) {
 			return null;
 		}
-		// 空白归一化:各类空白(含全角空格、不间断空格等非标准空白)统一压缩为单空格,容忍复制粘贴产生的不规范空格
-		// update 2026-9-8 正则预编译(原String.replaceAll每次隐式编译)
+		// update 2026-9-8 空白归一化:各类空白(含全角空格、不间断空格等非标准空白)统一压缩为单空格,容忍复制粘贴产生的不规范空格
+		// 正则预编译(避免String.replaceAll每次隐式编译)
 		String dateStr = BLANK_NORMALIZE_PATTERN.matcher(dateVar).replaceAll(" ").trim();
 		if ("".equals(dateStr) || dateStr.toLowerCase(Locale.ROOT).equals("null")) {
 			return null;
@@ -545,9 +550,9 @@ public class DateUtil {
 						dateStr = dateStr.substring(0, tmpBlankIndex + 1).concat(paddedTime.toString());
 					}
 				}
-				// 统一格式(去除掉日期中的符号变成全数字),update 2019-08-12 支持jdk8日期
-				// 时间部分不含小数秒且为1~5位奇数(如"20240105 304")时补前导0，避免单位数小时导致格式判断错位；
-				// 含小数秒(如"123030.123345321")时的奇数位来自小数部分，7位及以上按高精度解释，补零会破坏格式匹配
+				// update 2019-08-12 统一格式(去除掉日期中的符号变成全数字),支持jdk8日期
+				// 时间部分不含小数秒且为1~5位奇数(如「20240105 304」)时补前导0，避免单位数小时导致格式判断错位；
+				// 含小数秒(如「123030.123345321」)时的奇数位来自小数部分，7位及以上按高精度解释，补零会破坏格式匹配
 				boolean hasFraction = dateStr.indexOf(".", dateStr.indexOf(" ")) != -1;
 				dateStr = dateStr.replace("-", "").replace(".", "").replace(":", "").replace("/", "");
 				int blankIndex = dateStr.indexOf(" ");
@@ -658,19 +663,20 @@ public class DateUtil {
 		}
 		LocalDateTime result = null;
 		try {
-			// update 2026-9-9 复用FORMATTER_CACHE(原每次ofPattern现场解析格式串,解析路径高频)
+			// update 2026-9-9 复用FORMATTER_CACHE(避免每次ofPattern现场解析格式串,解析路径高频)
 			if (isTime) {
 				LocalTime timeResult = LocalTime.parse(dateStr, getFormatter(realDF, SqlToyConstants.getLocale()));
 				return LocalDateTime.of(LocalDate.now(), timeResult);
 			} else if (isDate) {
-				// update 2026-9-14 复用线程内SDF缓存;原new SimpleDateFormat(realDF)用JVM默认
-				// locale,与兄弟分支(:643/:649)的SqlToyConstants.getLocale()分叉,一并对齐
+				// update 2026-9-14 复用线程内SDF缓存;new SimpleDateFormat(realDF)原用JVM默认
+				// locale,与兄弟分支(:643/:649)的SqlToyConstants.getLocale()对齐
 				Date dateResult = getSdf(realDF, SqlToyConstants.getLocale()).parse(dateStr);
 				return asLocalDateTime(dateResult);
 			}
 			result = LocalDateTime.parse(dateStr, getFormatter(realDF, SqlToyConstants.getLocale()));
 		} catch (Exception e) {
-			logger.error("failed to parse the date string:[{}] with the format:[{}]", realDF, dateStr, e);
+			// update 2026-11-10 修正实参与占位符错位:第一个占位符是date string、第二个是format
+			logger.error("failed to parse the date string:[{}] with the format:[{}]", dateStr, realDF, e);
 		}
 		// 结果为null，格式不为null,通过自动格式匹配模式，进行一次补偿处理
 		if (result == null && hasFmt) {
@@ -781,9 +787,9 @@ public class DateUtil {
 	private static final java.util.concurrent.ConcurrentHashMap<String, DateTimeFormatter> FORMATTER_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
 
 	private static DateTimeFormatter getFormatter(String format, Locale locale) {
-		// update 2026-9-9 null
+		// update 2026-9-9
 		// locale兜底为默认Locale:DateTimeFormatter.ofPattern(pattern,null)抛NPE,
-		// 与原各处单参ofPattern(默认Locale)行为保持一致
+		// 与各处单参ofPattern(默认Locale)行为保持一致
 		Locale realLocale = (locale == null) ? SqlToyConstants.getLocale() : locale;
 		String key = format.concat("|").concat(realLocale.toString());
 		return FORMATTER_CACHE.computeIfAbsent(key, k -> DateTimeFormatter.ofPattern(format, realLocale));
@@ -867,7 +873,7 @@ public class DateUtil {
 				return getFormatter(format, patternLocale).format(result.toLocalTime());
 			}
 		}
-		// 低精度用SimpleDateFormat，兼容性强(update 2026-9-14 复用线程内SDF缓存)
+		// update 2026-9-14 低精度用SimpleDateFormat，兼容性强(复用线程内SDF缓存)
 		DateFormat df = getSdf(format, (locale == null) ? SqlToyConstants.getLocale() : locale);
 		Date tmp = convertDateObject(dt, null, locale);
 		return (null == tmp) ? null : df.format(tmp);
@@ -1317,6 +1323,7 @@ public class DateUtil {
 		// 处理十几的值:单趟逐段替换,避免replaceAll字符串替换的嵌套破坏
 		// (如"十一月二十一日"中"二十一"包含"十一",先替换"十一"会把"二十一"破坏成"二11")
 		Matcher matcher = MORE_TEN_PATTERN.matcher(tmp);
+		// (jre8同步适配:Matcher.appendReplacement/appendTail在JDK8仅接受StringBuffer)
 		StringBuffer tenReplaced = new StringBuffer();
 		while (matcher.find()) {
 			String prefix = matcher.group(1);
@@ -1545,7 +1552,7 @@ public class DateUtil {
 		}
 		Date result = null;
 		String format;
-		// update 2026-9-14 复用线程内SDF缓存(原每次调用new一个parser实例+applyPattern轮换,
+		// update 2026-9-14 复用线程内SDF缓存(每次调用new一个parser实例+applyPattern轮换,
 		// 现按格式串取缓存实例);ENGLISH默认保持(自动匹配面向标准数字格式,不受配置locale影响)
 		Locale realLocale = (locale == null) ? Locale.ENGLISH : locale;
 		while (formatIter.hasNext()) {
@@ -1615,6 +1622,7 @@ public class DateUtil {
 	 */
 	private static String padDateString(String dateStr) {
 		Matcher matcher = DATE_PATTERN.matcher(dateStr);
+		// (jre8同步适配:Matcher.appendReplacement/appendTail在JDK8仅接受StringBuffer)
 		StringBuffer sb = new StringBuffer();
 		while (matcher.find()) {
 			if (matcher.group(2) != null) {

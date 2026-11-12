@@ -8,7 +8,6 @@ import org.sagacity.sqltoy.config.annotation.Column;
 import org.sagacity.sqltoy.config.annotation.Entity;
 import org.sagacity.sqltoy.config.annotation.Id;
 
-
 /**
  * @project fisher application
  * @author fisher
@@ -16,9 +15,6 @@ import org.sagacity.sqltoy.config.annotation.Id;
  */
 @Entity(tableName = "sys_login_log", comment = "系统访问记录", pk_constraint = "PRIMARY", schema = "common")
 public class SysLoginLog implements Serializable {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 7597934527935925661L;
 
 	/**
@@ -223,7 +219,7 @@ public class SysLoginLog implements Serializable {
 	}
 
 	/**
-	 * @todo vo columns to String
+	 * vo columns to String
 	 */
 	@Override
 	public String toString() {

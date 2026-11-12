@@ -314,7 +314,7 @@ public class SqlWithAnalysis implements Serializable {
 
 	/**
 	 * update 2026-10-18 目标库是否支持CTE物化hint(AS [NOT] MATERIALIZED)。该语法为PostgreSQL
-	 * 12+引入, 同内核衍生库openGauss/金仓/Vastbase经docker真库实测均支持;GAUSSDB与openGauss同内核
+	 * 12+引入, 同内核衍生库openGauss/金仓/Vastbase/瀚高经docker真库实测均支持;GAUSSDB与openGauss同内核
 	 * (verify矩阵gaussdb档案即连opengauss容器),随openGauss实测一并收录。其余库
 	 * (mysql/tidb/sqlserver/oracle/db2/dm/hana/clickhouse等,实测mysql9.3/tidb8.5/mssql2025混入即报语法错误)不支持。
 	 * 白名单保守只收录已实测(或同内核已实测)支持的库,未收录库一律剔除hint(仅失去物化优化、不改变查询语义,
@@ -331,6 +331,7 @@ public class SqlWithAnalysis implements Serializable {
 		case DBType.KINGBASE:
 		case DBType.VASTBASE:
 		case DBType.GAUSSDB:
+		case DBType.HIGHGO:
 			return true;
 		default:
 			return false;

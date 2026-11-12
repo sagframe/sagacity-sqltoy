@@ -12,7 +12,8 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * @version v1.0,Date:2013-03-21
  */
 public class SubStr extends IFunction {
-	private static Pattern regex = Pattern.compile("(?i)\\W(substr|substring)\\(");
+	// update 2026-10-11 补mid源拼写(mysql的同义词写法,语义与substring完全一致)
+	private static Pattern regex = Pattern.compile("(?i)\\W(substr|substring|mid)\\(");
 
 	/**
 	 * 本身就支持substr的数据库
@@ -44,16 +45,19 @@ public class SubStr extends IFunction {
 		// (mysql的0是空串特例/oracle的0当1/pg与sqlserver的0少取1个/db2的0非法),
 		// 字面量0(含+0/-0/00)统一归一为1;未来若接入真正的0-based方言,在首位映射处调整
 		boolean zeroStart = false;
-		String zeroStartArg = args[1].trim();
-		if (zeroStartArg.matches("[+-]?0+(\\.0+)?")) {
-			args[1] = "1";
-			zeroStart = true;
+		if (args.length > 1) {
+			String zeroStartArg = args[1].trim();
+			if (zeroStartArg.matches("[+-]?0+(\\.0+)?")) {
+				args[1] = "1";
+				zeroStart = true;
+			}
 		}
-		// update 2026-9-14 补KINGBASE(KingbaseES基于PG,函数语法归PG系)
+		// update 2026-9-14 (真库实测语法错),归下方substr族(原生SUBSTR)
+		// 补KINGBASE(KingbaseES基于PG,函数语法归PG系)
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.GAUSSDB
 				|| dialect == DBType.OPENGAUSS || dialect == DBType.MOGDB || dialect == DBType.VASTBASE
 				|| dialect == DBType.SQLSERVER || dialect == DBType.H2 || dialect == DBType.STARDB
-				|| dialect == DBType.OSCAR || dialect == DBType.KINGBASE) {
+				|| dialect == DBType.OSCAR || dialect == DBType.KINGBASE || dialect == DBType.HIGHGO) {
 			// update 2026-10-4 负起点字面量(mysql惯用substr(s,-n)取末n位)统一处理:
 			// 两参转RIGHT(s,n);三参转case守卫形态(start=串长-n+1,串长不足n时取1,mysql语义)。
 			// 原仅sqlserver两参做了RIGHT,pg系substring(s,-n)按"串首之前偏移"返回整串静默错值。
@@ -75,7 +79,7 @@ public class SubStr extends IFunction {
 			}
 			if (dialect == DBType.SQLSERVER && args.length == 2) {
 				// update 2026-9-5 mysql惯用负数起点(substr(s,-2)=末2位):
-				// sqlserver substring负起点语义不同,负起点字面量已由上方统一处理(表达式无法判断,原样处理)
+				// sqlserver substring负起点语义不同,字面量负数转RIGHT(表达式无法判断,原样处理)
 				return "substring(" + args[0] + "," + args[1] + ",len(" + args[0] + "))";
 			}
 			return wrapArgs("substring", args);
@@ -123,14 +127,15 @@ public class SubStr extends IFunction {
 				return "case when length(" + args[0] + ")<" + n + " then '' else substring(" + args[0] + ",length("
 						+ args[0] + ")-" + n + "+1," + args[2] + ") end";
 			}
-			// update 2026-10-11 hana原生形态为substr/substring,substring拼写经wrapArgs换名为substr
+			// update 2026-10-11 hana原生形态为substr/substring,无mid():非substr拼写换名为substr
+			// (mid/substring写法透传会报函数不存在)
 			if (zeroStart || !"substr".equals(functionName.toLowerCase(java.util.Locale.ROOT))) {
 				return wrapArgs("substr", args);
 			}
 			return super.IGNORE;
 		}
-		// update 2026-10-20 sqlite原生substr无substring形态,非substr拼写统一换名为substr
-		// (负起点/三参语义与mysql一致)
+		// update 2026-10-20 sqlite原生substr无mid别名(真库实测no such function: mid),
+		// 非substr拼写统一换名为substr(负起点/substring三参语义与mysql一致)
 		if (dialect == DBType.SQLITE) {
 			if (zeroStart || !"substr".equals(functionName.toLowerCase(java.util.Locale.ROOT))) {
 				return wrapArgs("substr", args);

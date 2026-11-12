@@ -53,7 +53,7 @@ public class OracleDialectUtils {
 	 * @param cascadeTypes
 	 * @param lockMode
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param dialect
 	 * @param tableName
 	 * @return
@@ -82,7 +82,7 @@ public class OracleDialectUtils {
 	 * @param cascadeTypes
 	 * @param lockMode
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param tableName
 	 * @param fetchSize
 	 * @param maxRows
@@ -107,7 +107,7 @@ public class OracleDialectUtils {
 	 * @param pageNo
 	 * @param pageSize
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param dialect
 	 * @param fetchSize
 	 * @param maxRows
@@ -120,7 +120,7 @@ public class OracleDialectUtils {
 		String dialect = profile.getDialect();
 		boolean isNamed = sqlToyConfig.isNamedParam();
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
-		// 是否有order by,update 2017-5-22
+		// update 2017-5-22 是否有order by
 		boolean hasOrderBy = SqlUtil.hasOrderBy(innerSql, true);
 		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
 		innerSql = SqlUtilsExt.markOriginalSql(innerSql);
@@ -155,7 +155,7 @@ public class OracleDialectUtils {
 	 * @param queryExecutor
 	 * @param topSize
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param dialect
 	 * @param fetchSize
 	 * @param maxRows
@@ -201,7 +201,7 @@ public class OracleDialectUtils {
 	 * @param totalCount
 	 * @param randomCount
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param dialect
 	 * @param fetchSize
 	 * @param maxRows
@@ -255,7 +255,7 @@ public class OracleDialectUtils {
 	 * @param outParamTypes
 	 * @param moreResult
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param fetchSize
 	 * @return
 	 * @throws Exception
@@ -385,7 +385,7 @@ public class OracleDialectUtils {
 			DBProfile profile) throws Exception {
 		String dialect = profile.getDialect();
 		List<ColumnMeta> tableColumns = DefaultDialectUtils.getTableColumns(catalog, schema, tableName, conn, profile);
-		// update 2026-9-11 表名按方言大小写策略转换(oracle大写存储,小写原样绑定查不到列备注)
+		// 系统目录varchar列经驱动读取须::char CAST(直读返回空串);表名按方言大小写策略转换(oracle大写存储,小写原样绑定查不到列备注)
 		final String realTableName = SqlToyConstants.getDialectLowcaseStrategyName(tableName, dialect);
 		String sql = "SELECT COLUMN_NAME,COMMENTS FROM USER_COL_COMMENTS WHERE TABLE_NAME=?";
 		PreparedStatement pst = conn.prepareStatement(sql);
@@ -433,8 +433,9 @@ public class OracleDialectUtils {
 	public static List<TableMeta> getTables(String catalog, String schema, String tableName, Connection conn,
 			DBProfile profile) throws Exception {
 		String dialect = profile.getDialect();
-		// update 2026-9-11 pattern按方言大小写策略转换:oracle元数据大写存储且LIKE大小写敏感,
-		// 小写pattern原样绑定返回空清单(oracle 23ai实测TableApi.getTables空结果)
+		// update 2026-9-11
+		// pattern按方言大小写策略转换:oracle元数据大写存储且LIKE大小写敏感,小写pattern原样绑定返回空清单(oracle
+		// 23ai实测TableApi.getTables空结果)
 		final String realTableName = SqlToyConstants.getDialectLowcaseStrategyName(tableName, dialect);
 		String sql = "select * from user_tab_comments";
 		if (StringUtil.isNotBlank(realTableName)) {
@@ -482,11 +483,27 @@ public class OracleDialectUtils {
 
 	/**
 	 * 主键策略是identity或sequence时，主键值允许不由数据库内部自动产生，可人工赋值
-	 * 
+	 *
 	 * @param pkStrategy
 	 * @return
 	 */
 	public static boolean allowAssignPKValue(PKStrategy pkStrategy) {
+		return allowAssignPKValue(pkStrategy, null);
+	}
+
+	/**
+	 * 带库类型的赋值判定:oracle 12c的by-default identity插null会触发生成,identity改由数据库自增
+	 * (列提示getGeneratedKeys回取实测可行),IDENTITY时不允许人工赋值(与postgresql系同口径);
+	 * 其余库维持恒true(oracle的identity在merge路径先经identity→sequence转化,不受影响)
+	 *
+	 * @param pkStrategy 主键策略
+	 * @param dbType     数据库类型,参见DataSourceUtils.DBType,null按原恒true行为
+	 * @return true表示允许insert语句携带主键列
+	 */
+	public static boolean allowAssignPKValue(PKStrategy pkStrategy, Integer dbType) {
+		if (pkStrategy == null) {
+			return true;
+		}
 		return true;
 	}
 

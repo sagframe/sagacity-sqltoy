@@ -1,5 +1,6 @@
 package org.sagacity.sqltoy.plugins.ddl;
 
+import java.math.BigDecimal;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,17 +42,15 @@ public class DDLUtils {
 	public static String TAB = "   ";
 
 	/**
-	 * 因为存在外键关系，首先需要对表进行排序，被依赖的优先创建
+	 * update 2026-9-15 因为存在外键关系，首先需要对表进行排序，被依赖的优先创建
 	 * <p>
-	 * update 2026-9-15 重写为Kahn拓扑排序:原"贪心单层前置"算法对链式依赖(A←B←C)在
-	 * ConcurrentHashMap不利迭代顺序下产出[B,C,A](处理C时前置B但不考虑B自身的依赖,
-	 * 处理B时A未入队被append到尾部),而外键约束输出对建表顺序硬依赖(mysql/pg内联 FOREIGN KEY于CREATE
-	 * TABLE,oracle/h2/sqlserver的ALTER ADD CONSTRAINT紧跟本表
-	 * CREATE之后),错序即建表失败;且原输出依赖hash序跨环境不可复现、swotTables全量
-	 * 重建最坏O(n²)。新算法O(V+E):零入度集合按表名字典序出队保证脚本可复现,
-	 * 自环(树表自引用外键,内联合法)不参与排序约束,多外键指向同表去重防入度虚增,
-	 * 节点集外的外表引用忽略(与原实现一致),环状残余(互相外键,内联约束下本就无解) 按名序追加+warn提示,不吞表不死循环
-	 * 
+	 * 采用Kahn拓扑排序(O(V+E)):原"贪心单层前置"算法对链式依赖(A←B←C)在ConcurrentHashMap不利迭代
+	 * 顺序下产出[B,C,A](处理C时前置B但不考虑B自身的依赖,处理B时A未入队被append到尾部),而外键约束
+	 * 输出对建表顺序硬依赖(mysql/pg内联FOREIGN KEY于CREATE TABLE,oracle/h2/sqlserver的ALTER ADD
+	 * CONSTRAINT紧跟本表CREATE之后),错序即建表失败;且原输出依赖hash序跨环境不可复现、swotTables
+	 * 全量重建最坏O(n²)。新算法零入度集合按表名字典序出队保证脚本可复现,自环(树表自引用外键,内联合法)
+	 * 不参与排序约束,多外键指向同表去重防入度虚增,节点集外的外表引用忽略,环状残余(互相外键,内联约束下 本就无解)按名序追加+warn提示,不吞表不死循环
+	 *
 	 * @param entitysMetaMap
 	 * @return 被依赖表在前的表实体列表
 	 */
@@ -63,7 +62,7 @@ public class DDLUtils {
 		for (EntityMeta entityMeta : entitysMetaMap.values()) {
 			String key = entityMeta.getSchemaTable(null, null);
 			nodes.put(key, entityMeta);
-			lowerKeyMap.put(key.toLowerCase(), key);
+			lowerKeyMap.put(key.toLowerCase(Locale.ROOT), key);
 		}
 		// 建边:foreignTable->依赖表
 		Map<String, Set<String>> successors = new HashMap<String, Set<String>>();
@@ -81,11 +80,12 @@ public class DDLUtils {
 			Set<String> deps = new HashSet<String>();
 			for (Map.Entry<String, ForeignModel> iter : entityMeta.getForeignFields().entrySet()) {
 				String foreignTable = iter.getValue().getForeignTable();
-				if (entityMeta.getSchema() != null && !foreignTable.startsWith(entityMeta.getSchema().concat("."))) {
+				if (entityMeta.getSchema() != null && !foreignTable.toLowerCase(Locale.ROOT)
+						.startsWith(entityMeta.getSchema().toLowerCase(Locale.ROOT).concat("."))) {
 					foreignTable = entityMeta.getSchema().concat(".").concat(foreignTable);
 				}
 				// 大小写不敏感:@Foreign(table="QS_STAFF")与@Entity(tableName="qs_staff")等场景
-				String realKey = lowerKeyMap.get(foreignTable.toLowerCase());
+				String realKey = lowerKeyMap.get(foreignTable.toLowerCase(Locale.ROOT));
 				if (realKey == null) {
 					realKey = foreignTable;
 				}
@@ -191,7 +191,10 @@ public class DDLUtils {
 			columnMeta.setAutoIncrement(fieldMeta.isAutoIncrement());
 			columnMeta.setColumnSize(fieldMeta.getLength());
 			columnMeta.setPartitionKey(fieldMeta.isPartitionKey());
-			columnMeta.setDefaultValue(fieldMeta.getDefaultValue());
+			// update 2026-10-22
+			// boolean默认值按目标库归一(数值承载方言的true/false转1/0),挂在本单一入口使全部generator的DEFAULT路径共享
+			columnMeta.setDefaultValue(normalizeBooleanDefault(fieldMeta.getDefaultValue(), fieldMeta.getType(),
+					dbType == null ? -1 : dbType));
 			columnMeta.setNullable(fieldMeta.isNullable());
 			columnMeta.setDataType(fieldMeta.getType());
 			columnMeta.setTypeName(fieldMeta.getFieldType());
@@ -209,6 +212,7 @@ public class DDLUtils {
 	/**
 	 * JSON文档承载类型:无原生JSON列类型的库降级承载,避免生成非法的"col JSON"。
 	 * hana→NCLOB,sqlserver→NVARCHAR(MAX),db2/oracle11→CLOB;oracle21c+/mysql/pg/doris等原生支持→JSON
+	 * (getBytes即UTF-8文本,getObject/getString该驱动不可用)框架级承接,无需降级承载
 	 */
 	private static String jsonCarrierType(int dbType) {
 		if (dbType == DBType.HANA) {
@@ -237,7 +241,8 @@ public class DDLUtils {
 			} else if (colMeta.getNativeType().equalsIgnoreCase("BSON")) {
 				if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 						|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
-						|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE) {
+						|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE
+						|| dbType == DBType.HIGHGO) {
 					return "BSON";
 				} else {
 					return jsonCarrierType(dbType);
@@ -248,7 +253,7 @@ public class DDLUtils {
 		String typeName = "VARCHAR";
 		switch (colMeta.getDataType()) {
 		case java.sql.Types.BIGINT:
-			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
+			if (isOracleFamily(dbType)) {
 				typeName = "NUMBER";
 				typeName = setLength(typeName, true, colMeta);
 			} else {
@@ -259,7 +264,7 @@ public class DDLUtils {
 			typeName = "INTEGER";
 			break;
 		case java.sql.Types.TINYINT:
-			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
+			if (isOracleFamily(dbType)) {
 				typeName = "INTEGER";
 			} else {
 				typeName = "TINYINT";
@@ -276,12 +281,13 @@ public class DDLUtils {
 			typeName = setLength(typeName, false, colMeta);
 			break;
 		case java.sql.Types.VARCHAR:
-		case java.sql.Types.NVARCHAR:
+		case java.sql.Types.NVARCHAR: {
 			typeName = (dbType == DBType.HANA) ? "NVARCHAR" : "VARCHAR";
 			typeName = setLength(typeName, false, colMeta);
+		}
 			break;
 		case java.sql.Types.LONGNVARCHAR:
-			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM || dbType == DBType.H2) {
+			if (isOracleFamily(dbType) || dbType == DBType.H2) {
 				typeName = "CLOB";
 			} else if (dbType == DBType.HANA) {
 				typeName = "NCLOB";
@@ -293,8 +299,9 @@ public class DDLUtils {
 			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
 					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.ORACLE
-					// update 2026-9-14 补KINGBASE(KingbaseES基于PG,类型映射归PG系)
-					|| dbType == DBType.KINGBASE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
+					// update 2026-9-14 KINGBASE(KingbaseES基于PG,类型映射归PG系)
+					|| dbType == DBType.KINGBASE || dbType == DBType.HIGHGO || dbType == DBType.ORACLE11
+					|| dbType == DBType.DM || dbType == DBType.OCEANBASE) {
 				// 精度需跟在TIMESTAMP之后:TIMESTAMP(6) WITH TIME ZONE
 				typeName = "TIMESTAMP";
 				if (colMeta.getColumnSize() > 0) {
@@ -316,7 +323,8 @@ public class DDLUtils {
 		case java.sql.Types.BLOB:
 			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
-					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE) {
+					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE
+					|| dbType == DBType.HIGHGO) {
 				typeName = "BYTEA";
 			} else if (dbType == DBType.SQLSERVER) {
 				typeName = "VARBINARY(MAX)";
@@ -328,9 +336,10 @@ public class DDLUtils {
 		case java.sql.Types.BINARY:
 			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.STARDB || dbType == DBType.OSCAR
-					|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE) {
+					|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE
+					|| dbType == DBType.HIGHGO) {
 				typeName = "BYTEA";
-			} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
+			} else if (isOracleFamily(dbType)) {
 				typeName = "BLOB";
 			} else if (dbType == DBType.SQLSERVER) {
 				typeName = "VARBINARY(MAX)";
@@ -344,9 +353,10 @@ public class DDLUtils {
 		case java.sql.Types.LONGVARBINARY:
 			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 					|| dbType == DBType.OPENGAUSS || dbType == DBType.STARDB || dbType == DBType.OSCAR
-					|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE) {
+					|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE
+					|| dbType == DBType.HIGHGO) {
 				typeName = "BYTEA";
-			} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
+			} else if (isOracleFamily(dbType)) {
 				typeName = "BLOB";
 			} else if (dbType == DBType.SQLSERVER) {
 				typeName = "VARBINARY(MAX)";
@@ -358,8 +368,7 @@ public class DDLUtils {
 			break;
 		case java.sql.Types.CLOB:
 		case java.sql.Types.NCLOB:
-			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM || dbType == DBType.H2
-					|| dbType == DBType.DB2) {
+			if (isOracleFamily(dbType) || dbType == DBType.H2 || dbType == DBType.DB2) {
 				typeName = "CLOB";
 			} else if (dbType == DBType.HANA) {
 				// hana无TEXT类型,大文本为NCLOB(unicode)
@@ -385,14 +394,15 @@ public class DDLUtils {
 			}
 			break;
 		case java.sql.Types.DATE:
-			// update 2026-9-5 修复dm/pg按生成DDL建表后时间部分被静默清零的缺陷:实测dm的DATE列类型
-			// 只存日期(与oracle的DATE含时间不同),pg系date列同样只存日期(pg 18.6实测,timestamp
-			// 写入date列静默截断时间);java.util.Date/LocalDateTime这类含时间字段(无论@Column未指定
-			// type自动探测,还是quickvo生成实体显式声明type=DATE)此前均输出DATE列;
-			// 依据字段Java类型(typeName,小写全类名)精化:dm输出DATETIME,pg系输出TIMESTAMP,
-			// 纯日期类型(LocalDate/java.sql.Date)保持DATE语义不变;
-			// update 2026-9-6 原"不得将探测归入Types.TIMESTAMP"的约束已解除:rowversion剔除
-			// 改按目标库元数据校准(ensureRowVersionMeta),与实体JDBC类型解耦,LocalDateTime已归位TIMESTAMP
+			// update 2026-10-13
+			// Types.DATE按目标库与字段Java类型精化,修复按生成DDL建表后时间部分被静默清零:实测dm的DATE列只存日期
+			// (与oracle的DATE含时间不同),pg系date列同样只存日期(pg 18.6实测,timestamp写入date列静默截断时间);
+			// java.util.Date/LocalDateTime这类含时间字段(无论@Column未指定type自动探测,还是quickvo生成实体显式
+			// 声明type=DATE)此前均输出DATE列,现按字段Java类型(小写全类名)精化:dm输出DATETIME,pg系输出TIMESTAMP,
+			// 纯日期类型(LocalDate/java.sql.Date)保持DATE语义;rowversion已剔除并改按目标库元数据校准
+			// (ensureRowVersionMeta),与实体JDBC类型解耦,LocalDateTime归位TIMESTAMP;TIDB为mysql协议同构,
+			// Types.DATE与mysql一致转DATETIME,否则quickvo实体(type=DATE,nativeType=DATETIME,LocalDateTime)生成裸DATE列,
+			// 与DEFAULT CURRENT_TIMESTAMP(3)冲突报"Invalid default value"(真库实测)
 			if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.SQLSERVER
 					|| dbType == DBType.DORIS || dbType == DBType.STARROCKS || dbType == DBType.TIDB) {
 				typeName = "DATETIME";
@@ -410,13 +420,13 @@ public class DDLUtils {
 				} else {
 					typeName = "CHAR(1)";
 				}
-			} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
+			} else if (isOracleFamily(dbType)) {
 				typeName = "INTEGER";
 			} else if (dbType == DBType.SQLSERVER) {
 				// sqlserver无boolean类型,bit为0/1
 				typeName = "BIT";
 			} else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.DORIS
-					|| dbType == DBType.STARROCKS) {
+					|| dbType == DBType.STARROCKS || dbType == DBType.TIDB) {
 				typeName = "TINYINT(1)";
 			} else {
 				// postgresql/openGauss/H2等原生支持boolean
@@ -427,26 +437,30 @@ public class DDLUtils {
 			// 向量类型:gaussdb企业版为floatvector,其余(pgvector/openGauss系/oracle 23ai/mysql
 			// heatwave/sqlserver 2025/db2 12.1.2+)为vector
 			// 维度通过@Column(length=xxx)指定,mysql heatwave和sqlserver 2025的维度为必填项
+			// 内核)实测"Type (vector) not found",商业版V8.8提供向量能力,类型名以@Column
+			// (nativeType)覆盖为准;HIGHGO同pgvector(需库内create extension vector,社区镜像
+			// 未预装,可源码编译pgvector 0.7.4后安装,实测vector(3)建表/绑定/读回/近邻均可用)
 			if (dbType == DBType.H2) {
 				// h2无向量类型,测试场景按varchar存储'[1,2,3]'字符串形式
 				typeName = "VARCHAR";
 				typeName = setLength(typeName, false, colMeta);
 			} else if (dbType == DBType.DB2) {
-				// update 2026-9-10 实测db2 12.1.2.0/12.1.5.0:VECTOR须显式坐标类型双参形态
-				// VECTOR(n, FLOAT32),单参VECTOR(n)报-104语法错误、裸VECTOR报-901
-				// "Unknown vector coordinate type";维度必填(@Column(length=xxx)),
+				// update 2026-9-10 db2 12.1.2.0/12.1.5.0实测:VECTOR须显式坐标类型双参形态VECTOR(n,
+				// FLOAT32),单参VECTOR(n)
+				// 报-104语法错误、裸VECTOR报-901 "Unknown vector coordinate
+				// type";维度必填(@Column(length=xxx)),
 				// 其他坐标类型(FLOAT64等)经@Column(nativeType=...)覆盖
 				typeName = (colMeta.getColumnSize() > 0) ? ("VECTOR(" + colMeta.getColumnSize() + ", FLOAT32)")
 						: "VECTOR";
 			} else if (dbType == DBType.DORIS) {
-				// update 2026-9-10 实测doris 4.1.3:无VECTOR(n)列类型(解析器类型全集无VECTOR),
-				// 向量以ARRAY<FLOAT>承载(近邻检索配VECTOR索引),字符串'[1,2,3]'绑定隐式转换、
-				// 读回为'[1, 2, 3]'文本均实证可行;维度不进列定义(向量索引声明处约束)
+				// update 2026-9-10 doris
+				// 4.1.3实测:无VECTOR(n)列类型(解析器类型全集无VECTOR),向量以ARRAY<FLOAT>承载
+				// (近邻检索配VECTOR索引),字符串'[1,2,3]'绑定隐式转换、读回为'[1, 2, 3]'文本均实证可行;维度不进列定义(向量索引声明处约束)
 				typeName = "ARRAY<FLOAT>";
 			} else if (dbType == DBType.CLICKHOUSE) {
-				// update 2026-9-11 实测clickhouse 26.8.2.7:无vector类型族(报Unknown data type
-				// family: vector),向量以Array(Float32)承载(同doris思路):字符串'[1,2,3]'插入
-				// 隐式解析、读回'[1,2,3]'文本、L2Distance(v,[..])距离检索均实证可行
+				// update 2026-9-11 clickhouse 26.8.2.7实测:无vector类型族(报Unknown data type family:
+				// vector),向量以Array(Float32)
+				// 承载(同doris思路):字符串'[1,2,3]'插入隐式解析、读回'[1,2,3]'文本、L2Distance(v,[..])距离检索均实证可行
 				typeName = "Array(Float32)";
 			} else if (dbType == DBType.HANA) {
 				// 2026-9-11 hana 2.0 SPS08起提供REAL_VECTOR类型(维度必填,上限65000)
@@ -472,9 +486,10 @@ public class DDLUtils {
 			// 空间类型:oracle/dm为SDO_GEOMETRY,其余(postgis系/mysql/sqlserver/h2)为GEOMETRY
 			// 类型精度修饰(如geometry(Point,4326)、geography)通过@Column(nativeType="...")指定;
 			// nativeType未配置时注解默认为空串(非null),须按blank判断,否则生成空列类型导致DDL非法
+			// 扩展且依赖GEOS/PROJ无法容器内源码编译),nativeType覆盖为唯一路径
 			if (StringUtil.isNotBlank(colMeta.getNativeType())) {
 				typeName = colMeta.getNativeType();
-			} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
+			} else if (isOracleFamily(dbType)) {
 				typeName = "SDO_GEOMETRY";
 			} else if (dbType == DBType.HANA) {
 				// hana空间类型为ST_GEOMETRY(构造函数ST_GeomFromText与mysql系同名同参)
@@ -488,13 +503,13 @@ public class DDLUtils {
 			typeName = "FLOAT";
 			break;
 		case java.sql.Types.DOUBLE:
-			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11) {
+			if (isOracleStrictDialect(dbType)) {
 				typeName = "BINARY_DOUBLE";
 			} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
-			// update 2026-9-14 补KINGBASE(KingbaseES基于PG,类型映射归PG系)
-					|| dbType == DBType.KINGBASE || dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB
-					|| dbType == DBType.STARDB || dbType == DBType.OSCAR || dbType == DBType.VASTBASE
-					|| dbType == DBType.DM || dbType == DBType.H2) {
+			// update 2026-9-14 KINGBASE(KingbaseES基于PG,类型映射归PG系)
+					|| dbType == DBType.KINGBASE || dbType == DBType.HIGHGO || dbType == DBType.OPENGAUSS
+					|| dbType == DBType.MOGDB || dbType == DBType.STARDB || dbType == DBType.OSCAR
+					|| dbType == DBType.VASTBASE || dbType == DBType.DM || dbType == DBType.H2) {
 				typeName = "DOUBLE PRECISION";
 			} else if (dbType == DBType.SQLSERVER) {
 				typeName = "FLOAT";
@@ -504,10 +519,11 @@ public class DDLUtils {
 			break;
 		case java.sql.Types.DECIMAL:
 		case java.sql.Types.NUMERIC:
-			if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
+			if (isOracleFamily(dbType)) {
 				typeName = "NUMBER";
-			} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.KINGBASE) {
-				// update 2026-9-14 补KINGBASE(KingbaseES基于PG,numeric为任意精度,同vanilla PG)
+			} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.KINGBASE
+					|| dbType == DBType.HIGHGO) {
+				// update 2026-9-14 KINGBASE(KingbaseES基于PG,numeric为任意精度,同vanilla PG)
 				typeName = "NUMERIC";
 			} else {
 				typeName = "DECIMAL";
@@ -528,9 +544,10 @@ public class DDLUtils {
 		// VECTOR除外:pgvector的vector本身即向量类型(非"向量的数组"),加_前缀会变成_vector数组类型导致建表失败
 		if ((dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 				|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
-				|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE)
-				&& colMeta.getDataType() != JdbcTypes.VECTOR && colMeta.getTypeName() != null
-				&& colMeta.getTypeName().endsWith("[]") && !isBytes && !typeName.startsWith("_")) {
+				|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE
+				|| dbType == DBType.HIGHGO) && colMeta.getDataType() != JdbcTypes.VECTOR
+				&& colMeta.getTypeName() != null && colMeta.getTypeName().endsWith("[]") && !isBytes
+				&& !typeName.startsWith("_")) {
 			return "_".concat(typeName);
 		}
 		return typeName;
@@ -640,6 +657,37 @@ public class DDLUtils {
 			tableSql.append(" PARTITIONS ").append(names.length);
 			return;
 		}
+		// update 2026-10-13 DB2表分区为STARTING..ENDING双边界区间语法(非mysql系VALUES LESS
+		// THAN):PARTITION <name>
+		// STARTING (<low>) ENDING
+		// (<high>)[EXCLUSIVE];MINVALUE/MAXVALUE为DB2关键字不带括号;上界缺失以
+		// /* end value missing
+		// */显式标记(建表会失败,提示补全,优于静默生成错误边界);明细按目录SEQNO序原样渲染(DB2无升序强制,不做值排序)
+		if (dbType == DBType.DB2) {
+			String[] endValues = partitionMeta.getPartitionEndValues();
+			boolean[] endInclusives = partitionMeta.getPartitionEndInclusives();
+			tableSql.append(NEWLINE).append("(");
+			for (int i = 0; i < names.length; i++) {
+				if (i > 0) {
+					tableSql.append(",");
+				}
+				tableSql.append(NEWLINE).append(TAB).append("PARTITION ").append(names[i]);
+				String low = (values != null && i < values.length) ? values[i] : null;
+				String high = (endValues != null && i < endValues.length) ? endValues[i] : null;
+				if (StringUtil.isBlank(low) || StringUtil.isBlank(high)) {
+					tableSql.append(" /* bound value missing */");
+					continue;
+				}
+				tableSql.append(" STARTING ").append(db2Bound(low, "MINVALUE"));
+				tableSql.append(" ENDING ").append(db2Bound(high, "MAXVALUE"));
+				// ENDING默认INCLUSIVE,显式EXCLUSIVE须带关键字(endInclusives缺省按true=INCLUSIVE)
+				if (endInclusives != null && i < endInclusives.length && !endInclusives[i]) {
+					tableSql.append(" EXCLUSIVE");
+				}
+			}
+			tableSql.append(NEWLINE).append(")");
+			return;
+		}
 		boolean lessThan = strategy.startsWith("RANGE");
 		// RANGE分区明细必须按上界升序渲染(doris/mysql等拒绝非升序的VALUES LESS THAN);
 		// 提取顺序可能非升序(如doris经SHOW PARTITIONS返回pmax在前),此处按值稳定排序,MAXVALUE/空值恒排最后
@@ -685,7 +733,7 @@ public class DDLUtils {
 				if (StringUtil.isBlank(value)) {
 					tableSql.append(" /* value missing */");
 				} else {
-					boolean oracleFamily = dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM;
+					boolean oracleFamily = isOracleFamily(dbType);
 					tableSql.append(oracleFamily ? " VALUES (" : " VALUES IN (").append(quotePartitionValue(value))
 							.append(")");
 				}
@@ -710,7 +758,8 @@ public class DDLUtils {
 		String s1 = v1.trim();
 		String s2 = v2.trim();
 		try {
-			return Double.compare(Double.parseDouble(unquoteBound(s1)), Double.parseDouble(unquoteBound(s2)));
+			// 用BigDecimal避免超过2^53的整数分区边界在Double下被判相等而错序
+			return new BigDecimal(unquoteBound(s1)).compareTo(new BigDecimal(unquoteBound(s2)));
 		} catch (NumberFormatException e) {
 			return s1.compareTo(s2);
 		}
@@ -729,7 +778,7 @@ public class DDLUtils {
 	}
 
 	/** 分区值:日期形态加引号(2026-02-01裸值会被解析为算术2023);数字/MAXVALUE/函数调用不加 */
-	private static String quotePartitionValue(String value) {
+	public static String quotePartitionValue(String value) {
 		String v = value.trim();
 		if (v.startsWith("'") || v.equalsIgnoreCase("MAXVALUE") || v.matches("\\d+") || v.contains("(")) {
 			return v;
@@ -738,6 +787,18 @@ public class DDLUtils {
 			return "'" + v + "'";
 		}
 		return v;
+	}
+
+	/**
+	 * update 2026-10-13
+	 * DB2分区边界渲染:MINVALUE/MAXVALUE为DB2关键字不带括号,其余按字面量括号包裹(值引号规则同quotePartitionValue)
+	 */
+	private static String db2Bound(String value, String keyword) {
+		String v = value.trim();
+		if (v.equalsIgnoreCase(keyword)) {
+			return keyword;
+		}
+		return "(" + quotePartitionValue(v) + ")";
 	}
 
 	/** 分区键列名按输出大小写策略转换后拼接 */
@@ -844,12 +905,16 @@ public class DDLUtils {
 		}
 		// oracle/DM不支持ON UPDATE子句;oracle(非DM)不接受NO ACTION关键字(ORA-02000),
 		// oracle/DM(ORA-03001)与mysql系(InnoDB)均不支持SET DEFAULT,须跳过以免生成非法FK
-		boolean isOracle = (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM);
-		boolean isOracleStrict = (dbType == DBType.ORACLE || dbType == DBType.ORACLE11);
+		boolean isOracle = (isOracleFamily(dbType));
+		boolean isOracleStrict = (isOracleStrictDialect(dbType));
 		boolean isMySqlFamily = (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB
 				|| dbType == DBType.OCEANBASE || dbType == DBType.DORIS || dbType == DBType.STARROCKS);
 		String splitSign = ";";
 		for (ForeignModel foreign : tableMeta.getForeigns()) {
+			// ALTER形态整体括号包裹(ADD CONSTRAINT (FOREIGN KEY ... CONSTRAINT name)),
+			// 不支持ON UPDATE子句,ON DELETE仅CASCADE/SET NULL(RESTRICT/NO ACTION为默认须省略,
+			// 真库实测ON DELETE RESTRICT与命名前置的ADD CONSTRAINT name FOREIGN KEY均语法错)
+
 			if (outerTable) {
 				tableSql.append(splitSign).append(NEWLINE);
 				tableSql.append("ALTER TABLE ")
@@ -968,10 +1033,11 @@ public class DDLUtils {
 	}
 
 	/**
-	 * 判断字段Java类型是否为日期+时间类型(update 2026-9-5 供Types.DATE列类型精化使用):
-	 * java.time.LocalDateTime与java.util.Date携带时间部分,LocalDate/java.sql.Date为纯日期;
-	 * typeName取自FieldMeta.fieldType(小写全类名),可能为null(空值按纯日期处理,尊重显式声明)
-	 * 
+	 * update 2026-9-5
+	 * 判断字段Java类型是否为日期+时间类型(供Types.DATE列类型精化使用):java.time.LocalDateTime与
+	 * java.util.Date携带时间部分,LocalDate/java.sql.Date为纯日期;typeName取自FieldMeta.fieldType
+	 * (小写全类名),可能为null(空值按纯日期处理,尊重显式声明)
+	 *
 	 * @param typeName
 	 * @return
 	 */
@@ -984,25 +1050,65 @@ public class DDLUtils {
 	}
 
 	/**
-	 * 判断数据库的DATE列类型是否为纯日期语义(update 2026-9-5): dm的DATE列只存日期(dm
-	 * 21c实测)、pg及衍生库的date只存日期(pg 18.6实测,timestamp写入静默截断时间);
-	 * oracle的DATE含时间、mysql系无纯DATE列( Types.DATE已统一转DATETIME ),均不在精化范围;
-	 * kingbase/openGauss/MogDB等PG衍生库的date在实例为Oracle兼容模式时含时间(此时TIMESTAMP为无损超型),
-	 * PG模式时只存日期(此时TIMESTAMP修复丢时间),两种模式下输出TIMESTAMP均无损,按安全优先纳入
-	 * 
+	 * update 2026-9-5 判断数据库的DATE列类型是否为纯日期语义:dm的DATE列只存日期(dm 21c实测)、pg及衍生库的date只存日期
+	 * (pg 18.6实测,timestamp写入静默截断时间);oracle的DATE含时间、mysql系无纯DATE列(Types.DATE已统一
+	 * 转DATETIME),均不在精化范围;kingbase/openGauss/MogDB等PG衍生库的date在实例为Oracle兼容模式时含时间
+	 * (此时TIMESTAMP为无损超型),PG模式时只存日期(此时TIMESTAMP修复丢时间),两种模式下输出TIMESTAMP均无损, 按安全优先纳入
+	 *
 	 * @param dbType
 	 * @return
 	 */
+	/**
+	 * Oracle 兼容家族(含 OceanBase 的 oceanbase 方言):类型名/标识符/DDL 语法按 Oracle 处理
+	 */
+	private static boolean isOracleFamily(int dbType) {
+		return dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM
+				|| dbType == DBType.OCEANBASE;
+	}
+
+	/**
+	 * Oracle 原生语义(不含 DM 的差异化类型;OceanBase 按 Oracle 兼容处理)
+	 */
+	private static boolean isOracleStrictDialect(int dbType) {
+		return dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.OCEANBASE;
+	}
+
 	private static boolean isDateOnlyDialect(int dbType) {
 		return dbType == DBType.DM || dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14
-				|| dbType == DBType.GAUSSDB || dbType == DBType.KINGBASE || dbType == DBType.MOGDB
-				|| dbType == DBType.OPENGAUSS || dbType == DBType.VASTBASE || dbType == DBType.STARDB
-				|| dbType == DBType.OSCAR || dbType == DBType.HANA;
+				|| dbType == DBType.GAUSSDB || dbType == DBType.KINGBASE || dbType == DBType.HIGHGO
+				|| dbType == DBType.MOGDB || dbType == DBType.OPENGAUSS || dbType == DBType.VASTBASE
+				|| dbType == DBType.STARDB || dbType == DBType.OSCAR || dbType == DBType.HANA;
+	}
+
+	/**
+	 * update 2026-10-22
+	 * boolean默认值按目标库归一:oracle系(BOOLEAN列映射INTEGER)与sqlserver(BIT)无true/false字面量,
+	 * 裸DEFAULT
+	 * true建表报ORA-00904/无效列名(响亮失败),true/false统一转1/0;mysql系(TINYINT(1))/pg系/H2/
+	 * sqlite等TRUE/FALSE为原生字面量原样保留。仅精确匹配true/false(忽略大小写),生成列表达式等其余形态不受影响
+	 *
+	 * @param defaultValue 原始默认值
+	 * @param dataType     字段JDBC类型
+	 * @param dbType       目标库类型(未知-1原样返回)
+	 * @return 归一后的默认值
+	 */
+	public static String normalizeBooleanDefault(String defaultValue, int dataType, int dbType) {
+		if (defaultValue == null || dataType != Types.BOOLEAN) {
+			return defaultValue;
+		}
+		String tmp = defaultValue.trim();
+		if (!"true".equalsIgnoreCase(tmp) && !"false".equalsIgnoreCase(tmp)) {
+			return defaultValue;
+		}
+		if (isOracleFamily(dbType) || dbType == DBType.SQLSERVER) {
+			return "true".equalsIgnoreCase(tmp) ? "1" : "0";
+		}
+		return defaultValue;
 	}
 
 	/**
 	 * 判断是否是日期函数，对默认值处理时不需要加单引号
-	 * 
+	 *
 	 * @param defaultValue
 	 * @return
 	 */
@@ -1013,11 +1119,14 @@ public class DDLUtils {
 				|| defaultValue.equals("CURDATE()") || defaultValue.equals("CURTIME()")
 				|| defaultValue.equals("LOCALTIMESTAMP") || defaultValue.equals("SYSTIMESTAMP")
 				|| defaultValue.equals("SYSDATETIME()") || defaultValue.equals("sysdatetime()")
-				|| defaultValue.equals("LOCALTIME") || defaultValue.equals("TODAY")) {
+				|| defaultValue.equals("LOCALTIME")) {
 			return true;
 		}
 		// 带精度形态:CURRENT_TIMESTAMP(3)/NOW(6)等(mysql/mariadb合法时间函数默认值)
-		return defaultValue.matches("(?i)(CURRENT_TIMESTAMP|NOW|LOCALTIMESTAMP)\\s*\\(\\s*\\d+\\s*\\)");
+		if (defaultValue.matches("(?i)(CURRENT_TIMESTAMP|NOW|LOCALTIMESTAMP)\\s*\\(\\s*\\d+\\s*\\)")) {
+			return true;
+		}
+		return false;
 	}
 
 	/**

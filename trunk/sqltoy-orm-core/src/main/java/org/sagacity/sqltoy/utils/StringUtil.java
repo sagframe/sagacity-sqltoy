@@ -1534,9 +1534,12 @@ public class StringUtil {
 		int length = str.length();
 		int maskLength = (int) Math.ceil(length * maskRate / 100.0);
 		if (maskLength >= length) {
-			char[] maskChars = new char[length];
-			Arrays.fill(maskChars, maskCode.charAt(0));
-			return new String(maskChars);
+			// (jre8同步适配:String.repeat为JDK11+,改StringBuilder循环拼接)
+			StringBuilder repeated = new StringBuilder(maskCode.length() * length);
+			for (int i = 0; i < length; i++) {
+				repeated.append(maskCode);
+			}
+			return repeated.toString();
 		}
 		int stride = (int) Math.ceil((double) length / maskLength);
 		char maskChar = maskCode.charAt(0);

@@ -50,7 +50,7 @@
 		<xsd:attribute name="desc" type="xsd:string">
 			<xsd:annotation>
 				<xsd:documentation>
-				<![CDATA[缓存说明]]>
+					<![CDATA[cache description]]>
 				</xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
@@ -62,11 +62,95 @@
 			type="xsd:boolean" default="false">
 			<xsd:annotation>
 				<xsd:documentation>
-				<![CDATA[缓存内部是否存在分组,比如数据字典缓存中有字典分类]]>
+					<![CDATA[whether the cache has internal groups, e.g. the dictionary classification inside a data dictionary cache]]>
 				</xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
 		<xsd:attribute name="check-frequency" type="xsd:string" />
+	</xsd:attributeGroup>
+	<!-- rest authentication modes: basic(username/password) and jwt(token based) -->
+	<xsd:simpleType name="authTypeEnum">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="basic" />
+			<xsd:enumeration value="jwt" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- jwt self-signing algorithms(HS: symmetric HMAC with shared secret; RS: asymmetric RSA, signed by private key and verified by public key) -->
+	<xsd:simpleType name="signAlgorithmEnum">
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="HS256" />
+			<xsd:enumeration value="HS384" />
+			<xsd:enumeration value="HS512" />
+			<xsd:enumeration value="RS256" />
+			<xsd:enumeration value="RS384" />
+			<xsd:enumeration value="RS512" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<!-- rest request authentication attributes: basic(existing username/password) and jwt(token based) -->
+	<xsd:attributeGroup name="sqlToyTranslateRestAuth">
+		<xsd:attribute name="auth-type" type="tns:authTypeEnum">
+			<xsd:annotation>
+				<xsd:documentation>
+					<![CDATA[rest authentication mode: basic(default, username/password) or jwt(token based); under jwt mode token-url(fetch by login), token-secure-key(self-signed locally) and authorization(static token) are mutually exclusive, and the priority follows this order when multiple are configured]]>
+				</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="token-url" type="xsd:string">
+			<xsd:annotation>
+				<xsd:documentation>
+					<![CDATA[the login url to fetch the token under jwt mode: username/password are submitted as a form, the token is extracted from the json response by token-key and cached, re-fetched automatically when nearly expired or on 401]]>
+				</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="token-path" type="xsd:string">
+			<xsd:annotation>
+				<xsd:documentation>
+					<![CDATA[the token field path in the login response json under jwt mode, dot path is supported(e.g. data.token), default: access_token]]>
+				</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="token-prefix" type="xsd:string">
+			<xsd:annotation>
+				<xsd:documentation>
+					<![CDATA[the token header value prefix under jwt mode, default: Bearer; set to none to send the bare token value without prefix]]>
+				</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="token-header" type="xsd:string">
+			<xsd:annotation>
+				<xsd:documentation>
+					<![CDATA[the http header name carrying the token under jwt mode, default: Authorization, e.g. Sag-Auth-Token]]>
+				</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="token-expire" type="xsd:integer">
+			<xsd:annotation>
+				<xsd:documentation>
+					<![CDATA[the token validity period in seconds under jwt mode, the expires_in in the login response takes precedence when present, default: 1800]]>
+				</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="token-secure-key" type="xsd:string">
+			<xsd:annotation>
+				<xsd:documentation>
+					<![CDATA[jwt self-signing mode: configure the signing key directly, the token(with claims sub=username, iat, exp) is generated locally without a login endpoint; for HS256/HS384/HS512 it is the shared secret, for RS256/RS384/RS512 it is the PKCS#8 PEM private key(-----BEGIN PRIVATE KEY-----, convertible by: openssl pkcs8 -topk8 -nocrypt); regenerated automatically when nearly expired, force re-signed and retried once on 401]]>
+				</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="sign-algorithm" type="tns:signAlgorithmEnum">
+			<xsd:annotation>
+				<xsd:documentation>
+					<![CDATA[the signing algorithm for jwt self-signing mode: HS256(default), HS384, HS512(symmetric HMAC with shared secret) or RS256, RS384, RS512(asymmetric RSA, verified by the server with the public key)]]>
+				</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
+		<xsd:attribute name="authorization" type="xsd:string">
+			<xsd:annotation>
+				<xsd:documentation>
+					<![CDATA[a static token configured directly under jwt mode(long-lived token scenario, mutually exclusive with token-url), sent as the Authorization: {token-prefix} {token} header]]>
+				</xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
 	</xsd:attributeGroup>
 	<xsd:element name="sagacity">
 		<xsd:complexType>
@@ -78,8 +162,8 @@
 								maxOccurs="unbounded">
 								<xsd:annotation>
 									<xsd:documentation>
-										<![CDATA[基于sql直接查询,将结果放入缓存,一般格式:key、name、segment1、segment2、status
-										第一列放编码,第二列放名称、后续作为扩展列自行定义,一般将状态放于最后一列
+										<![CDATA[query directly by sql and put the result into cache, the general format is: key, name, segment1, segment2, status
+										the first column holds the code, the second holds the name, the rest are extension columns defined as needed, and the status is generally placed in the last column
 										]]>
 									</xsd:documentation>
 								</xsd:annotation>
@@ -98,7 +182,7 @@
 								maxOccurs="unbounded">
 								<xsd:annotation>
 									<xsd:documentation>
-										<![CDATA[通过spring service调用获取缓存,返回结果为List<List>或List<Object[]>类型]]>
+										<![CDATA[fetch the cache by invoking a spring service, the result should be List<List> or List<Object[]>]]>
 									</xsd:documentation>
 								</xsd:annotation>
 								<xsd:complexType>
@@ -106,7 +190,7 @@
 										use="required">
 										<xsd:annotation>
 											<xsd:documentation>
-										<![CDATA[对应serviceName或者对应java类型,如:com.xxx.TranslateService]]>
+									<![CDATA[the serviceName or the java class name, e.g. com.xxx.TranslateService]]>
 											</xsd:documentation>
 										</xsd:annotation>
 									</xsd:attribute>
@@ -114,7 +198,7 @@
 										use="required">
 										<xsd:annotation>
 											<xsd:documentation>
-										<![CDATA[服务对应的method必须有一个字符型参数,例如:getDictCache(String cacheType)]]>
+										<![CDATA[the service method must have one string parameter, e.g. getDictCache(String cacheType)]]>
 											</xsd:documentation>
 										</xsd:annotation>
 									</xsd:attribute>
@@ -130,6 +214,8 @@
 									<xsd:attribute name="username" type="xsd:string" />
 									<xsd:attribute name="password" type="xsd:string" />
 									<xsd:attributeGroup
+										ref="sqlToyTranslateRestAuth" />
+									<xsd:attributeGroup
 										ref="sqlToyTranslateAttrs" />
 								</xsd:complexType>
 							</xsd:element>
@@ -144,7 +230,7 @@
 										type="xsd:boolean">
 										<xsd:annotation>
 											<xsd:documentation>
-											<![CDATA[一般指通过本地缓存和分布式缓存综合运用，解决超大数据集合，每次检查本地缓存，没有则调用redis获取]]>
+											<![CDATA[generally refers to combining local cache and distributed cache for extra large datasets: check the local cache first, then fetch from redis when missing]]>
 											</xsd:documentation>
 										</xsd:annotation>
 									</xsd:attribute>
@@ -152,7 +238,7 @@
 										type="xsd:int">
 										<xsd:annotation>
 											<xsd:documentation>
-											<![CDATA[指定动态缓存数据map构造长度，默认1万]]>
+											<![CDATA[the initial capacity of the dynamic cache map, default 10000]]>
 											</xsd:documentation>
 										</xsd:annotation>
 									</xsd:attribute>
@@ -160,7 +246,7 @@
 										type="xsd:int">
 										<xsd:annotation>
 											<xsd:documentation>
-											<![CDATA[指定动态缓存数据最大存放数量，默认十万]]>
+											<![CDATA[the maximum number of entries in the dynamic cache, default 100000]]>
 											</xsd:documentation>
 										</xsd:annotation>
 									</xsd:attribute>
@@ -168,14 +254,14 @@
 										type="xsd:float">
 										<xsd:annotation>
 											<xsd:documentation>
-											<![CDATA[指定动态缓存map加载因子，默认0.75]]>
+											<![CDATA[the load factor of the dynamic cache map, default 0.75]]>
 											</xsd:documentation>
 										</xsd:annotation>
 									</xsd:attribute>
 									<xsd:attribute name="sid" type="xsd:string">
 										<xsd:annotation>
 											<xsd:documentation>
-											<![CDATA[配套dynamic-cache提供标识符号]]>
+											<![CDATA[the identifier used along with dynamic-cache]]>
 											</xsd:documentation>
 										</xsd:annotation>
 									</xsd:attribute>
@@ -224,8 +310,8 @@
 					<xsd:annotation>
 						<xsd:documentation>
 							<![CDATA[
-							1、返回结果必须是:cacheName,cacheType(可为null) 两列值,请求参数:lastUpdateTime;
-							2、check-frequency:可以是一个数字如5(每个5秒检测一次),也可以分段模式0..10:20?300,10:20..20?15,20..24?150
+							1. the result must be two columns: cacheName, cacheType(can be null); the request parameter: lastUpdateTime;
+							2. check-frequency: can be a single number such as 5(check every 5 seconds), or a segmented mode such as 0..10:20?300,10:20..20?15,20..24?150
 							]]>
 						</xsd:documentation>
 					</xsd:annotation>
@@ -234,7 +320,7 @@
 							<xsd:element name="sql-checker" minOccurs="0"
 								maxOccurs="unbounded">
 								<xsd:complexType mixed="true">
-									<!-- sql支持三种写法:sql="sqlId"属性引用、<sql>子元素、元素内直接写sql,因此子元素可选 -->
+									<!-- sql supports three forms: the sql="sqlId" attribute reference, the <sql> child element, or sql written directly inside the element, so the child element is optional -->
 									<xsd:sequence minOccurs="0">
 										<xsd:element name="sql" type="xsd:string" />
 									</xsd:sequence>
@@ -268,12 +354,14 @@
 										type="xsd:string" />
 									<xsd:attribute name="username" type="xsd:string" />
 									<xsd:attribute name="password" type="xsd:string" />
+									<xsd:attributeGroup
+										ref="sqlToyTranslateRestAuth" />
 								</xsd:complexType>
 							</xsd:element>
 							<xsd:element name="sql-increment-checker"
 								minOccurs="0" maxOccurs="unbounded">
 								<xsd:complexType mixed="true">
-									<!-- sql支持三种写法:sql="sqlId"属性引用、<sql>子元素、元素内直接写sql,因此子元素可选 -->
+									<!-- sql supports three forms: the sql="sqlId" attribute reference, the <sql> child element, or sql written directly inside the element, so the child element is optional -->
 									<xsd:sequence minOccurs="0">
 										<xsd:element name="sql" type="xsd:string" />
 									</xsd:sequence>
@@ -304,6 +392,8 @@
 										ref="sqlToyTranslateUpdater" />
 									<xsd:attribute name="username" type="xsd:string" />
 									<xsd:attribute name="password" type="xsd:string" />
+									<xsd:attributeGroup
+										ref="sqlToyTranslateRestAuth" />
 								</xsd:complexType>
 							</xsd:element>
 						</xsd:choice>
@@ -311,9 +401,9 @@
 							type="xsd:integer" default="1">
 							<xsd:annotation>
 								<xsd:documentation>
-								<![CDATA[
-									集群各个节点时间差异(单位秒),缓存更新检测时将基准检测时间扣减差集群时差。
-								]]>
+									<![CDATA[
+										the time deviation among cluster nodes(in seconds), the base check time is reduced by this deviation when detecting cache updates.
+									]]>
 								</xsd:documentation>
 							</xsd:annotation>
 						</xsd:attribute>

@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.PreparedStatementResultHandler;
+import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.PKStrategy;
 import org.sagacity.sqltoy.model.ColumnMeta;
@@ -49,19 +50,24 @@ public class SqlServerDialectUtils {
 	// order by 匹配(与SqlServerDialect.ORDER_BY同形)
 	private static final Pattern ORDER_BY_PATTERN = Pattern.compile("(?i)\\Worder\\s*by\\W");
 
-	// update 2026-9-17 offset分页子句匹配(word边界):规避row_offset/offset_id等标识符子串
-	// 以及字面量/别名声明的"offset"被误判为已有分页(修复前contains("offset")子串误判,
-	// 跳过offset 0 rows追加后派生表内order by报"The ORDER BY clause is invalid..."语法错误)
+	// 表级锁提示:用于判断目标表自身是否已经加锁(避免子查询/其他表上的hint误抑制目标表)
+	private static final Pattern TABLE_LOCK_HINT_PATTERN = Pattern
+			.compile("(?i)\\b(rowlock|xlock|updlock|holdlock|nolock|readpast|paglock|tablock|tablockx)\\b");
+
+	// update 2026-9-17
+	// offset分页子句匹配(word边界):规避row_offset/offset_id等标识符子串,以及字面量/别名声明的"offset"被误判为已有分页
+	// (原contains("offset")子串误判,跳过offset 0 rows追加后派生表内order by报"The ORDER BY clause
+	// is invalid..."语法错误)
 	private static final Pattern OFFSET_PATTERN = Pattern.compile("(?i)\\boffset\\b");
 
 	/**
 	 * update 2026-9-17 派生表内层SQL合法性处理:mssql要求派生表(子查询)内的order by必须伴随
 	 * top/offset,否则报"The ORDER BY clause is invalid in views, inline functions,
 	 * derived tables, subqueries...";内层存在top级order by且自身无offset分页时,末尾追加offset 0
-	 * rows (offset 0不增删行,随机取数等场景最终行序由外层order by决定);已有offset时不可重复追加
+	 * rows(offset 0不增删行,随机取数等场景最终行序由外层order by决定);已有offset时不可重复追加
 	 * (双offset语法错误);无order by的裸union派生表本已合法,且OFFSET语法必须跟随order by,
-	 * 同样不可追加。判定经clearDisturbSql掩码字面量并剔除括号内容,规避字面量内'order by'/ 'offset'及子查询内order
-	 * by的干扰;offset判定使用word边界正则,避免row_offset/offset_id 等标识符子串误判为已有分页
+	 * 同样不可追加。判定经clearDisturbSql掩码字面量并剔除括号内容,规避字面量内'order by'/'offset'及子查询内order
+	 * by的干扰;offset判定使用word边界正则,避免row_offset/offset_id等标识符子串误判为已有分页
 	 *
 	 * @param innerSql 待放入派生表的内层sql
 	 * @return 合法化后的内层sql(需追加时末尾带" offset 0 rows")
@@ -94,7 +100,7 @@ public class SqlServerDialectUtils {
 	 * 
 	 * @param sqlToyContext 上下文
 	 * @param conn          数据库连接
-	 * @param dbType        数据库类型(仅sqlserver校准)
+	 * @param profile       数据库类型(仅sqlserver校准)
 	 * @param tableName     实际表名(可含schema)
 	 * @param entityClass   实体类型
 	 */
@@ -151,60 +157,362 @@ public class SqlServerDialectUtils {
 	 */
 	public static String lockSql(String loadSql, String tableName, LockMode lockMode) {
 		// 锁为null直接返回
-		if (lockMode == null || SqlUtil.hasLock(loadSql, DBType.SQLSERVER)) {
+		if (lockMode == null) {
 			return loadSql;
 		}
-		int fromIndex = SqlUtil.getSymMarkIndexExcludeKeyWords(loadSql, "select\\s+", "\\s+from[\\(\\s+]", 0);
-		String selectPart = loadSql.substring(0, fromIndex);
-		String fromPart = loadSql.substring(fromIndex);
-		String[] sqlChips = fromPart.trim().split("\\s+");
-		String realTableName = (tableName == null) ? sqlChips[1] : tableName;
-		if (realTableName.indexOf(",") != -1) {
-			realTableName = realTableName.substring(0, realTableName.indexOf(","));
+		// 复用既有注释清理:后续定位基于无注释sql
+		String sql = SqlUtil.clearMark(loadSql, true);
+		LockTableRef tableRef = findLockTable(sql); // 只看目标表自身是否已有锁提示:子查询/其他join表上的with(nolock)不能抑制目标表加锁
+		TableHint existingHint = findTableHint(sql, tableRef);
+		if (hasTableLock(sql, tableRef, existingHint)) {
+			return loadSql;
 		}
-		String tmp;
-		int chipSize = sqlChips.length;
-		String replaceStr = realTableName;
-		String regex = realTableName;
-		// sqlserver lock 必须在table 后面(如果有别名则在别名后面),这里实现对table和别名位置的查找
-		for (int i = 0; i < chipSize; i++) {
-			tmp = sqlChips[i];
-			if (tmp.toLowerCase(Locale.ROOT).indexOf(realTableName.toLowerCase(Locale.ROOT)) != -1) {
-				if (i + 2 < chipSize && "as".equals(sqlChips[i + 1].toLowerCase(Locale.ROOT))) {
-					regex = realTableName.concat("\\s+as\\s+").concat(sqlChips[i + 2]);
-					replaceStr = realTableName.concat(" as ").concat(sqlChips[i + 2]);
-					break;
-				} else if (i + 2 < chipSize && "where".equals(sqlChips[i + 2].toLowerCase(Locale.ROOT))) {
-					regex = realTableName.concat("\\s+").concat(sqlChips[i + 1]);
-					replaceStr = realTableName.concat(" ").concat(sqlChips[i + 1]);
-					break;
-				} else if (i + 2 < chipSize && ",".equals(sqlChips[i + 2])) {
-					regex = realTableName.concat("\\s+").concat(sqlChips[i + 1]).concat(",");
-					replaceStr = realTableName.concat(" ").concat(sqlChips[i + 1]);
-					break;
-				} else if (i + 3 < chipSize && "join".equals(sqlChips[i + 3].toLowerCase(Locale.ROOT))) {
-					regex = realTableName.concat("\\s+").concat(sqlChips[i + 1]);
-					replaceStr = realTableName.concat(" ").concat(sqlChips[i + 1]);
-					break;
-				}
-			}
-		}
+		String lockHint;
+		String mergeHint;
 		switch (lockMode) {
 		case UPGRADE:
-			loadSql = selectPart.concat(fromPart.replaceFirst("(?i)".concat(regex), replaceStr.replace(",", "")
-					.concat(" with (rowlock xlock) ").concat((regex.endsWith(",") ? "," : ""))));
+			lockHint = " with (rowlock xlock)";
+			mergeHint = "rowlock, xlock";
 			break;
 		case UPGRADE_NOWAIT:
 			// nowait语义是拿不到锁立即报错,不能用readpast(会静默跳过被锁行)
-			loadSql = selectPart.concat(fromPart.replaceFirst("(?i)".concat(regex), replaceStr.replace(",", "")
-					.concat(" with (rowlock xlock nowait) ").concat((regex.endsWith(",") ? "," : ""))));
+			lockHint = " with (rowlock xlock nowait)";
+			mergeHint = "rowlock, xlock, nowait";
 			break;
 		case UPGRADE_SKIPLOCK:
-			loadSql = selectPart.concat(fromPart.replaceFirst("(?i)".concat(regex), replaceStr.replace(",", "")
-					.concat(" with (rowlock readpast) ").concat((regex.endsWith(",") ? "," : ""))));
+			lockHint = " with (rowlock readpast)";
+			mergeHint = "rowlock, readpast";
 			break;
+		default:
+			return loadSql;
 		}
-		return loadSql;
+		// 目标表已有非锁表提示(如with(index(...))):合并到同一with中,不能追加第二个with
+		if (existingHint != null) {
+			String hintContent = sql.substring(existingHint.start + 1, existingHint.end).trim();
+			String merged = hintContent.isEmpty() ? mergeHint : hintContent.concat(", ").concat(mergeHint);
+			return sql.substring(0, existingHint.start + 1).concat(merged).concat(sql.substring(existingHint.end));
+		}
+		// 表提示必须位于表名/别名之后,不能插在别名之前
+		int insertIndex = Math.max(tableRef.tableEnd, tableRef.aliasEnd);
+		return sql.substring(0, insertIndex).concat(lockHint).concat(sql.substring(insertIndex));
+	}
+
+	/**
+	 * @description 判断目标表自身是否已带锁提示(with (...)/旧式(nolock)),只检查该表引用范围,
+	 *              不复用SqlUtil.hasLock的全SQL扫描,避免子查询或join其他表上的hint导致目标表漏锁
+	 */
+	private static boolean hasTableLock(String sql, LockTableRef tableRef, TableHint tableHint) {
+		// 旧式 from t (nolock):parseTableRef已把旧提示纳入aliasEnd
+		if (TABLE_LOCK_HINT_PATTERN.matcher(sql.substring(tableRef.tableEnd, tableRef.aliasEnd)).find()) {
+			return true;
+		}
+		return tableHint != null
+				&& TABLE_LOCK_HINT_PATTERN.matcher(sql.substring(tableHint.start, tableHint.end + 1)).find();
+	}
+
+	/**
+	 * @description 定位目标表后的with (...)表提示,返回括号区间;无提示返回null
+	 */
+	private static TableHint findTableHint(String sql, LockTableRef tableRef) {
+		int n = sql.length();
+		int pos = skipWhitespace(sql, tableRef.aliasEnd);
+		if (pos >= n) {
+			return null;
+		}
+		int hintStart = -1;
+		if (isWordAt(sql, pos, "with")) {
+			hintStart = skipWhitespace(sql, pos + 4);
+		} else if (sql.charAt(pos) == '(') {
+			hintStart = pos;
+		}
+		if (hintStart < 0 || hintStart >= n || sql.charAt(hintStart) != '(') {
+			return null;
+		}
+		int hintEnd = StringUtil.getSymMarkIndexSkipQuoted("(", ")", sql, hintStart);
+		if (hintEnd < hintStart) {
+			return null;
+		}
+		return new TableHint(hintStart, hintEnd);
+	}
+
+	/**
+	 * @description lock语义只取第一个顶层from后的表(可带schema/方括号/别名);
+	 *              CTE/派生表/表值函数等复杂形态不在这里推演,无法直接定位表就明确报错
+	 * @param sql 已去注释sql
+	 * @return 第一个from后的表引用
+	 */
+	private static LockTableRef findLockTable(String sql) {
+		// 复用字面量掩码,避免select list中的'from t'被当from子句
+		String maskedSql = SqlConfigParseUtils.maskLiterals(sql, true);
+		int depth = 0;
+		int fromIndex = -1;
+		for (int i = 0; i < maskedSql.length(); i++) {
+			char c = maskedSql.charAt(i);
+			if (c == '(') {
+				depth++;
+			} else if (c == ')') {
+				if (depth > 0) {
+					depth--;
+				}
+			} else if (depth == 0 && isWordAt(maskedSql, i, "from")) {
+				fromIndex = i;
+				break;
+			}
+		}
+		if (fromIndex < 0) {
+			throw new IllegalArgumentException("lock query must contain a from clause, lock sql: " + sql);
+		}
+		int tableStart = skipWhitespace(sql, fromIndex + 4);
+		if (tableStart >= sql.length() || sql.charAt(tableStart) == '(') {
+			throw new IllegalArgumentException("lock query must reference a table directly, lock sql: " + sql);
+		}
+		LockTableRef tableRef = parseTableRef(sql, tableStart);
+		if (tableRef == null) {
+			throw new IllegalArgumentException("cannot determine the table to lock from sql: " + sql);
+		}
+		return tableRef;
+	}
+
+	/**
+	 * @description 解析from/join后的表引用,支持schema.table、[schema].[table]、别名(含as)
+	 * @return 表引用;表值函数、派生表等处返回null
+	 */
+	private static LockTableRef parseTableRef(String sql, int start) {
+		int n = sql.length();
+		int pos = skipWhitespace(sql, start);
+		Identifier identifier = readQualifiedIdentifier(sql, pos);
+		if (identifier == null) {
+			return null;
+		}
+		int afterTable = skipWhitespace(sql, identifier.end);
+		// 未加引号的关键字不是表名(from where等非法sql),避免把where当表加锁
+		if (!isQuotedIdentifierStart(sql.charAt(pos)) && isClauseKeyword(identifier.name)) {
+			return null;
+		}
+		// 表值函数:from openjson(...)等没有可加锁的基表;旧式表提示from t (nolock)除外
+		if (afterTable < n && sql.charAt(afterTable) == '(') {
+			int close = StringUtil.getSymMarkIndexSkipQuoted("(", ")", sql, afterTable);
+			if (close > afterTable && TABLE_LOCK_HINT_PATTERN.matcher(sql.substring(afterTable, close + 1)).find()) {
+				LockTableRef oldHintRef = new LockTableRef();
+				oldHintRef.name = identifier.name;
+				oldHintRef.tableEnd = identifier.end;
+				oldHintRef.aliasEnd = close + 1;
+				return oldHintRef;
+			}
+			return null;
+		}
+		int aliasEnd = identifier.end;
+		if (isWordAt(sql, afterTable, "as")) {
+			int aliasStart = skipWhitespace(sql, afterTable + 2);
+			Identifier alias = readIdentifierPart(sql, aliasStart);
+			if (alias != null) {
+				aliasEnd = alias.end;
+			}
+		} else if (isAliasStart(sql, afterTable)) {
+			int wordEnd = readWordEnd(sql, afterTable);
+			String word = sql.substring(afterTable, wordEnd).toLowerCase(Locale.ROOT);
+			if (!isClauseKeyword(word)) {
+				Identifier alias = readIdentifierPart(sql, afterTable);
+				if (alias != null) {
+					aliasEnd = alias.end;
+				}
+			}
+		}
+		// 别名后的列清单:from t as a(c1,c2),复用StringUtil括号配对
+		int columnList = skipWhitespace(sql, aliasEnd);
+		if (columnList < n && sql.charAt(columnList) == '(') {
+			int close = StringUtil.getSymMarkIndexSkipQuoted("(", ")", sql, columnList);
+			if (close > columnList) {
+				aliasEnd = close + 1;
+			}
+		}
+		LockTableRef tableRef = new LockTableRef();
+		tableRef.name = identifier.name;
+		tableRef.tableEnd = identifier.end;
+		tableRef.aliasEnd = aliasEnd;
+		return tableRef;
+	}
+
+	/**
+	 * @description 读取schema.table形式的限定标识符,去掉[]/""/``并转小写
+	 */
+	private static Identifier readQualifiedIdentifier(String sql, int start) {
+		int n = sql.length();
+		int pos = skipWhitespace(sql, start);
+		List<String> parts = new ArrayList<String>();
+		int end = pos;
+		while (true) {
+			Identifier part = readIdentifierPart(sql, pos);
+			if (part == null) {
+				return null;
+			}
+			parts.add(part.name);
+			end = part.end;
+			pos = skipWhitespace(sql, end);
+			if (pos >= n || sql.charAt(pos) != '.') {
+				break;
+			}
+			pos++;
+		}
+		return new Identifier(String.join(".", parts).toLowerCase(Locale.ROOT), end);
+	}
+
+	/**
+	 * @description 读取单个标识符:普通单词、[方括号]、"双引号"、`反引号`
+	 */
+	private static Identifier readIdentifierPart(String sql, int start) {
+		int n = sql.length();
+		if (start >= n) {
+			return null;
+		}
+		char c = sql.charAt(start);
+		if (c == '[') {
+			StringBuilder value = new StringBuilder();
+			int i = start + 1;
+			while (i < n) {
+				char ch = sql.charAt(i);
+				if (ch == ']') {
+					if (i + 1 < n && sql.charAt(i + 1) == ']') {
+						value.append(']');
+						i += 2;
+						continue;
+					}
+					return new Identifier(value.toString(), i + 1);
+				}
+				value.append(ch);
+				i++;
+			}
+			return null;
+		}
+		if (c == '"' || c == '`') {
+			StringBuilder value = new StringBuilder();
+			int i = start + 1;
+			while (i < n) {
+				char ch = sql.charAt(i);
+				if (ch == c) {
+					if (i + 1 < n && sql.charAt(i + 1) == c) {
+						value.append(c);
+						i += 2;
+						continue;
+					}
+					return new Identifier(value.toString(), i + 1);
+				}
+				value.append(ch);
+				i++;
+			}
+			return null;
+		}
+		if (!isIdentifierStart(c)) {
+			return null;
+		}
+		int end = readWordEnd(sql, start);
+		return new Identifier(sql.substring(start, end), end);
+	}
+
+	private static boolean isAliasStart(String sql, int pos) {
+		if (pos >= sql.length()) {
+			return false;
+		}
+		char c = sql.charAt(pos);
+		return c == '[' || c == '"' || c == '`' || isIdentifierStart(c);
+	}
+
+	private static boolean isQuotedIdentifierStart(char c) {
+		return c == '[' || c == '"' || c == '`';
+	}
+
+	private static boolean isIdentifierStart(char c) {
+		return Character.isLetter(c) || c == '_' || c == '@' || c == '#' || c == '$';
+	}
+
+	private static boolean isWordChar(char c) {
+		return Character.isLetterOrDigit(c) || c == '_' || c == '@' || c == '#' || c == '$';
+	}
+
+	private static int readWordEnd(String sql, int start) {
+		int i = start;
+		while (i < sql.length() && isWordChar(sql.charAt(i))) {
+			i++;
+		}
+		return i;
+	}
+
+	private static boolean isWordAt(String sql, int pos, String word) {
+		int n = sql.length();
+		if (pos < 0 || pos + word.length() > n || !sql.regionMatches(true, pos, word, 0, word.length())) {
+			return false;
+		}
+		if (pos > 0 && isWordChar(sql.charAt(pos - 1))) {
+			return false;
+		}
+		int after = pos + word.length();
+		return after >= n || !isWordChar(sql.charAt(after));
+	}
+
+	private static boolean isClauseKeyword(String word) {
+		switch (word) {
+		case "select":
+		case "from":
+		case "where":
+		case "group":
+		case "order":
+		case "having":
+		case "union":
+		case "except":
+		case "intersect":
+		case "join":
+		case "inner":
+		case "left":
+		case "right":
+		case "full":
+		case "cross":
+		case "outer":
+		case "on":
+		case "for":
+		case "option":
+		case "tablesample":
+		case "pivot":
+		case "unpivot":
+		case "apply":
+		case "with":
+			return true;
+		default:
+			return false;
+		}
+	}
+
+	private static int skipWhitespace(String sql, int start) {
+		int i = start;
+		while (i < sql.length() && Character.isWhitespace(sql.charAt(i))) {
+			i++;
+		}
+		return i;
+	}
+
+	private static final class Identifier {
+		private final String name;
+		private final int end;
+
+		private Identifier(String name, int end) {
+			this.name = name;
+			this.end = end;
+		}
+	}
+
+	private static final class LockTableRef {
+		private String name;
+		private int tableEnd;
+		private int aliasEnd;
+	}
+
+	private static final class TableHint {
+		private final int start;
+		private final int end;
+
+		private TableHint(int start, int end) {
+			this.start = start;
+			this.end = end;
+		}
 	}
 
 	@SuppressWarnings("unchecked")
@@ -241,8 +549,8 @@ public class SqlServerDialectUtils {
 					while (rs.next()) {
 						TableMeta tableMeta = new TableMeta();
 						tableMeta.setTableName(rs.getString("TABLE_NAME"));
-						// update 2026-9-11 sysobjects.xtype为CHAR(2),视图值'V '带尾随空格,
-						// 原"V".equals恒不命中致视图被归为TABLE(sqlserver2022实测),trim后判型
+						// update 2026-9-11 sysobjects.xtype为CHAR(2),视图值'V
+						// '带尾随空格,原"V".equals恒不命中致视图被归为TABLE(sqlserver2022实测),trim后判型
 						String rawType = rs.getString("TABLE_TYPE");
 						if (rawType != null) {
 							rawType = rawType.trim();

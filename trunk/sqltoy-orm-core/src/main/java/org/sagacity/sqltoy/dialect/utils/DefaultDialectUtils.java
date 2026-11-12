@@ -31,9 +31,9 @@ import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.GeneratedType;
 import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
+import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
-import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.DBProfile;
@@ -80,7 +80,7 @@ public class DefaultDialectUtils {
 	 * @param totalCount
 	 * @param randomCount
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param dialect
 	 * @param fetchSize
 	 * @param maxRows
@@ -103,12 +103,13 @@ public class DefaultDialectUtils {
 		}
 		// 给原始sql标记上特殊的开始和结尾，便于sql拦截器快速定位到原始sql并进行条件补充
 		innerSql = SqlUtilsExt.markOriginalSql(innerSql);
-		// update 2026-9-10 移除sag_row_number随机列,改派生表+order by rand():原形态将随机列
-		// 混入结果集(注入形态居首/包裹形态亦含),单值映射(findRandom的resultType=String/Long
-		// 等按第1列取值)读到随机数而非业务列,多列行更触发ArrayList cannot be cast(mysql系
-		// 实测);order by rand() limit n为mysql/clickhouse/impala系取随机行的标准形态,结果集
-		// 与原始sql列完全一致,VO/Map映射也不再混入sag_row_number键;派生表包裹天然中和
-		// 内层order by/union(原hasOrderByOrUnion双分支统一为单一包裹形态)
+		// update 2026-9-10 移除sag_row_number随机列,改派生表+order by
+		// rand():原形态将随机列混入结果集(注入形态居首/
+		// 包裹形态亦含),单值映射(findRandom的resultType=String/Long等按第1列取值)读到随机数而非业务列,
+		// 多列行更触发ArrayList cannot be cast(mysql系实测);order by rand() limit
+		// n为mysql/clickhouse/
+		// impala系取随机行的标准形态,结果集与原始sql列完全一致,VO/Map映射也不再混入sag_row_number键;
+		// 派生表包裹天然中和内层order by/union(原hasOrderByOrUnion双分支统一为单一包裹形态)
 		sql.append("select " + SqlToyConstants.INTERMEDIATE_TABLE1 + ".* from (");
 		sql.append(innerSql);
 		sql.append(" )  as " + SqlToyConstants.INTERMEDIATE_TABLE1);
@@ -130,7 +131,7 @@ public class DefaultDialectUtils {
 	 * @param pageNo
 	 * @param pageSize
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param dialect
 	 * @param fetchSize
 	 * @param maxRows
@@ -153,9 +154,20 @@ public class DefaultDialectUtils {
 		// update 2026-11-10 集合语句先包派生表再limit/offset:CH的limit/offset在集合运算尾部绑定右侧SELECT
 		// (分页页行数与偏移整体失效);Impala同族行为——官方UNION文档明确"要让ORDER BY/LIMIT作用于整个结果集,
 		// 须把UNION整条包成子查询再在外层排序/限制",即裸挂LIMIT只作用于最后一个SELECT。
+		// update 2026-11-12 Impala的WITH不支持出现在子查询块内(必须位于最外层语句开头),包裹前先剥离置前,
+		// 与SqlServer分支口径一致;CH对子查询内CTE与外层WITH均合法(26.8真库实测),统一上提无副作用
 		// 其余库(DB2/Hana/PG/MySQL/SQLite等标准语义)保持原形态,避免多包一层派生表改变执行计划;
 		// 别名复用SqlToyConstants.INTERMEDIATE_TABLE与其他包裹路径统一
 		if ((dbType == DBType.CLICKHOUSE || dbType == DBType.IMPALA) && SqlUtil.hasSetOperation(innerSql, true)) {
+			if (sqlToyConfig.isHasWith()) {
+				SqlWithAnalysis sqlWith = new SqlWithAnalysis(innerSql);
+				String withSql = sqlWith.getWithSql();
+				// 防御:hasWith标记与传入innerSql不一致时getWithSql可能为空,不能append(null)产出"null"文本
+				if (StringUtil.isNotBlank(withSql)) {
+					sql.append(withSql);
+				}
+				innerSql = sqlWith.getRejectWithSql();
+			}
 			sql.append("select * from (").append(innerSql).append(") ").append(SqlToyConstants.INTERMEDIATE_TABLE);
 		} else {
 			sql.append(innerSql);
@@ -188,7 +200,7 @@ public class DefaultDialectUtils {
 	 * @param queryExecutor
 	 * @param topSize
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param dialect
 	 * @param fetchSize
 	 * @param maxRows
@@ -204,9 +216,20 @@ public class DefaultDialectUtils {
 		StringBuilder sql = DialectUtils.openFastWrap(sqlToyConfig, dialect);
 		// update 2026-11-10 集合语句先包派生表再limit:CH的limit在集合运算尾部绑定右侧SELECT
 		// (A except B limit N的N修饰B,整体不截断,真库实测top2返回全量);Impala同族行为(官方UNION文档:
-		// 要让ORDER BY/LIMIT作用于整体须把UNION包成子查询)。其余库保持原形态(标准语义,无需多包一层)。
+		// 要让ORDER BY/LIMIT作用于整体须把UNION包成子查询)。
+		// update 2026-11-12 WITH先剥离置前再包裹:Impala不支持子查询块内CTE(同findPageBySql,SqlServer同口径)
+		// 其余库保持原形态(标准语义,无需多包一层)。
 		// 别名复用SqlToyConstants.INTERMEDIATE_TABLE
 		if ((dbType == DBType.CLICKHOUSE || dbType == DBType.IMPALA) && SqlUtil.hasSetOperation(innerSql, true)) {
+			if (sqlToyConfig.isHasWith()) {
+				SqlWithAnalysis sqlWith = new SqlWithAnalysis(innerSql);
+				String withSql = sqlWith.getWithSql();
+				// 防御:hasWith标记与传入innerSql不一致时getWithSql可能为空,不能append(null)产出"null"文本
+				if (StringUtil.isNotBlank(withSql)) {
+					sql.append(withSql);
+				}
+				innerSql = sqlWith.getRejectWithSql();
+			}
 			sql.append("select * from (").append(innerSql).append(") ").append(SqlToyConstants.INTERMEDIATE_TABLE);
 		} else {
 			sql.append(innerSql);
@@ -227,7 +250,7 @@ public class DefaultDialectUtils {
 	 * @param entities
 	 * @param batchSize
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param autoCommit
 	 * @param tableName
 	 * @return
@@ -315,7 +338,7 @@ public class DefaultDialectUtils {
 			}
 			sqlToyResult = SqlConfigParseUtils.processSql(deleteSql.toString(), null, realValues, profile.getDialect());
 		}
-		// 增加sql执行拦截器 update 2022-9-10
+		// update 2022-9-10 增加sql执行拦截器
 		SqlToyConfig sqlToyConfig = new SqlToyConfig(DataSourceUtils.getDialect(dbType));
 		sqlToyConfig.setSqlType(SqlType.delete);
 		sqlToyConfig.setSql(sqlToyResult.getSql());
@@ -347,7 +370,7 @@ public class DefaultDialectUtils {
 	 * @param updateRowHandler
 	 * @param uniqueProps
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param dialect
 	 * @param tableName
 	 * @return
@@ -397,7 +420,7 @@ public class DefaultDialectUtils {
 		// 组织select * from table for update 语句
 		SqlToyResult queryParam = wrapFetchSql(entityMeta, profile, whereFields, whereParamValues, tableName,
 				lockWaitTimeout);
-		// 增加sql执行拦截器 update 2022-9-10
+		// update 2022-9-10 增加sql执行拦截器
 		queryParam = DialectUtils.doInterceptors(sqlToyContext, null, OperateType.singleTable, queryParam,
 				entity.getClass(), profile);
 		SqlExecuteStat.showSql("execute lock records query", queryParam.getSql(), queryParam.getParamsValue());
@@ -426,9 +449,9 @@ public class DefaultDialectUtils {
 		}
 		final String usfReReadSql = reReadSqlB.toString();
 		final String[] usfReReadProps = usfLocatorProps;
-		// 可编辑结果集
-		// update 2026-9-14 DM驱动FORWARD_ONLY+UPDATABLE组合prepare即报-2123无效cursor
-		// name(真库实测),SCROLL_INSENSITIVE+UPDATABLE可用(updateRow正常落库);其余库维持FORWARD_ONLY
+		// update 2026-9-14 可编辑结果集
+		// DM驱动FORWARD_ONLY+UPDATABLE组合prepare即报-2123无效cursor name(真库实测),
+		// SCROLL_INSENSITIVE+UPDATABLE可用(updateRow正常落库);其余库维持FORWARD_ONLY
 		int usfRsType = (dbType == DBType.DM) ? ResultSet.TYPE_SCROLL_INSENSITIVE : ResultSet.TYPE_FORWARD_ONLY;
 		PreparedStatement pst = conn.prepareStatement(queryParam.getSql(), usfRsType, ResultSet.CONCUR_UPDATABLE);
 		// 设置全局statementTimeout，默认为null
@@ -444,7 +467,13 @@ public class DefaultDialectUtils {
 						SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, profile, pst, (Object[]) rowData,
 								null, 0);
 						// 执行类似 select xxx from table for update(sqlserver语法有差异)
-						ResultSet finalRs = pst.executeQuery();
+						ResultSet executeRs = pst.executeQuery();
+						// SQL组装缺陷(真库实测updateRow报"Found a quote for which there is no
+						// updateRow/insertRow转独立update/insert语句、行内读可见性);行定位键
+						// 取usfReReadProps(优先主键)的列名,代理在next()时捕获其原始值;
+						// 其余流程(dataVersion/公共字段/insert分支/回读组装)对代理透明不变
+
+						final ResultSet finalRs = executeRs;
 						try {
 							int rowCnt = finalRs.getMetaData().getColumnCount();
 							// 列类型名与读取策略查询级一次预计算(结果集元数据恒定,置于行循环外;
@@ -579,6 +608,11 @@ public class DefaultDialectUtils {
 								// 当前行缓存不反映本次修改(标签/序号update均陈旧,refreshRow/滚动集亦无效),
 								// 直接回读当前行得到旧值致返回实体失真;以独立语句重查回读(行锁已由本事务
 								// 持有,同事务可见自身修改);其余库驱动updateRow后当前行即新值,维持原形态
+								// update 2026-11-9 真库复测(26ai Free 23.26.3.0.0 与 21c XE 21.3.0.0.0 表现一致;
+								// ojdbc11 23.26.4 / ojdbc8 19.33 / ojdbc8 19.3 三档驱动一致):
+								// 若回调只改普通列、不碰库里会被触发器/默认值改写的列,updateRow后立即回读即新值;
+								// 但只要把这些列的实体旧值一并updateXxx回写(本方法逐列resultUpdate的真实形态),回读仍是旧值,
+								// 而独立select证实库内已是新值,refreshRow亦无效(实测0/100修复)——26ai未改变该驱动行为,本重查不可省
 								ResultSet readRs = finalRs;
 								PreparedStatement reReadPst = null;
 								if (hasUpdateRow && (dbType == DBType.ORACLE || dbType == DBType.ORACLE11
@@ -638,8 +672,8 @@ public class DefaultDialectUtils {
 			return entity;
 		}
 		List rowList = (List) updateResult.get(0);
-		// 覆盖返回值
-		// update 2026-9-10 传入字段注解的jdbcType:回读行值已归一为文本形态(json列=String),
+		// update 2026-9-10 覆盖返回值
+		// 传入字段注解的jdbcType:回读行值已归一为文本形态(json列=String),
 		// 原OTHER类型转换不触发json→POJO/List反序列化,String直设对象属性报argument type
 		// mismatch(vastbase G100真库updateSaveFetch的json对象列实爆,vector/geometry属性同理受益)
 		String[] overrideFields = entityMeta.getFieldsArray(false);
@@ -655,7 +689,7 @@ public class DefaultDialectUtils {
 	 * 组织updateSaveFetch的锁查询sql
 	 * 
 	 * @param entityMeta
-	 * @param dbType
+	 * @param profile
 	 * @param uniqueProps
 	 * @param whereParamValues
 	 * @param tableName
@@ -686,7 +720,7 @@ public class DefaultDialectUtils {
 			}
 			columnName = entityMeta.getColumnName(field);
 			sql.append(ReservedWordsUtil.convertWord(columnName, dbType));
-			// update 2024-8-7 rabbit 反馈,条件值为null的场景
+			// update 2024-8-7 条件值为null的场景(rabbit反馈)
 			if (whereParamValues[index] == null) {
 				sql.append(" is null ");
 			} else {
@@ -923,7 +957,7 @@ public class DefaultDialectUtils {
 	 * @param schema
 	 * @param tableName
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param dialect
 	 * @return
 	 * @throws Exception
@@ -1008,7 +1042,7 @@ public class DefaultDialectUtils {
 	 * @param schema
 	 * @param tableName
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param dialect
 	 * @return
 	 * @throws Exception
@@ -1113,7 +1147,7 @@ public class DefaultDialectUtils {
 
 	/**
 	 * update 2026-9-11 oceanbase专用:直查information_schema.tables获取表元数据(规避驱动
-	 * getTables将TABLE_COMMENT预先toString为"[B@hash"的构造缺陷),TABLE_TYPE按JDBC惯例 归一(BASE
+	 * getTables将TABLE_COMMENT预先toString为"[B@hash"的构造缺陷),TABLE_TYPE按JDBC惯例归一(BASE
 	 * TABLE→TABLE);表名匹配语义与默认实现一致(无%时按contains包裹)
 	 *
 	 * @param conn             数据库连接
@@ -1172,7 +1206,7 @@ public class DefaultDialectUtils {
 	}
 
 	/**
-	 * update 2026-9-13 行级锁for update语句模板(收编各方言类私有的getLockSql拷贝): 差异点参数化——是否含skip
+	 * update 2026-9-13 行级锁for update语句模板(收编各方言类私有的getLockSql拷贝):差异点参数化——是否含skip
 	 * locked分支、skip locked的方言形态、UPGRADE是否追加wait N
 	 *
 	 * @param sql               原sql
@@ -1191,6 +1225,7 @@ public class DefaultDialectUtils {
 			return "";
 		}
 		if (lockMode == LockMode.UPGRADE_NOWAIT) {
+			// for update(如需立即失败语义由会话级set lock mode to not wait承担)
 			return " for update nowait ";
 		}
 		if (supportSkipLocked && lockMode == LockMode.UPGRADE_SKIPLOCK) {
@@ -1202,7 +1237,7 @@ public class DefaultDialectUtils {
 	/**
 	 * 设置会话级锁超时
 	 *
-	 * @param dbType
+	 * @param profile
 	 * @param conn
 	 * @param lockMode
 	 * @param lockWaitTimeout 单位秒
@@ -1228,7 +1263,8 @@ public class DefaultDialectUtils {
 			}
 		} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 				|| dbType == DBType.OPENGAUSS || dbType == DBType.STARDB || dbType == DBType.VASTBASE
-				|| dbType == DBType.OSCAR || dbType == DBType.MOGDB) {
+				|| dbType == DBType.OSCAR || dbType == DBType.MOGDB || dbType == DBType.HIGHGO) {
+			// update 2026-10-12 瀚高归PG系(lock_timeout)
 			try (Statement setLockStmt = conn.createStatement()) {
 				setLockStmt.execute("SET lock_timeout='" + 1000 * lockWaitTimeout + "ms'");
 			}

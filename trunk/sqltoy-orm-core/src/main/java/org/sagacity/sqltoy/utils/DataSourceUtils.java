@@ -131,6 +131,8 @@ public class DataSourceUtils {
 		public final static String STARDB = "stardb";
 		// SAP HANA 2.0(驱动产品名上报HDB,URL schema为jdbc:sap:)
 		public final static String HANA = "hana";
+		// update 2026-10-11 瀚高数据库(PG12内核+oracle兼容层)
+		public final static String HIGHGO = "highgo";
 		public final static String UNDEFINE = "undefine";
 	}
 
@@ -153,7 +155,7 @@ public class DataSourceUtils {
 		public final static int DORIS = 46;
 		public final static int STARROCKS = 47;
 
-		// 默认15+版本(update 2026-7-30 将postgresql默认提升到15+版本，增加postgresql14 代替<=14的老版本)
+		// update 2026-7-30 默认15+版本(postgresql默认按15+版本,postgresql14 承接<=14的老版本)
 		public final static int POSTGRESQL = 50;
 		// public final static int POSTGRESQL15 = 51;
 		public final static int POSTGRESQL14 = 52;
@@ -189,6 +191,7 @@ public class DataSourceUtils {
 		public final static int STARDB = 220;
 		// SAP HANA 2.0
 		public final static int HANA = 230;
+		public final static int HIGHGO = 240;
 	}
 
 	static {
@@ -238,6 +241,8 @@ public class DataSourceUtils {
 		DBNameTypeMap.put(Dialect.STARROCKS, DBType.STARROCKS);
 		// 2026-9-11 增加对SAP HANA的支持
 		DBNameTypeMap.put(Dialect.HANA, DBType.HANA);
+		// update 2026-10-11 瀚高数据库
+		DBNameTypeMap.put(Dialect.HIGHGO, DBType.HIGHGO);
 
 		// 默认设置oscar、vastbase数据库用gaussdb方言来实现
 		// dialectMap.put(Dialect.OSCAR, Dialect.OPENGAUSS);
@@ -335,6 +340,9 @@ public class DataSourceUtils {
 		case DBType.HANA: {
 			return Dialect.HANA;
 		}
+		case DBType.HIGHGO: {
+			return Dialect.HIGHGO;
+		}
 		default:
 			return Dialect.UNDEFINE;
 		}
@@ -373,16 +381,16 @@ public class DataSourceUtils {
 	 * @throws SQLException 获取数据库类型
 	 */
 	public static String getCurrentDBDialect(final Connection conn) throws SQLException {
-		// update 2026-9-6 委托DBProfile统筹缓存(以URL为key,含dialect/dbType等一次解析),
-		// 原始匹配逻辑(产品名+URL特征+dialectMap映射)提炼为resolveDialectByMeta供
-		// getDBProfile未命中解析时调用,避免委托形成循环;dialectMap运行期修改自此为
-		// 首次解析冻结语义(与getDBType的既有缓存行为一致),需热生效可显式配置dialect
+		// update 2026-9-6 委托DBProfile统筹缓存(以URL为key,dialect/dbType等一次解析);
+		// 原始匹配逻辑(产品名+URL特征+dialectMap映射)提炼为resolveDialectByMeta,供getDBProfile
+		// 未命中解析时调用,避免委托形成循环;dialectMap自定义映射自首次解析起冻结(与getDBType既有
+		// 缓存行为一致),需热生效可显式配置dialect
 		return getDBProfile(conn).getDialect();
 	}
 
 	/**
-	 * update 2026-9-6 方言原始匹配(自原getCurrentDBDialect提炼,仅getDBProfile解析链内部使用):
-	 * 产品名匹配+URL特征优先+dialectMap自定义映射,无缓存实时
+	 * update 2026-9-6
+	 * 方言原始匹配(仅getDBProfile解析链内部使用):产品名匹配+URL特征优先+dialectMap自定义映射,无缓存实时
 	 */
 	private static String resolveDialectByMeta(final Connection conn) throws SQLException {
 		String dilectName = Dialect.UNDEFINE;
@@ -412,9 +420,8 @@ public class DataSourceUtils {
 					|| StringUtil.indexOfIgnoreCase(dbDialect, Dialect.MARIADB) != -1
 					|| StringUtil.indexOfIgnoreCase(dbDialect, Dialect.INNOSQL) != -1) {
 				dilectName = Dialect.MYSQL;
-				// update 2026-9-6 StarRocks/Doris的current_version()引擎探测已上移至getDBProfile
-				// 统一处理(探测属档案属性解析,随URL_PROFILE_CACHE每URL缓存一次),
-				// 本方法恢复纯产品名+URL特征的实时语义
+				// update 2026-9-6 StarRocks/Doris的current_version()引擎探测上移至getDBProfile统一处理
+				// (探测属档案属性解析,随URL_PROFILE_CACHE每URL缓存一次),本方法保持纯产品名+URL特征的实时语义
 			} // doris
 			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.DORIS) != -1) {
 				dilectName = Dialect.DORIS;
@@ -480,7 +487,11 @@ public class DataSourceUtils {
 				dilectName = Dialect.VASTBASE;
 			} // SAP HANA 2.2026-9-11 驱动getDatabaseProductName()上报"HDB"(不含hana字样),
 				// URL特征jdbc:sap:已在getDBDialectByUrl优先命中,此处按产品名兜底
-			else if (StringUtil.indexOfIgnoreCase(dbDialect, "hdb") != -1
+			else if (StringUtil.indexOfIgnoreCase(dbDialect, Dialect.HIGHGO) != -1) {
+				dilectName = Dialect.HIGHGO;
+				// SAP HANA 2.2026-9-11 驱动getDatabaseProductName()上报"HDB"(不含hana字样),
+				// URL特征jdbc:sap:已在getDBDialectByUrl优先命中,此处按产品名兜底
+			} else if (StringUtil.indexOfIgnoreCase(dbDialect, "hdb") != -1
 					|| StringUtil.indexOfIgnoreCase(dbDialect, Dialect.HANA) != -1) {
 				dilectName = Dialect.HANA;
 			} else if (!dialectMap.isEmpty()) {
@@ -524,11 +535,12 @@ public class DataSourceUtils {
 
 	/**
 	 * update 2026-9-10 db2的GSE空间扩展schema探测(随URL档案每URL一次):12.1起内置空间引擎与 db2gse
-	 * GSE扩展可并存(实测12.1.5容器GSE仍启用、12.1.2容器仅内置),且内置ST_GEOMETRY与
-	 * db2gse.ST_GEOMETRY为不同UDT(函数产物与列类型错配报-408),geometry参数化包装须按GSE
-	 * 存在性分派db2gse前缀或内置非限定形态;非db2为null,探测异常为TRUE(保持既有db2gse形态)。
-	 * (原probeSqlServerJsonType服务器级json类型探测已于2026-9-10移除:merge/insert-ignore统一
-	 * 裸?+coalesce形态对原生json列与nvarchar承载列双兼容,不再依赖服务器级探测)
+	 * GSE扩展可并存
+	 * (实测12.1.5容器GSE仍启用、12.1.2容器仅内置),且内置ST_GEOMETRY与db2gse.ST_GEOMETRY为不同UDT
+	 * (函数产物与列类型错配报-408),geometry参数化包装须按GSE存在性分派db2gse前缀或内置非限定形态;
+	 * 非db2为null,探测异常为TRUE(保持既有db2gse形态)。
+	 * 原probeSqlServerJsonType服务器级json类型探测已移除:merge/insert-ignore统一裸?+coalesce形态,
+	 * 对原生json列与nvarchar承载列双兼容,不再依赖服务器级探测
 	 */
 	private static Boolean probeDB2GseSchema(final Connection conn, int dbType) {
 		if (dbType != DBType.DB2) {
@@ -543,11 +555,12 @@ public class DataSourceUtils {
 	}
 
 	/**
-	 * update 2026-9-5 JDBC URL schema特征与方言识别名的映射:openGauss/MOGDB/VASTBASE/STARDB等
-	 * 国产PG系内核的getDatabaseProductName()误报为PostgreSQL(openGauss 5.0.0实测上报
-	 * PostgreSQL/9.2.4),仅靠产品名会被误判为postgresql方言,而其saveOrUpdate生成的 ON
-	 * CONFLICT语法在这些内核默认不解析;JDBC URL的schema段(jdbc:opengauss:等)
-	 * 由驱动忠实保留,特征命中以识别名参与后续方言匹配(含dialectMap自定义映射)
+	 * update 2026-9-5 JDBC URL
+	 * schema特征与方言识别名的映射:openGauss/MOGDB/VASTBASE/STARDB等国产PG系内核的
+	 * getDatabaseProductName()误报为PostgreSQL(openGauss
+	 * 5.0.0实测上报PostgreSQL/9.2.4),仅靠产品名 会被误判为postgresql方言,而其saveOrUpdate生成的 ON
+	 * CONFLICT语法在这些内核默认不解析; JDBC
+	 * URL的schema段(jdbc:opengauss:等)由驱动忠实保留,特征命中以识别名参与后续方言匹配 (含dialectMap自定义映射)
 	 */
 	private static final Map<String, String> URL_SCHEMA_DIALECT = new HashMap<>();
 	static {
@@ -556,13 +569,16 @@ public class DataSourceUtils {
 		URL_SCHEMA_DIALECT.put("vastbase", Dialect.VASTBASE);
 		URL_SCHEMA_DIALECT.put("stardb", Dialect.STARDB);
 		URL_SCHEMA_DIALECT.put("gaussdb", Dialect.GAUSSDB);
-		// update 2026-9-6 DM驱动compatibleMode=oracle时ProductName伪装成Oracle(实测被误判
-		// 为oracle方言走Oracle11gDialect,identity列生成nvl(?,null)赋值形态报-2723),
-		// URL特征优先纠正(与openGauss伪装PostgreSQL同构场景)
+		// update 2026-10-11 瀚高官方驱动URL形态jdbc:highgo://
+		URL_SCHEMA_DIALECT.put("highgo", Dialect.HIGHGO);
+		// update 2026-9-6
+		// DM驱动compatibleMode=oracle时ProductName伪装成Oracle(实测被误判为oracle方言走
+		// Oracle11gDialect,identity列生成nvl(?,null)赋值形态报-2723),URL特征优先纠正
+		// (与openGauss伪装PostgreSQL同构场景)
 		URL_SCHEMA_DIALECT.put("dm", Dialect.DM);
-		// update 2026-9-6 oceanbase的ProductName为"MySQL 5.7.25-OceanBase_CE..."(mysql分支
-		// 在产品名判定链中先命中被误判mysql方言,ob4.3无string_to_vector等mysql9函数),
-		// URL特征jdbc:oceanbase://优先纠正
+		// update 2026-9-6 oceanbase的ProductName为"MySQL
+		// 5.7.25-OceanBase_CE..."(mysql分支在产品名判定链中
+		// 先命中被误判mysql方言,ob4.3无string_to_vector等mysql9函数),URL特征jdbc:oceanbase://优先纠正
 		URL_SCHEMA_DIALECT.put("oceanbase", Dialect.OCEANBASE);
 		// update 2026-9-11 SAP HANA的URL schema为jdbc:sap:(产品名HDB不含hana字样,URL特征优先命中)
 		URL_SCHEMA_DIALECT.put("sap", Dialect.HANA);
@@ -657,9 +673,9 @@ public class DataSourceUtils {
 	}
 
 	/**
-	 * update 2026-9-10 获取当前执行上下文的数据库特征档案:连接获取阶段绑定至线程上下文
-	 * (setDBProfile),数据库运行期特征(反斜杠转义约定等)统一经此档案提供,消费方无需直接
-	 * 访问ThreadDataHolder;配置解析期等无连接上下文场景返回null,由调用方回退配置方言
+	 * update 2026-9-10 获取当前执行上下文的数据库特征档案:连接获取阶段绑定至线程上下文(setDBProfile),
+	 * 数据库运行期特征(反斜杠转义约定等)统一经此档案提供,消费方无需直接访问ThreadDataHolder;
+	 * 配置解析期等无连接上下文场景返回null,由调用方回退配置方言
 	 * 
 	 * @return 当前线程上下文的特征档案,无连接上下文时为null
 	 */
@@ -668,7 +684,7 @@ public class DataSourceUtils {
 	}
 
 	/**
-	 * update 2026-9-10 判断dbType是否属反斜杠转义族(字面量内反斜杠为转义字符,\'不终结字面量):
+	 * update 2026-9-10 判断dbType是否属反斜杠转义族(字面量内反斜杠为转义字符,'不终结字面量):
 	 * mysql/mysql57/tidb/doris/starrocks/oceanbase;PostgreSQL/Oracle/SQLServer/DB2/h2/kingbase等
 	 * 按标准SQL单反斜杠语义(kingbase即使mysql兼容模式亦单斜杠)。
 	 * 构建DBProfile解析出dbType时即完成判定并随档案缓存,运行期经profile.isBackslashEscape()直取
@@ -682,29 +698,64 @@ public class DataSourceUtils {
 	}
 
 	/**
-	 * update 2026-9-6 方言的引擎探测统一处理:mysql协议方言(mysql系元数据同形)时校正
-	 * StarRocks/Doris——实测其经mysql驱动连接时ProductName/Version/URL三信号全部伪装成MySQL
-	 * (8.0.33/jdbc:mysql)无法靠元数据区分。 update 2026-9-10
-	 * 探测顺序对调(实测修正):一级@@version_comment(所有mysql协议引擎均支持,
-	 * 零报错风险)命中doris字样归DORIS——原current_version()先行的探测在Doris(无此函数,实测
-	 * 2.1.0/4.1.3均无)报HY000/ErrorCode 1105,命中Hikari对mysql驱动的fatal vendor错误码清单,
-	 * 池连接被标记broken逐出引发后续用例"Connection is closed"雪崩(真mysql报42000非fatal故
-	 * 此前未暴露);二级current_version()兜底StarRocks(SR有该函数探测不报错,返回值校验版本串
-	 * 特征如4.1.4-4a9848e含git哈希后缀,而其@@version_comment无产品名仅"4.1.4-4a9848e"无法
-	 * 一级识别),特征不符保持mysql方言并warn,可显式配置dialect覆盖。
-	 * DialectFactory中DORIS与STARROCKS共用DorisDialect,两家均正确落方言
-	 * (本方法仅在getDBProfile解析时调用,随URL缓存每URL探测一次)
+	 * update 2026-9-10
+	 * 方言的引擎探测统一处理:mysql协议方言(mysql系元数据同形)时校正StarRocks/Doris——实测其经mysql
+	 * 驱动连接时ProductName/Version/URL三信号全部伪装成MySQL(8.0.33/jdbc:mysql)无法靠元数据区分。
+	 * 探测顺序:一级@@version_comment(所有mysql协议引擎均支持,零报错风险)命中doris字样归DORIS——
+	 * current_version()先行的探测在Doris(无此函数,实测2.1.0/4.1.3均无)报HY000/ErrorCode 1105,
+	 * 命中Hikari对mysql驱动的fatal vendor错误码清单,池连接被标记broken逐出引发后续用例 "Connection is
+	 * closed"雪崩(真mysql报42000非fatal故此前未暴露);二级current_version()兜底
+	 * StarRocks(SR有该函数探测不报错,返回值校验版本串特征如4.1.4-4a9848e含git哈希后缀,而其
+	 * 
+	 * @@version_comment无产品名仅"4.1.4-4a9848e"无法一级识别),特征不符保持mysql方言并warn, 可显式配置dialect覆盖。DialectFactory中DORIS与STARROCKS共用DorisDialect,两家均正确落方言
+	 *                                                                  (本方法仅在getDBProfile解析时调用,随URL缓存每URL探测一次)
 	 */
+	/**
+	 * update 2026-10-12 PG系引擎探测(仅getDBProfile解析链调用,随URL缓存每URL一次):
+	 * 瀚高oracle兼容层的系统目录硬指纹——oracle_catalog schema与sys_guid函数,vanilla
+	 * PostgreSQL与orafce扩展均无此两者(真库对比实测:highgo有/vanilla无,
+	 * orafce提供add_months/last_day/nvl但不提供sys_guid、不建oracle_catalog),
+	 * 任一命中即校正为highgo方言;探测异常或无指纹保持postgresql
+	 * (显式dialectMap映射结果非postgresql时本方法不会被调用,显式配置不受影响)
+	 */
+	private static String resolvePgEngine(Connection conn) {
+		try (java.sql.Statement probe = conn.createStatement()) {
+			try (java.sql.ResultSet rs = probe
+					.executeQuery("select count(*) from pg_catalog.pg_namespace where nspname='oracle_catalog'")) {
+				if (rs.next() && rs.getInt(1) > 0) {
+					logger.info("detected highgo engine by oracle_catalog schema!");
+					return Dialect.HIGHGO;
+				}
+			}
+			try (java.sql.ResultSet rs = probe
+					.executeQuery("select count(*) from pg_catalog.pg_proc where proname='sys_guid'")) {
+				if (rs.next() && rs.getInt(1) > 0) {
+					logger.info("detected highgo engine by sys_guid function!");
+					return Dialect.HIGHGO;
+				}
+			}
+		} catch (Exception e) {
+			logger.debug("failed to probe highgo fingerprint, keep postgresql dialect!", e);
+		}
+		return Dialect.POSTGRESQL;
+	}
+
 	private static String resolveDialect(Connection conn, String dialect) {
+		// update 2026-10-12 PG系内核引擎探测:瀚高(vanilla
+		// pg驱动场景)的version()与驱动ProductName完全伪装成vanilla
+		// PostgreSQL(实测12.3无任何HighGo标记),但其oracle兼容层在系统目录留有硬指纹(见resolvePgEngine);
+		// 误归postgresql会走pg15+的merge into路径(PG12内核无merge)直接语法错,故须校正
+		if (Dialect.POSTGRESQL.equals(dialect)) {
+			return resolvePgEngine(conn);
+		}
 		if (!Dialect.MYSQL.equals(dialect)) {
 			return dialect;
 		}
-		// 一级:@@version_comment(零报错风险)——Doris返回"Doris version
+		// update 2026-9-10 一级:@@version_comment(零报错风险)——Doris返回"Doris version
 		// doris-x.y.z-..."(2.1/4.1实测),
-		// 真mysql返回"MySQL Community Server...",TiDB返回"TiDB Server..."(update 2026-9-10
-		// 实测
+		// 真mysql返回"MySQL Community Server...",TiDB返回"TiDB Server...";
 		// TiDB 8.5.1的元数据ProductName已由"TiDB"变为"MySQL"(7.5.1为TiDB),产品名识别链失效致
-		// 误归MYSQL方言生成string_to_vector等mysql9专属语法,此处按version_comment纠正归TIDB),
+		// 误归MYSQL方言生成string_to_vector等mysql9专属语法,此处按version_comment纠正归TIDB;
 		// SR返回纯版本串无产品名(落二级current_version兜底)
 		try (java.sql.Statement probe = conn.createStatement();
 				java.sql.ResultSet prs = probe.executeQuery("select @@version_comment")) {
@@ -818,22 +869,24 @@ public class DataSourceUtils {
 			return DBType.STARROCKS;
 		} else if (dbDialect.equals(Dialect.HANA)) {
 			return DBType.HANA;
+		} else if (dbDialect.equals(Dialect.HIGHGO)) {
+			return DBType.HIGHGO;
 		}
 		return DBType.UNDEFINE;
 	}
 
 	/**
-	 * update 2026-9-6 URL scheme→同源驱动PGobject反射句柄(自SqlUtil迁入统筹):
+	 * update 2026-9-16 URL scheme→同源驱动PGobject反射句柄(自SqlUtil迁入统筹):
 	 * 实测PGobject不能跨驱动setObject(pg驱动收到org.opengauss的PGobject报Can't infer the SQL
 	 * type,反向同理);按URL的schema段选择同源驱动的PGobject类,对应不上
 	 * classpath中的驱动类时返回constructor为null的哨兵,由调用方回退setObject(str,OTHER)。
 	 * 注意本匹配的对象是"驱动"而非"数据库":用postgresql官方驱动连openGauss/vastbase等
 	 * PG系库时(pom注释中明示的兼容用法),URL必为jdbc:postgresql:从而解析出org.postgresql的
-	 * PGobject,与实际驱动同源,天然正确;实测openGauss默认SCRAM(sha256)认证下PG官方驱动 连接即被拒(Invalid SCRAM
-	 * client initialization),须openGauss侧开启兼容认证方可使用此形态 update 2026-9-16
-	 * 增加dbType守卫:URL schema未显式建映射时仅PG系dbType才兜底探测
-	 * org.postgresql.util.PGobject,非PG系(mysql/oracle等)直接返回哨兵,避免对optional
-	 * 依赖的无谓Class.forName(纯mysql用户必抛ClassNotFoundException产生误导日志)
+	 * PGobject,与实际驱动同源,天然正确;实测openGauss默认SCRAM(sha256)认证下PG官方驱动连接即被拒 (Invalid SCRAM
+	 * client initialization),须openGauss侧开启兼容认证方可使用此形态。 dbType守卫:URL
+	 * schema未显式建映射时仅PG系dbType才兜底探测org.postgresql.util.PGobject,
+	 * 非PG系(mysql/oracle等)直接返回哨兵,避免对optional依赖的无谓Class.forName
+	 * (纯mysql用户必抛ClassNotFoundException产生误导日志)
 	 */
 	private static DBProfile.PGobjectHolder resolvePGobjectHolder(String url, int dbType) {
 		try {
@@ -865,8 +918,8 @@ public class DataSourceUtils {
 				// stardb等其他PG系驱动:多数兼容postgresql驱动包路径,尝试后失败由调用方回退
 				pgObjectClass = "org.postgresql.util.PGobject";
 			} else {
-				// update 2026-9-16 兜底探测以PG系dbType为守卫:mysql/oracle/sqlserver/h2等非PG系库
-				// 直接返回哨兵,不再盲探org.postgresql.util.PGobject——postgresql驱动为optional依赖,
+				// update 2026-9-16 兜底探测以PG系dbType为守卫:mysql/oracle/sqlserver/h2等非PG系库直接返回哨兵,
+				// 不再盲探org.postgresql.util.PGobject——postgresql驱动为optional依赖,
 				// 纯mysql等用户classpath无此类,盲探必抛ClassNotFoundException产生误导性debug日志
 				// (消费方SqlUtil/JSONTypeUtil本就有isPGFamily守卫,非PG系holder从不被消费,行为不变);
 				// oscar(神通)不在isPGFamily白名单(老pgjdbc深度魔改,无PGobject同构类,跨驱动setObject
@@ -877,7 +930,7 @@ public class DataSourceUtils {
 			return new DBProfile.PGobjectHolder(clazz.getDeclaredConstructor(),
 					clazz.getMethod("setType", String.class), clazz.getMethod("setValue", String.class));
 		} catch (Throwable e) {
-			// update 2026-9-14 补debug日志:原完全静默,占位句柄回退后json/vector统一以setString绑定,
+			// update 2026-9-14 补debug日志(原完全静默):占位句柄回退后json/vector统一以setString绑定,
 			// 一旦探测在特定驱动上持续失败,问题现场无任何线索(回退行为本身是设计预期,故只记debug)
 			logger.debug("failed to probe PGobject class by url:{}, json/vector will be bound as string!", url, e);
 			return NULL_PG_HOLDER;
@@ -967,9 +1020,9 @@ public class DataSourceUtils {
 		}
 		Connection conn = sqltoyContext.getConnection(datasource);
 		try {
-			// 统一提取数据库方言类型(update 2026-9-12 步骤3:构建有效执行档案整体传递)
+			// update 2026-9-12 统一提取数据库方言类型,构建有效执行档案整体传递
 			DBProfile connProfile = getDBProfile(conn);
-			// update 2026-9-15 优化:显式dialect时走asEffective产出有效执行档案
+			// update 2026-9-15 显式dialect时走asEffective产出有效执行档案
 			// (dbType/dialect=配置覆盖,realDBType/realDialect=连接探测事实);
 			// ThreadLocal统一存effective profile(一个对象承载两层语义),消费方按需取
 			DBProfile profile = (StringUtil.isNotBlank(sqltoyContext.getDialect()))
@@ -983,7 +1036,7 @@ public class DataSourceUtils {
 						conn.getMetaData().getUserName());
 			}
 			// 调用反调，传入conn和数据库类型进行实际业务处理(数据库类型主要便于DialectFactory获取对应方言处理类)
-			handler.doConnection(conn, profile.getDbType(), profile.getDialect());
+			handler.doConnection(conn, profile);
 		} catch (Exception e) {
 			logger.error("processDataSource method execution failed", e);
 			sqltoyContext.releaseConnection(conn, datasource);
@@ -1131,8 +1184,8 @@ public class DataSourceUtils {
 	 */
 	/**
 	 * update 2026-9-14 按SQL标准(ANSI COALESCE)统一空值判定函数:
-	 * 既有各库方言(nvl/ifnull/isnull/NVL)全部原生支持COALESCE,不再按库分派; COALESCE为短路求值,较oracle
-	 * NVL的全参数求值更优。保留方法供dbType-only 场景(无DBProfile档案)获取空值函数
+	 * 既有各库方言(nvl/ifnull/isnull/NVL)全部原生支持COALESCE,不再按库分派;COALESCE为短路求值, 较oracle
+	 * NVL的全参数求值更优。保留方法供dbType-only场景(无DBProfile档案)获取空值函数
 	 */
 	public static String getNvlFunction(Integer dbType) {
 		// oracle 23ai实测:COALESCE中对绑定变量按CHAR推断类型,与VECTOR/SDO_GEOMETRY
@@ -1142,6 +1195,40 @@ public class DataSourceUtils {
 			return "nvl";
 		}
 		return "COALESCE";
+	}
+
+	/**
+	 * update 2026-10-13 虚表(伪表)名称的单一事实源:select常量行伪表按方言获取,
+	 * 供@virtualTable()宏展开(SqlConfigParseUtils.expandVirtualTable)、DBProfile
+	 * 派生getter及各方言Dialect的VIRTUAL_TABLE常量统一引用。映射与各方言Dialect实现自身生成merge语句所用伪表同源:
+	 * oracle系(oracle/oracle11/dm/oceanbase)→dual;db2→SYSIBM.SYSDUMMY1;hana→dummy;
+	 * 其余方言(mysql系/pg系/sqlserver/sqlite/h2/clickhouse/impala/tdengine等)原生支持无from
+	 * select,返回空串。新增DBType若未纳入分支,返回空串(经由VirtualTableMacroTest.allDbTypesCovered
+	 * 反射穷举断言暴露),不会产生错误伪表
+	 *
+	 * @param dbType 数据库类型,参见DBType
+	 * @return 该库的虚表名(不含from前缀,如"dual"/"SYSIBM.SYSDUMMY1"/"dummy"),无虚表返回空串
+	 */
+	public static String getVirtualTable(Integer dbType) {
+		if (dbType == null) {
+			return "";
+		}
+		switch (dbType) {
+		// oracle系:必须dual伪表(dm兼容dual视图,oceanbase继承oracle方言)
+		case DBType.ORACLE:
+		case DBType.ORACLE11:
+		case DBType.DM:
+		case DBType.OCEANBASE:
+			return "dual";
+		// db2:sysibm.sysdummy1单行伪表(DB2对系统schema大小写不敏感,取小写与宏展开既有产物一致)
+		case DBType.DB2:
+			return "sysibm.sysdummy1";
+		// hana:dummy单行伪表(HanaDialect.VIRTUAL_TABLE)
+		case DBType.HANA:
+			return "dummy";
+		default:
+			return "";
+		}
 	}
 
 	/**
@@ -1159,12 +1246,15 @@ public class DataSourceUtils {
 			}
 		}
 		// update 2026-10-12 postgresql系列数据库默认转小写
-		// 补齐pg折叠家族(原仅POSTGRESQL/POSTGRESQL14):getGeneratedKeys列提示在pg折叠内核上
-		// 大小写敏感(opengauss/vastbase的"ID"/"Id"报column does not exist,kingbase混合大小写"Id"
-		// 报错而全大写可过,转小写对全家族安全),按opengauss同内核系谱与原注释声明一并纳入
+		// 对齐注释与代码并补齐pg折叠家族(原仅POSTGRESQL/POSTGRESQL14):
+		// 15库真库矩阵核实——getGeneratedKeys列提示在pg折叠内核上大小写敏感(opengauss/
+		// og7/vastbase/highgo的"ID"/"Id"报column does not exist,kingbase混合大小写"Id"
+		// 报错而全大写可过,转小写对全家族安全),mysql系/tidb/ob/sqlserver/db2/dm/oracle/
+		// OSCAR无docker环境未实测,按opengauss同内核系谱与原注释声明一并纳入
 		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.OPENGAUSS
 				|| dbType == DBType.GAUSSDB || dbType == DBType.MOGDB || dbType == DBType.VASTBASE
-				|| dbType == DBType.STARDB || dbType == DBType.OSCAR || dbType == DBType.KINGBASE) {
+				|| dbType == DBType.STARDB || dbType == DBType.OSCAR || dbType == DBType.KINGBASE
+				|| dbType == DBType.HIGHGO) {
 			return CaseType.LOWER;
 		}
 		return CaseType.DEFAULT;

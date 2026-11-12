@@ -10,7 +10,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
 /**
  * update 2026-10-18 CTE物化hint(AS [NOT] MATERIALIZED)按目标库类型保留/剔除的单元测试。
- * 白名单经docker真库实测:PG18/openGauss5.0/金仓V9/Vastbase均支持;
+ * 白名单经docker真库实测:PG18/openGauss5.0/金仓V9/瀚高(PG12.3)/Vastbase均支持;
  * mysql9.3/tidb8.5/mssql2025混入即报语法错误。本测试锁定SQL文本层的剔除/保留/字面量安全行为
  */
 public class SqlWithAnalysisMaterializedTest {
@@ -28,6 +28,7 @@ public class SqlWithAnalysisMaterializedTest {
 		assertTrue(SqlWithAnalysis.supportsCteMaterialized(DBType.OPENGAUSS));
 		assertTrue(SqlWithAnalysis.supportsCteMaterialized(DBType.KINGBASE));
 		assertTrue(SqlWithAnalysis.supportsCteMaterialized(DBType.VASTBASE));
+		assertTrue(SqlWithAnalysis.supportsCteMaterialized(DBType.HIGHGO));
 		// GAUSSDB与openGauss同内核(verify矩阵gaussdb档案即连opengauss容器),随openGauss实测支持
 		assertTrue(SqlWithAnalysis.supportsCteMaterialized(DBType.GAUSSDB));
 	}

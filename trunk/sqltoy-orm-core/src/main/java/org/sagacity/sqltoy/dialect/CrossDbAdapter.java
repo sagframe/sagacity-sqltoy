@@ -157,7 +157,6 @@ public class CrossDbAdapter {
 				errMsg = "查询语句:" + sqlToyConfig.getId() + " 不适配:" + dialect + " 的数据源:" + dataSourceName + ";errorMsg="
 						+ e.getMessage();
 				logger.error(errMsg);
-				// update 2026-10-22 保留原始cause便于排障(原仅message,异常链断裂)
 				throw new DataAccessException(errMsg, e);
 			}
 		}

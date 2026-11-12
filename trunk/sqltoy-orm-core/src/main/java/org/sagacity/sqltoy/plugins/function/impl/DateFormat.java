@@ -63,6 +63,7 @@ public class DateFormat extends IFunction {
 		case DBType.VASTBASE:
 			// update 2026-9-14 补KINGBASE(KingbaseES基于PG,date_format归to_char+PG格式模型)
 		case DBType.KINGBASE:
+		case DBType.HIGHGO:
 		case DBType.OCEANBASE:
 		case DBType.DM:
 			// 2026-9-11 hana无date_format,TO_CHAR为oracle兼容格式模型(非PG系,pgToCharParamCast原样透传)
@@ -93,7 +94,7 @@ public class DateFormat extends IFunction {
 		case DBType.TIDB:
 		case DBType.MYSQL57: {
 			// update 2026-11-10 与带引号字面量共用同一token引擎(FunctionUtils.toMySqlFormatTokens):
-			// 原replace链只服务裸格式(占位符/表达式形态,带引号输入已在入口由归一层映射完),两处规则曾分裂——
+			// 原replace链只服务裸格式(占位符/表达式形态,带引号输入已在L52由归一层映射完),两处规则曾分裂——
 			// 裸"HHmmss"被映成%H%m%s,而带引号"HHmmss"经归一层是%H%i%s;引擎对已%风格输入幂等,
 			// 并覆盖大写YYYY/YY/DD/MI/SS与HH24/hh24等既有形态
 			format = FunctionUtils.toMySqlFormatTokens(args[1]);
@@ -158,15 +159,15 @@ public class DateFormat extends IFunction {
 			return "date_format(toDateTime(" + args[0] + ")," + format + ")";
 		}
 		case DBType.SQLITE: {
-			// update 2026-9-6 sqlite以strftime实现(格式标识差异:Y m d H M S);
-			// JDBC setTimestamp在sqlite存为毫秒Long,strftime直接作用于毫秒返回null,
-			// 须先datetime(ts/1000,'unixepoch')转为日期文本再格式化
+			// update 2026-9-6 sqlite以strftime实现(格式标识差异:Y m d H M S);JDBC
+			// setTimestamp在sqlite存为毫秒Long,
+			// strftime直接作用于毫秒返回null,须先datetime(ts/1000,'unixepoch')转为日期文本再格式化
 			format = args[1].replace("%Y", "%Y").replace("%y", "%y").replace("%m", "%m").replace("%d", "%d");
 			format = format.replace("%T", "%H:%M:%S");
 			format = format.replace("%H", "%H").replace("%h", "%H").replace("%i", "%M").replace("%s", "%S");
-			// update 2026-9-10 参数归一收敛至sqliteDateTextExpr:字面量/文本函数表达式透传
-			// (原一律/1000包裹对date('..')等文本形态算出1970垃圾值),列/占位符补'localtime'
-			// (原'unixepoch'UTC墙钟使本地午夜毫秒值偏1天,date_format(:dt)实测'2026-01-14')
+			// update 2026-9-10
+			// 参数归一收敛至sqliteDateTextExpr:字面量/文本函数表达式透传(原一律/1000包裹对date('..')等文本形态算出1970垃圾值),
+			// 列/占位符补'localtime'(原'unixepoch'UTC墙钟使本地午夜毫秒值偏1天,date_format(:dt)实测'2026-01-14')
 			return "strftime(" + format + "," + FunctionUtils.sqliteDateTextExpr(args[0]) + ")";
 		}
 		default:

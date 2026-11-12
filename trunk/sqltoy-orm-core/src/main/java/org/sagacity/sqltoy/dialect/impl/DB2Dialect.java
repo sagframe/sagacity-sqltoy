@@ -38,7 +38,6 @@ import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.SqlUtilsExt;
-import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,9 +74,10 @@ public class DB2Dialect implements Dialect {
 	 * <p>
 	 * 判定要点:
 	 * <ol>
-	 * <li>在字面量掩码串上判FROM,避免 {@code select 'a from b'} 把字面量里的from当成已有FROM(真库实测漏补即报错)</li>
-	 * <li>只认<b>顶层</b>(括号深度0)的FROM,避免 {@code select (select max(id) from t)} 因子查询内的FROM漏补虚表
-	 * (顶层无FROM在DB2同样是SQL0104)</li>
+	 * <li>在字面量掩码串上判FROM,避免 {@code select 'a from b'}
+	 * 把字面量里的from当成已有FROM(真库实测漏补即报错)</li>
+	 * <li>只认<b>顶层</b>(括号深度0)的FROM,避免 {@code select (select max(id) from t)}
+	 * 因子查询内的FROM漏补虚表 (顶层无FROM在DB2同样是SQL0104)</li>
 	 * <li>先摘出已有的"with ur"尾缀再补虚表,最后只追加一次UR,避免 {@code select 99 with ur} 拼成
 	 * {@code select 99 with ur FROM SYSIBM.SYSDUMMY1 with ur}</li>
 	 * <li>VALUES形式查询({@code values (1)})本身合法且无需FROM,补虚表反而SQL0104,故排除</li>
@@ -85,7 +85,10 @@ public class DB2Dialect implements Dialect {
 	 * 注:不处理尾分号——sqltoy的sql配置/查询链路不携带语句终止符,为不存在的输入做防御属过度设计
 	 */
 	private String appendWithUR(String sql) {
-		String maskedSql = SqlConfigParseUtils.maskLiterals(sql, false);
+		// update 2026-11-12 先掩双引号定界标识符再掩单引号字面量:DB2的"..."内容是标识符,
+		// select 1 as "from"中的from被hasTopLevelFrom误判为顶层FROM而漏补虚表(真库SQL0104实锤),
+		// 尾部字样藏在双引号标识符内的" with ur"同理会被误摘。双引号先掩:标识符内的'不会再干扰字面量配对
+		String maskedSql = SqlConfigParseUtils.maskLiterals(maskQuotedIdentifiers(sql), false);
 		String body = sql;
 		String urSuffix = "";
 		// 掩码串与原串等长,匹配位置可直接用于原串截取
@@ -156,6 +159,71 @@ public class DB2Dialect implements Dialect {
 
 	private static boolean isIdentifierChar(char c) {
 		return Character.isLetterOrDigit(c) || c == '_' || c == '$' || c == '#';
+	}
+
+	/**
+	 * 掩码双引号定界标识符:整段(含定界引号)置为空格,与原串等长保持位置偏移一致。
+	 * ""成对转义引号属标识符内容一并掩掉;单引号字符串字面量内的双引号是普通字符,
+	 * 必须整体跳过(否则会把字面量之后的FROM/with ur误吞,真库实测SQL0104);不含双引号时原样返回,零开销
+	 *
+	 * @param sql 原始sql
+	 * @return 双引号标识符被掩码的等长sql
+	 */
+	private static String maskQuotedIdentifiers(String sql) {
+		if (sql.indexOf('"') == -1) {
+			return sql;
+		}
+		char[] chars = sql.toCharArray();
+		int length = chars.length;
+		boolean inQuote = false;
+		// update 2026-11-12 必须从0开始扫描:首个双引号可能位于单引号字面量内部(如 select '"' from t),
+		// 只从首个"位置起扫会把字面量内的"当成标识符定界,吞掉后续FROM
+		for (int i = 0; i < length; i++) {
+			char c = chars[i];
+			if (!inQuote) {
+				// 单引号字面量整体跳过(含''转义),交由maskLiterals统一掩码
+				if (c == '\'') {
+					i = skipStringLiteral(chars, i);
+					continue;
+				}
+				if (c == '"') {
+					inQuote = true;
+					chars[i] = ' ';
+				}
+				continue;
+			}
+			// ""成对转义:两引号均为标识符内容,一并掩掉
+			if (c == '"' && i + 1 < length && chars[i + 1] == '"') {
+				chars[i] = ' ';
+				chars[i + 1] = ' ';
+				i++;
+				continue;
+			}
+			chars[i] = ' ';
+			if (c == '"') {
+				inQuote = false;
+			}
+		}
+		return new String(chars);
+	}
+
+	/**
+	 * @param chars 字符数组
+	 * @param start 起始单引号下标
+	 * @return 字符串字面量结束单引号下标(含''转义处理);未闭合返回末尾下标
+	 */
+	private static int skipStringLiteral(char[] chars, int start) {
+		int length = chars.length;
+		for (int i = start + 1; i < length; i++) {
+			if (chars[i] == '\'') {
+				if (i + 1 < length && chars[i + 1] == '\'') {
+					i++;
+					continue;
+				}
+				return i;
+			}
+		}
+		return length - 1;
 	}
 
 	@Override

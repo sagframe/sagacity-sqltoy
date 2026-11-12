@@ -274,7 +274,7 @@ public class OracleDialect implements Dialect {
 				pkStrategy = PKStrategy.ASSIGN;
 			}
 		}
-		boolean isAssignPK = OracleDialectUtils.allowAssignPKValue(pkStrategy);
+		boolean isAssignPK = OracleDialectUtils.allowAssignPKValue(pkStrategy, profile.getDbType());
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), profile, entityMeta,
 				pkStrategy, sequence, isAssignPK, tableName);
 		return DialectUtils.save(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entity,
@@ -317,12 +317,12 @@ public class OracleDialect implements Dialect {
 		// oracle12c 开始支持identity机制
 		EntityMeta entityMeta = sqlToyContext.getEntityMeta(entities.get(0).getClass());
 		PKStrategy pkStrategy = entityMeta.getIdStrategy();
-		boolean isAssignPK = OracleDialectUtils.allowAssignPKValue(pkStrategy);
 		String sequence = entityMeta.getSequence() + NEXTVAL;
 		if (pkStrategy != null && pkStrategy.equals(PKStrategy.IDENTITY)) {
 			pkStrategy = PKStrategy.SEQUENCE;
 			sequence = entityMeta.getFieldMeta(entityMeta.getIdArray()[0]).getDefaultValue();
 		}
+		boolean isAssignPK = OracleDialectUtils.allowAssignPKValue(pkStrategy, profile.getDbType());
 		String insertSql = DialectExtUtils.generateInsertSql(sqlToyContext.getUnifyFieldsHandler(), profile, entityMeta,
 				pkStrategy, sequence, isAssignPK, tableName);
 		return DialectUtils.saveAll(sqlToyContext, entityMeta, pkStrategy, isAssignPK, insertSql, entities, batchSize,

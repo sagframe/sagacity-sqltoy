@@ -44,8 +44,8 @@ public class DateFormat extends AbstractMacro {
 				fmt = params[1];
 			}
 		}
-		// 提出单引号和双引号
-		// update 2026-9-14 引号是纯字面量:改String.replace免去每次ID生成时2次隐式正则编译
+		// update 2026-9-14 提出单引号和双引号
+		// 引号是纯字面量:改String.replace免去每次ID生成时2次隐式正则编译
 		String realFmt = fmt.replace("\"", "").replace("'", "").trim();
 		if ("".equals(realFmt) || "null".equals(realFmt.toLowerCase(Locale.ROOT))) {
 			return "";

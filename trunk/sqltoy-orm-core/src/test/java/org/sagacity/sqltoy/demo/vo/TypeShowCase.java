@@ -12,11 +12,11 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Date;
 
+/**
+ * 字段类型展示演示实体
+ */
 public class TypeShowCase implements Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 7631445621290397940L;
 
 	private String name;
@@ -38,7 +38,7 @@ public class TypeShowCase implements Serializable {
 	private Integer status;
 
 	private boolean isTrue;
-	
+
 	private boolean sexType;
 
 	private Boolean enabled;

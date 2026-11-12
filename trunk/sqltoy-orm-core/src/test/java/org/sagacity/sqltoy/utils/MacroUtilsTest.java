@@ -1,13 +1,10 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.utils;
 
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
 
 /**
- * @author zhong
+ * @author zhongxuchen
  *
  */
 public class MacroUtilsTest {

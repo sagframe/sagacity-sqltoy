@@ -61,7 +61,7 @@ public class H2DDLGenerator implements DialectDDLGenerator {
 			}
 			// 列注释
 			if (StringUtil.isNotBlank(colMeta.getComments())) {
-				// update 2026-9-14 反斜杠/引号均为字面量:改String.replace免去每列3次隐式正则编译
+				// update 2026-9-14 反斜杠/引号均为字面量:改用String.replace免去每列3次隐式正则编译
 				tableSql.append(" COMMENT '")
 						.append(colMeta.getComments().replace("\\", "").replace("\"", "").replace("'", "")).append("'");
 			}

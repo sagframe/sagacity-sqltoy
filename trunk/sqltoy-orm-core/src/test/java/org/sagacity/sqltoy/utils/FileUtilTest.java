@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.utils;
 
 import java.io.FileInputStream;
@@ -11,9 +8,9 @@ import org.junit.jupiter.api.Test;
 /**
  * @project sagacity-sqltoy
  * @description 请在此说明类的功能
- * @author zhong
- * @version v1.0, Date:2023年12月6日
- * @modify 2023年12月6日,修改说明
+ * @author zhongxuchen
+ * @version v1.0,Date:2023-12-06
+ * @modify Date:2023-12-06,修改说明
  */
 public class FileUtilTest {
 	@Test
@@ -31,7 +28,8 @@ public class FileUtilTest {
 	@Test
 	public void testFormatPath() {
 		System.err.println(FileUtil.formatPath("a\\/b//c\\\\"));
-		//assertEquals("a" + File.separator + "b" + File.separator + "c", FileUtil.formatPath("a\\b/c\\"));
+		// assertEquals("a" + File.separator + "b" + File.separator + "c",
+		// FileUtil.formatPath("a\\b/c\\"));
 		System.err.println(FileUtil.formatPath(null));
 		System.err.println(FileUtil.formatPath(""));
 
@@ -41,7 +39,7 @@ public class FileUtilTest {
 		System.err.println(FileUtil.formatPath("a\\/b//c\\\\"));
 
 		// Windows 盘符
-		System.err.println("\"C:/test\\\\file.txt\" 变成 "+FileUtil.formatPath("C:/test\\file.txt"));
+		System.err.println("\"C:/test\\\\file.txt\" 变成 " + FileUtil.formatPath("C:/test\\file.txt"));
 
 		// 连续分隔符
 		System.err.println(FileUtil.formatPath("////\\\\\\\\"));

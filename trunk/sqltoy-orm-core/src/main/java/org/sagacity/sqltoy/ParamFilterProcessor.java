@@ -64,6 +64,9 @@ public class ParamFilterProcessor {
 	// 默认日期格式
 	private static final String DAY_FORMAT = "yyyy-MM-dd";
 
+	// 空匹配列集合的共享实例,避免无比较列时反复分配
+	private static final String[] EMPTY_LOW_MATCH_VALUES = new String[0];
+
 	private ParamFilterProcessor() {
 	}
 
@@ -81,8 +84,8 @@ public class ParamFilterProcessor {
 		if ((filters == null || filters.size() == 0) || values == null || values.length == 0) {
 			return values;
 		}
-		// update 2020-09-08 当全是?模式传参时，在非分页等场景下paramNames会为null导致正常params="*" 的blank过滤无效
-		// 构造出参数便于统一处理
+		// update 2020-09-08 当全是?模式传参时,非分页等场景下paramNames会为null,导致正常params="*"
+		// 的blank过滤无效;构造出参数便于统一处理
 		String[] paramsName;
 		if ((paramArgs == null || paramArgs.length == 0)) {
 			paramsName = new String[values.length];
@@ -267,7 +270,6 @@ public class ParamFilterProcessor {
 			String[] matchWords;
 			// key 值
 			Object keyCode;
-			Object compareValue;
 			// 优先匹配查询参数跟缓存名称等直接相等，精准匹配
 			if (priorMatchEqual) {
 				String keyLow;
@@ -281,6 +283,8 @@ public class ParamFilterProcessor {
 					// 过滤条件成立，且当前key没有被匹配过，开始匹配
 					if (include) {
 						keyLow = keyCode.toString().toLowerCase(Locale.ROOT);
+						// update 2026-11-11 每行只预计算一次比较列小写值,避免row×参数×列重复toString().toLowerCase()
+						String[] lowMatchValues = toLowMatchValues(cacheRow, matchIndexes);
 						skipLoop: for (int i = 0; i < paramValueAry.size(); i++) {
 							// 从转小写集合中取值，避免每次toLowcase
 							matchStr = matchLowAry.get(i);
@@ -294,11 +298,9 @@ public class ParamFilterProcessor {
 								break;
 							}
 							// 名称跟比较列的值相同
-							for (int matchIndex : matchIndexes) {
-								compareValue = cacheRow[matchIndex];
+							for (int m = 0; m < lowMatchValues.length; m++) {
 								// 名称相同
-								if (compareValue != null
-										&& matchStr.equals(compareValue.toString().toLowerCase(Locale.ROOT))) {
+								if (lowMatchValues[m] != null && matchStr.equals(lowMatchValues[m])) {
 									matchedKeys.add(keyCode);
 									// 相等的剔除不再参与后续like匹配
 									matchLowAry.remove(i);
@@ -336,13 +338,13 @@ public class ParamFilterProcessor {
 					}
 					// 过滤条件成立，且当前key没有被匹配过，开始匹配
 					if (include) {
+						// update 2026-11-11 同上:比较列小写值每行只算一次
+						String[] lowMatchValues = toLowMatchValues(cacheRow, matchIndexes);
 						skipLoop: for (int i = 0; i < likeArgSize; i++) {
 							matchWords = paramsMatchWords.get(i);
-							for (int matchIndex : matchIndexes) {
-								compareValue = cacheRow[matchIndex];
+							for (int m = 0; m < lowMatchValues.length; m++) {
 								// 匹配检索,全部转成小写比较
-								if (compareValue != null && StringUtil
-										.like(compareValue.toString().toLowerCase(Locale.ROOT), matchWords)) {
+								if (lowMatchValues[m] != null && StringUtil.like(lowMatchValues[m], matchWords)) {
 									matchedKeys.add(keyCode);
 									break skipLoop;
 								}
@@ -382,6 +384,28 @@ public class ParamFilterProcessor {
 					"exception occurred in cache-arg filter processing, the query condition is processed as unfiltered in this execution (may expand the query range), cacheName:{}!",
 					paramFilterModel.getCacheName(), e);
 		}
+	}
+
+	/**
+	 * update 2026-11-11 预计算缓存行中参与匹配的列的小写值:每次查询、每行只计算一次,
+	 * 避免 row×查询参数×比较列 级别的重复 toString().toLowerCase();
+	 * 不做跨查询索引(缓存行可被原地修改,跨查询缓存会读到过期值)
+	 * 
+	 * @param cacheRow     缓存行
+	 * @param matchIndexes 参与匹配的列下标
+	 * @return 与matchIndexes等长的小写值数组,null值对应位置为null
+	 */
+	static String[] toLowMatchValues(Object[] cacheRow, int[] matchIndexes) {
+		if (matchIndexes.length == 0) {
+			return EMPTY_LOW_MATCH_VALUES;
+		}
+		String[] lowValues = new String[matchIndexes.length];
+		Object value;
+		for (int i = 0; i < matchIndexes.length; i++) {
+			value = cacheRow[matchIndexes[i]];
+			lowValues[i] = (value == null) ? null : value.toString().toLowerCase(Locale.ROOT);
+		}
+		return lowValues;
 	}
 
 	/**
@@ -911,8 +935,9 @@ public class ParamFilterProcessor {
 	}
 
 	/**
+	 * update 2026-9-10
 	 * 对参数进行左边或右补%符号,便于like处理,sqltoy在不做处理情况下会默认左右都补%符合,单独一边补%则可以保留索引
-	 * appendStr拼接在补充的%和值之间,如r-like配置append-str=","构成xx,%的树形路由前缀匹配; update 2026-9-10
+	 * appendStr拼接在补充的%和值之间,如r-like配置append-str=「,」构成xx,%的树形路由前缀匹配
 	 * appendStr与参数值一致按转义处理后拼接:其中的%转为字面量\%,不做去除连续%处理, 通配符统一仅由本方法补充的%提供,天然避免拼接后出现%%
 	 * 
 	 * @param paramValue

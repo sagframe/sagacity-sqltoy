@@ -47,8 +47,8 @@ public abstract class IFunction {
 
 	/**
 	 * @description 带投影上下文的重载:projection=true表示函数位于select列表/值位置
-	 *              (需要返回可投影的值),false表示条件/布尔上下文。
-	 *              默认忽略上下文走原wrap,只有需要区分返回类型的适配器覆盖。
+	 *              (需要返回可投影的值,如find_in_set的位置整数),false表示条件/布尔上下文。
+	 *              默认忽略上下文走原wrap,只有需要区分返回类型的适配器(如find_in_set)覆盖。
 	 *
 	 * @param dialect      数据库方言
 	 * @param functionName 函数名称
@@ -64,7 +64,8 @@ public abstract class IFunction {
 	/**
 	 * update 2026-10-11 尾部子句的两种形态:true=括号子句(如within group (order by
 	 * …),按平衡括号消费,默认,维持既有适配器语义);
-	 * false=裸操作符子句(如函数后的">0"比较符,按pattern命中长度消费)。
+	 * false=裸操作符子句(如函数后的">0"比较符,按pattern命中长度消费)。find_in_set的">0/=0"布尔口径适配即此形态:
+	 * 改写产物为boolean,须连带消费比较符以在PG系(_where必须boolean_)同时兼容裸真值与显式比较两种惯用法
 	 *
 	 * @return true按平衡括号消费尾部子句,false按pattern命中长度消费
 	 */
@@ -99,7 +100,7 @@ public abstract class IFunction {
 
 	/**
 	 * 提供默认的函数加工拼接方式实现
-	 *
+	 * 
 	 * @param functionName 函数名称
 	 * @param args         函数中的参数如ifnull(name)这里就是name
 	 * @return

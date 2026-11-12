@@ -52,6 +52,7 @@ import org.sagacity.sqltoy.dialect.impl.DorisDialect;
 import org.sagacity.sqltoy.dialect.impl.GaussDBDialect;
 import org.sagacity.sqltoy.dialect.impl.H2Dialect;
 import org.sagacity.sqltoy.dialect.impl.HanaDialect;
+import org.sagacity.sqltoy.dialect.impl.HighgoDialect;
 import org.sagacity.sqltoy.dialect.impl.ImpalaDialect;
 import org.sagacity.sqltoy.dialect.impl.KingbaseDialect;
 import org.sagacity.sqltoy.dialect.impl.MogDBDialect;
@@ -238,6 +239,11 @@ public class DialectFactory {
 				dialectSqlWrapper = new VastbaseDialect();
 				break;
 			}
+			// highgo 瀚高数据库(PG12内核,SQL生成复用PG系)
+			case DBType.HIGHGO: {
+				dialectSqlWrapper = new HighgoDialect();
+				break;
+			}
 			case DBType.IMPALA: {
 				dialectSqlWrapper = new ImpalaDialect();
 				break;
@@ -297,8 +303,7 @@ public class DialectFactory {
 	private Object inConnection(final SqlToyContext ctx, DataSource ds, final ProfileAction action) {
 		return DataSourceUtils.processDataSource(ctx, ds, new DataSourceCallbackHandler() {
 			@Override
-			public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-				DBProfile profile = DataSourceUtils.getDBProfile(conn);
+			public void doConnection(Connection conn, DBProfile profile) throws Exception {
 				SqlExecuteStat.setDialect(profile);
 				this.setResult(action.run(conn, profile));
 			}
@@ -308,6 +313,78 @@ public class DialectFactory {
 	@FunctionalInterface
 	private interface ProfileAction {
 		Object run(Connection conn, DBProfile profile) throws Exception;
+	}
+
+	/**
+	 * update 2026-9-17 查询管线统一预处理结果:named化+sharding表替换后的realSqlToyConfig与
+	 * 参数组装、拦截器处理后的最终sql/参数值
+	 */
+	private static final class PreparedQuery {
+		final SqlToyConfig config;
+		final SqlToyResult queryParam;
+
+		PreparedQuery(SqlToyConfig config, SqlToyResult queryParam) {
+			this.config = config;
+			this.queryParam = queryParam;
+		}
+	}
+
+	/**
+	 * update 2026-9-17
+	 * 查询管线统一预处理(收敛executeSql/insertReturnPrimaryKey/findByQuery/updateFetch/fetchStream
+	 * 5处同构代码):getUnifyParamsNamedConfig(?转named+sharding表替换)→
+	 * processSql参数组装→doInterceptors拦截器;“改拦截器/参数规整”的改动点由5处降为1处
+	 */
+	private PreparedQuery prepareQuery(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
+			final QueryExecutor queryExecutor, final QueryExecutorExtend extend, DBProfile profile,
+			final OperateType operateType) throws Exception {
+		return prepareQuery(sqlToyContext, sqlToyConfig, queryExecutor, extend, profile, operateType,
+				extend.entityClass);
+	}
+
+	/**
+	 * @param interceptorEntityClass 拦截器实体类参数(updateFetch原实现固定传null以跳过单表拦截语义,保持原行为)
+	 */
+	private PreparedQuery prepareQuery(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
+			final QueryExecutor queryExecutor, final QueryExecutorExtend extend, DBProfile profile,
+			final OperateType operateType, final Class interceptorEntityClass) throws Exception {
+		String dialect = profile.getDialect();
+		// 处理sql中的?为统一的:named形式，并进行sharding table替换
+		SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext, sqlToyConfig,
+				queryExecutor, profile, false);
+		// 通过参数处理最终的sql和参数值
+		SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
+				extend.getParamsName(), extend.getParamsValue(sqlToyContext, realSqlToyConfig), dialect);
+		// update 2022-9-10 增加sql执行拦截器
+		queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig, operateType, queryParam,
+				interceptorEntityClass, profile);
+		return new PreparedQuery(realSqlToyConfig, queryParam);
+	}
+
+	/**
+	 * update 2026-9-17 查询结果统一后处理:透视类别探测→计算处理(脱敏/格式化/数据旋转/同步环比/
+	 * 分组汇总等)→按resultType映射对象;findPage/findSkipTotalCountPage/findTop/findByQuery/
+	 * getRandomResult五处同构块收敛于此
+	 */
+	private void mapQueryResult(final SqlToyContext sqlToyContext, final SqlToyConfig realSqlToyConfig,
+			final QueryExecutor queryExecutor, final Connection conn, DBProfile profile, final QueryResult queryResult,
+			final QueryExecutorExtend extend) throws Exception {
+		// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
+		if (queryResult.getRows() == null || queryResult.getRows().isEmpty()) {
+			return;
+		}
+		List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig, queryExecutor, conn,
+				profile);
+		// 对查询结果进行计算处理:字段脱敏、格式化、数据旋转、同步环比、分组汇总等
+		boolean changedCols = ResultUtils.calculate(sqlToyContext.getDesensitizeProvider(), realSqlToyConfig,
+				queryResult, pivotCategorySet, extend);
+		// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理,后续可能还有旋转、汇总等计算
+		// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
+		if (extend.resultType != null) {
+			queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
+					queryResult.getLabelNames(), queryResult.getLabelTypes(), (Class) extend.resultType, changedCols,
+					extend.humpMapLabel, extend.hiberarchy, extend.hiberarchyClasses, extend.fieldsMap));
+		}
 	}
 
 	/**
@@ -341,42 +418,34 @@ public class DialectFactory {
 			List<Long> result = ParallelUtils.execute(sqlToyContext, dataSet, false, true, SqlType.update, dataSource,
 					parallelConfig, (context, batchModel) -> {
 						ShardingModel shardingModel = batchModel.getShardingModel();
-						Long updateCnt = (Long) DataSourceUtils.processDataSource(context,
-								shardingModel.getDataSource(), new DataSourceCallbackHandler() {
-									@Override
-									public void doConnection(Connection conn, Integer dbType, String dialect)
-											throws Exception {
-										DBProfile profile = DataSourceUtils.getDBProfile(conn);
-										SqlExecuteStat.setDialect(profile);
-										String realSql = sqlToyConfig.getSql(dialect);
-										Integer[] fieldTypes = null;
-										// update 2026-11-11 分片回调内用本分片实体集:原误用全量dataSet,
-										// 并行分片时每个分片都执行全量数据(跨分片重复执行)
-										List batchEntities = batchModel.getEntities();
-										List values = batchEntities;
-										// sql中存在:named参数模式，通过sql提取参数名称
-										if (sqlToyConfig.getParamsName() != null) {
-											// 替换sql:name为?并提取参数名称归集成数组
-											SqlParamsModel sqlParamsModel = SqlConfigParseUtils
-													.processNamedParamsQuery(realSql);
-											realSql = sqlParamsModel.getSql();
-											// update 2021-10-28 增加统一授权传参、根据insert、update 判断自动补充创建人、创建时间、修改人、修改时间等属性值的填充
-											ReflectPropsHandler realPropsHandler = DialectUtils
-													.wrapReflectWithUnifyFields(realSql, reflectPropsHandler,
-															sqlToyContext.getUnifyFieldsHandler());
-											values = BeanUtil.reflectBeansToList(batchEntities,
-													sqlParamsModel.getParamsName(), realPropsHandler);
-											fieldTypes = BeanUtil.matchMethodsType(batchEntities.get(0).getClass(),
-													sqlParamsModel.getParamsName());
-										}
-										// 做sql签名
-										realSql = SqlUtilsExt.signSql(SqlUtil.adjustMergeIntoSql(realSql, dbType),
-												dbType, sqlToyConfig);
-										SqlExecuteStat.showSql("batch sql execution", realSql, null);
-										this.setResult(SqlUtil.batchUpdateByJdbc(sqlToyContext.getTypeHandler(),
-												realSql, values, batchSize, insertCallhandler, fieldTypes, autoCommit,
-												conn, profile));
+						Long updateCnt = (Long) inConnection(context, shardingModel.getDataSource(),
+								(conn, profile) -> {
+									Integer dbType = profile.getDbType();
+									String dialect = profile.getDialect();
+									String realSql = sqlToyConfig.getSql(dialect);
+									Integer[] fieldTypes = null;
+									List batchEntities = batchModel.getEntities();
+									List values = batchEntities;
+									// sql中存在:named参数模式，通过sql提取参数名称
+									if (sqlToyConfig.getParamsName() != null) {
+										// 替换sql中:name为?并提取参数名称归集成数组
+										SqlParamsModel sqlParamsModel = SqlConfigParseUtils
+												.processNamedParamsQuery(realSql);
+										realSql = sqlParamsModel.getSql();
+										// update 2021-10-28 统一授权传参:根据insert、update 判断自动补充创建人、创建时间、修改人、修改时间等属性值的填充
+										ReflectPropsHandler realPropsHandler = DialectUtils.wrapReflectWithUnifyFields(
+												realSql, reflectPropsHandler, sqlToyContext.getUnifyFieldsHandler());
+										values = BeanUtil.reflectBeansToList(batchEntities,
+												sqlParamsModel.getParamsName(), realPropsHandler);
+										fieldTypes = BeanUtil.matchMethodsType(batchEntities.get(0).getClass(),
+												sqlParamsModel.getParamsName());
 									}
+									// 做sql签名
+									realSql = SqlUtilsExt.signSql(SqlUtil.adjustMergeIntoSql(realSql, dbType), dbType,
+											sqlToyConfig);
+									SqlExecuteStat.showSql("batch sql execution", realSql, null);
+									return SqlUtil.batchUpdateByJdbc(sqlToyContext.getTypeHandler(), realSql, values,
+											batchSize, insertCallhandler, fieldTypes, autoCommit, conn, profile);
 								});
 						List<Long> tmp = new ArrayList();
 						tmp.add(updateCnt);
@@ -434,44 +503,32 @@ public class DialectFactory {
 			SqlExecuteStat.start(sqlToyConfig.getId(), executeType,
 					(extend.resultType == null) ? null : (Class) extend.resultType,
 					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql(), extend.contextData);
-			Long updateTotalCnt = (Long) DataSourceUtils.processDataSource(sqlToyContext,
+			Long updateTotalCnt = (Long) inConnection(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
-					new DataSourceCallbackHandler() {
-						@Override
-						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							DBProfile profile = DataSourceUtils.getDBProfile(conn);
-							SqlExecuteStat.setDialect(profile);
-							// 进行sharding table替换
-							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
-									sqlToyConfig, queryExecutor, profile, false);
-							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
-									extend.getParamsName(), extend.getParamsValue(sqlToyContext, realSqlToyConfig),
-									dialect);
-							// 增加sql执行拦截器 update 2022-9-10
-							queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
-									(extend.entityClass == null) ? OperateType.execute : OperateType.singleTable,
-									queryParam, extend.entityClass, profile);
-							String sql = queryParam.getSql();
-							// update 2023-2-19 兼容updateByQuery和deleteByQuery未对clickhouse场景的处理
-							// clickhouse 删除和修改语法存在特殊性
-							if (dbType == DBType.CLICKHOUSE && extend.entityClass != null) {
-								EntityMeta entityMeta = sqlToyContext.getEntityMeta(extend.entityClass);
-								sql = ClickHouseDialectUtils.wrapDelOrUpdate(entityMeta, sql,
-										sqlToyConfig.getSqlType());
-							}
-							// 做sql签名
-							String executeSql = SqlUtilsExt.signSql(SqlUtil.adjustMergeIntoSql(sql, dbType), dbType,
-									realSqlToyConfig);
-							// 2022-3-21 存在类似in (?) ?对应参数为数组，将参数和类型长度变得不一致则去除类型约束
-							if (paramsTypes != null && queryParam.getParamsValue() != null
-									&& queryParam.getParamsValue().length != paramsTypes.length) {
-								this.setResult(SqlUtil.executeSql(sqlToyContext.getTypeHandler(), executeSql,
-										queryParam.getParamsValue(), null, conn, profile, autoCommit, false));
-							} else {
-								this.setResult(SqlUtil.executeSql(sqlToyContext.getTypeHandler(), executeSql,
-										queryParam.getParamsValue(), paramsTypes, conn, profile, autoCommit, false));
-							}
+					(conn, profile) -> {
+						Integer dbType = profile.getDbType();
+						PreparedQuery prepared = prepareQuery(sqlToyContext, sqlToyConfig, queryExecutor, extend,
+								profile, (extend.entityClass == null) ? OperateType.execute : OperateType.singleTable);
+						SqlToyConfig realSqlToyConfig = prepared.config;
+						SqlToyResult queryParam = prepared.queryParam;
+						String sql = queryParam.getSql();
+						// update 2023-2-19 兼容updateByQuery和deleteByQuery未覆盖clickhouse场景的处理:
+						// clickhouse 删除和修改语法存在特殊性
+						if (dbType == DBType.CLICKHOUSE && extend.entityClass != null) {
+							EntityMeta entityMeta = sqlToyContext.getEntityMeta(extend.entityClass);
+							sql = ClickHouseDialectUtils.wrapDelOrUpdate(entityMeta, sql, sqlToyConfig.getSqlType());
 						}
+						// 做sql签名
+						String executeSql = SqlUtilsExt.signSql(SqlUtil.adjustMergeIntoSql(sql, dbType), dbType,
+								realSqlToyConfig);
+						// 2022-3-21 存在类似in (?) ?对应参数为数组，将参数和类型长度变得不一致则去除类型约束
+						if (paramsTypes != null && queryParam.getParamsValue() != null
+								&& queryParam.getParamsValue().length != paramsTypes.length) {
+							return SqlUtil.executeSql(sqlToyContext.getTypeHandler(), executeSql,
+									queryParam.getParamsValue(), null, conn, profile, autoCommit, false);
+						}
+						return SqlUtil.executeSql(sqlToyContext.getTypeHandler(), executeSql,
+								queryParam.getParamsValue(), paramsTypes, conn, profile, autoCommit, false);
 					});
 			if (updateTotalCnt > sqlToyContext.getUpdateTipCount()) {
 				SqlExecuteStat.debug("execution result",
@@ -501,36 +558,22 @@ public class DialectFactory {
 			SqlExecuteStat.start(sqlToyConfig.getId(), executeType,
 					(extend.resultType == null) ? null : (Class) extend.resultType,
 					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql(), extend.contextData);
-			Object returnPkValue = DataSourceUtils.processDataSource(sqlToyContext,
+			Object returnPkValue = inConnection(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
-					new DataSourceCallbackHandler() {
-						@Override
-						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							DBProfile profile = DataSourceUtils.getDBProfile(conn);
-							SqlExecuteStat.setDialect(profile);
-							// 进行sharding table替换
-							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
-									sqlToyConfig, queryExecutor, profile, false);
-							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
-									extend.getParamsName(), extend.getParamsValue(sqlToyContext, realSqlToyConfig),
-									dialect);
-							// 增加sql执行拦截器 update 2022-9-10
-							queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
-									OperateType.singleTable, queryParam, extend.entityClass, profile);
-							// 做sql签名
-							String executeSql = SqlUtilsExt.signSql(queryParam.getSql(), dbType, realSqlToyConfig);
-							// 2022-3-21 存在类似in (?) ?对应参数为数组，将参数和类型长度变得不一致则去除类型约束
-							if (paramsTypes != null && queryParam.getParamsValue() != null
-									&& queryParam.getParamsValue().length != paramsTypes.length) {
-								this.setResult(SqlUtil.insertReturnPrimaryKey(sqlToyContext.getTypeHandler(),
-										executeSql, queryParam.getParamsValue(), null, primaryField, conn, profile,
-										autoCommit, false));
-							} else {
-								this.setResult(SqlUtil.insertReturnPrimaryKey(sqlToyContext.getTypeHandler(),
-										executeSql, queryParam.getParamsValue(), paramsTypes, primaryField, conn,
-										profile, autoCommit, false));
-							}
+					(conn, profile) -> {
+						PreparedQuery prepared = prepareQuery(sqlToyContext, sqlToyConfig, queryExecutor, extend,
+								profile, OperateType.singleTable);
+						// 做sql签名
+						String executeSql = SqlUtilsExt.signSql(prepared.queryParam.getSql(), profile.getDbType(),
+								prepared.config);
+						Object[] realParams = prepared.queryParam.getParamsValue();
+						// 2022-3-21 存在类似in (?) ?对应参数为数组，将参数和类型长度变得不一致则去除类型约束
+						if (paramsTypes != null && realParams != null && realParams.length != paramsTypes.length) {
+							return SqlUtil.insertReturnPrimaryKey(sqlToyContext.getTypeHandler(), executeSql,
+									realParams, null, primaryField, conn, profile, autoCommit, false);
 						}
+						return SqlUtil.insertReturnPrimaryKey(sqlToyContext.getTypeHandler(), executeSql, realParams,
+								paramsTypes, primaryField, conn, profile, autoCommit, false);
 					});
 			return returnPkValue;
 		} catch (Exception e) {
@@ -597,81 +640,57 @@ public class DialectFactory {
 			SqlExecuteStat.start(sqlToyConfig.getId(), operateDetailType,
 					(extend.resultType == null) ? null : (Class) extend.resultType,
 					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql(), extend.contextData);
-			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
+			QueryResult result = (QueryResult) inConnection(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
-					new DataSourceCallbackHandler() {
-						@Override
-						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							DBProfile profile = DataSourceUtils.getDBProfile(conn);
-							SqlExecuteStat.setDialect(profile);
-							// 处理sql中的?为统一的:named形式，并进行sharding table替换
-							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
-									sqlToyConfig, queryExecutor, profile, false);
-							// 判断数据库是否支持取随机记录(只有informix和sybase不支持)
-							Long totalCount = null;
-							Long randomCnt;
-							// 记录数量大于1表示取随机记录数量
-							if (randomCount >= 1) {
-								randomCnt = randomCount.longValue();
-							}
-							// 按比例提取
-							else {
-								// update 2026-9-14 删除恒真的 totalCount==null 判断(历史重构残留:totalCount
-								// 上一行刚初始化为null、此处即首次赋值,判断必然成立)
-								// 提取总记录数
-								long preTime = System.currentTimeMillis();
-								totalCount = getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn,
-										profile);
-								long countRunTime = System.currentTimeMillis() - preTime;
-								randomCnt = Double.valueOf(totalCount * randomCount.doubleValue()).longValue();
-								if (countRunTime == 0) {
-									SqlExecuteStat.debug("process hint",
-											"total records by ratio:{} rows, random records to fetch:{} rows!",
-											totalCount, randomCnt);
-								} else {
-									SqlExecuteStat.debug("process hint",
-											"total records by ratio:{} rows, random records to fetch:{} rows, count query cost time:{} ms!",
-											totalCount, randomCnt, countRunTime);
-								}
-								// 如果总记录数不为零，randomCnt最小为1
-								if (totalCount >= 1 && randomCnt < 1) {
-									randomCnt = 1L;
-								}
-							}
-							QueryResult queryResult;
-							// 总记录数为零
-							if (totalCount != null && totalCount == 0) {
-								queryResult = new QueryResult();
-								queryResult.setRows(new ArrayList());
-								this.setResult(queryResult);
-								logger.warn("getRandom,total Records is zero,please check sql!sqlId={}",
-										sqlToyConfig.getIdOrSql());
-								return;
-							}
-							queryResult = getDialectSqlWrapper(dbType).getRandomResult(sqlToyContext, realSqlToyConfig,
-									queryExecutor, wrapDecryptHandler(sqlToyContext, extend.resultType), totalCount,
-									randomCnt, conn, profile, getFetchSize(extend.fetchSize), extend.maxRows);
-							if (queryResult.getRows() != null && !queryResult.getRows().isEmpty()) {
-								// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
-								List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
-										queryExecutor, conn, profile);
-								// 对查询结果进行计算处理:字段脱敏、格式化、数据旋转、同步环比、分组汇总等
-								boolean changedCols = ResultUtils.calculate(sqlToyContext.getDesensitizeProvider(),
-										realSqlToyConfig, queryResult, pivotCategorySet, extend);
-								// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理
-								// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
-								if (extend.resultType != null) {
-									queryResult
-											.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-													queryResult.getLabelNames(), queryResult.getLabelTypes(),
-													(Class) extend.resultType, changedCols, extend.humpMapLabel,
-													extend.hiberarchy, extend.hiberarchyClasses, extend.fieldsMap));
-								}
-							}
-							SqlExecuteStat.debug("query result", "random records fetched:{} rows!",
-									queryResult.getRecordCount());
-							this.setResult(queryResult);
+					(conn, profile) -> {
+						// 处理sql中的?为统一的:named形式，并进行sharding table替换
+						SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
+								sqlToyConfig, queryExecutor, profile, false);
+						Long totalCount = null;
+						Long randomCnt;
+						// 记录数量大于1表示取随机记录数量
+						if (randomCount >= 1) {
+							randomCnt = randomCount.longValue();
 						}
+						// 按比例提取
+						else {
+							// update 2026-9-14 提取总记录数(删除恒真的 totalCount==null 判断:totalCount
+							// 上一行刚初始化为null、此处即首次赋值,判断必然成立)
+							long preTime = System.currentTimeMillis();
+							totalCount = getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn, profile);
+							long countRunTime = System.currentTimeMillis() - preTime;
+							randomCnt = Double.valueOf(totalCount * randomCount.doubleValue()).longValue();
+							if (countRunTime == 0) {
+								SqlExecuteStat.debug("process hint",
+										"total records by ratio:{} rows, random records to fetch:{} rows!", totalCount,
+										randomCnt);
+							} else {
+								SqlExecuteStat.debug("process hint",
+										"total records by ratio:{} rows, random records to fetch:{} rows, count query cost time:{} ms!",
+										totalCount, randomCnt, countRunTime);
+							}
+							// 如果总记录数不为零，randomCnt最小为1
+							if (totalCount >= 1 && randomCnt < 1) {
+								randomCnt = 1L;
+							}
+						}
+						QueryResult queryResult;
+						// 总记录数为零
+						if (totalCount != null && totalCount == 0) {
+							queryResult = new QueryResult();
+							queryResult.setRows(new ArrayList());
+							logger.warn("getRandom,total Records is zero,please check sql!sqlId={}",
+									sqlToyConfig.getIdOrSql());
+							return queryResult;
+						}
+						queryResult = getDialectSqlWrapper(profile.getDbType()).getRandomResult(sqlToyContext,
+								realSqlToyConfig, queryExecutor, wrapDecryptHandler(sqlToyContext, extend.resultType),
+								totalCount, randomCnt, conn, profile, getFetchSize(extend.fetchSize), extend.maxRows);
+						mapQueryResult(sqlToyContext, realSqlToyConfig, queryExecutor, conn, profile, queryResult,
+								extend);
+						SqlExecuteStat.debug("query result", "random records fetched:{} rows!",
+								queryResult.getRecordCount());
+						return queryResult;
 					});
 			result.setExecuteTime(System.currentTimeMillis() - startTime);
 			return result;
@@ -753,7 +772,7 @@ public class DialectFactory {
 							+ "] has no @Id primary key defined, please check the entity configuration!");
 				}
 				FieldMeta idMeta = (FieldMeta) entityMeta.getFieldMeta(entityMeta.getIdArray()[0]);
-				// 如未定义则使用主键(update 2020-10-16)
+				// update 2020-10-16 如未定义则使用主键
 				if (StringUtil.isBlank(treeModel.getIdField())) {
 					treeModel.idField(idMeta.getColumnName());
 				} else {
@@ -768,7 +787,7 @@ public class DialectFactory {
 				}
 				// 通过实体对象取值给rootId和idValue赋值
 				if (!(treeModel.getEntity() instanceof Type)) {
-					// update 2020-10-19 从手工设定的字段中取值(原本从主键中取值)
+					// update 2020-10-19 从手工设定的字段中取值(不再从主键中取值)
 					if (StringUtil.isBlank(treeModel.getPidValue())) {
 						Object pidValue = BeanUtil.getProperty(treeModel.getEntity(),
 								StringUtil.toHumpStr(treeModel.getPidField(), false));
@@ -787,7 +806,7 @@ public class DialectFactory {
 					throw new IllegalArgumentException("tree table pid field [" + treeModel.getPidField()
 							+ "] has no value assigned, the parent node property is null, please check!");
 				}
-				// update 2022-5-6，boolean类型转出Boolean,在未赋值情况下通过主键类型进行自动补全设置
+				// update 2022-5-6 boolean类型转出Boolean,在未赋值情况下通过主键类型进行自动补全设置
 				if (treeModel.isChar() == null) {
 					// id字段非主键
 					if (!treeModel.getIdField().equalsIgnoreCase(idMeta.getColumnName())) {
@@ -888,44 +907,23 @@ public class DialectFactory {
 			SqlExecuteStat.start(sqlToyConfig.getId(), operateDetailType,
 					(extend.resultType == null) ? null : (Class) extend.resultType,
 					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql(), extend.contextData);
-			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
+			QueryResult result = (QueryResult) inConnection(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
-					new DataSourceCallbackHandler() {
-						@Override
-						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							DBProfile profile = DataSourceUtils.getDBProfile(conn);
-							SqlExecuteStat.setDialect(profile);
-							// 处理sql中的?为统一的:named形式，并进行sharding table替换
-							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
-									sqlToyConfig, queryExecutor, profile, true);
-							QueryResult queryResult = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext,
-									realSqlToyConfig, queryExecutor,
-									wrapDecryptHandler(sqlToyContext, extend.resultType), pageNo, pageSize, conn,
-									profile, getFetchSize(extend.fetchSize), extend.maxRows);
-							queryResult.setPageNo(pageNo);
-							queryResult.setPageSize(pageSize);
-							if (queryResult.getRows() != null && !queryResult.getRows().isEmpty()) {
-								// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
-								List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
-										queryExecutor, conn, profile);
-								// 对查询结果进行计算处理:字段脱敏、格式化、数据旋转、同步环比、分组汇总等
-								boolean changedCols = ResultUtils.calculate(sqlToyContext.getDesensitizeProvider(),
-										realSqlToyConfig, queryResult, pivotCategorySet, extend);
-								// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理
-								// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
-								if (extend.resultType != null) {
-									queryResult
-											.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-													queryResult.getLabelNames(), queryResult.getLabelTypes(),
-													(Class) extend.resultType, changedCols, extend.humpMapLabel,
-													extend.hiberarchy, extend.hiberarchyClasses, extend.fieldsMap));
-								}
-							}
-							queryResult.setSkipQueryCount(true);
-							SqlExecuteStat.debug("query result", "pagination query returned:{} rows!",
-									queryResult.getRecordCount());
-							this.setResult(queryResult);
-						}
+					(conn, profile) -> {
+						// 处理sql中的?为统一的:named形式，并进行sharding table替换(不分页count场景传true)
+						SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
+								sqlToyConfig, queryExecutor, profile, true);
+						QueryResult queryResult = getDialectSqlWrapper(profile.getDbType()).findPageBySql(sqlToyContext,
+								realSqlToyConfig, queryExecutor, wrapDecryptHandler(sqlToyContext, extend.resultType),
+								pageNo, pageSize, conn, profile, getFetchSize(extend.fetchSize), extend.maxRows);
+						queryResult.setPageNo(pageNo);
+						queryResult.setPageSize(pageSize);
+						mapQueryResult(sqlToyContext, realSqlToyConfig, queryExecutor, conn, profile, queryResult,
+								extend);
+						queryResult.setSkipQueryCount(true);
+						SqlExecuteStat.debug("query result", "pagination query returned:{} rows!",
+								queryResult.getRecordCount());
+						return queryResult;
 					});
 			result.setExecuteTime(System.currentTimeMillis() - startTime);
 			return result;
@@ -967,200 +965,176 @@ public class DialectFactory {
 					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql(), extend.contextData);
 			final DataSource realDataSource = ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig,
 					queryExecutor, dataSource);
-			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext, realDataSource,
-					new DataSourceCallbackHandler() {
-						@Override
-						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							DBProfile profile = DataSourceUtils.getDBProfile(conn);
-							boolean isOverPageToFirst = false;
-							// 使用全局默认值
-							if (sqlToyContext.getOverPageToFirst() != null) {
-								isOverPageToFirst = sqlToyContext.getOverPageToFirst();
+			QueryResult result = (QueryResult) inConnection(sqlToyContext, realDataSource, (conn, profile) -> {
+				Integer dbType = profile.getDbType();
+				String dialect = profile.getDialect();
+				boolean isOverPageToFirst = false;
+				// 使用全局默认值
+				if (sqlToyContext.getOverPageToFirst() != null) {
+					isOverPageToFirst = sqlToyContext.getOverPageToFirst();
+				}
+				// 以pageModel中指定的为准
+				if (overPageToFirst != null) {
+					isOverPageToFirst = overPageToFirst;
+				}
+				// 处理sql中的?为统一的:named形式，并进行sharding table替换
+				SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext, sqlToyConfig,
+						queryExecutor, profile, true);
+				QueryResult queryResult = null;
+				PageOptimize pageOptimize = extend.pageOptimize;
+				if (pageOptimize == null) {
+					pageOptimize = realSqlToyConfig.getPageOptimize();
+				}
+				Long recordCnt = null;
+				// 通过查询条件构造唯一的key
+				String pageQueryKey = PageOptimizeUtils.generateOptimizeKey(sqlToyContext, sqlToyConfig, queryExecutor,
+						pageOptimize);
+				// update 2026-11-11 分页count缓存的数据源身份:url+账号/schema/catalog(同库重建连接池可复用,
+				// 命名空间数量随真实端点收敛);无url时由PageOptimizeUtils回退数据源对象身份。
+				// 仅在开启分页优化(pageQueryKey!=null)时构建,避免未启用时产生元数据读取
+				String pageCacheDataSourceKey = (pageQueryKey != null)
+						? PageOptimizeUtils.buildDataSourceKey(profile, conn, realDataSource)
+						: null;
+				// 需要进行分页查询优化
+				if (null != pageQueryKey) {
+					// 从缓存中提取总记录数
+					recordCnt = PageOptimizeUtils.getPageTotalCount(realSqlToyConfig, pageOptimize, pageQueryKey,
+							profile.getDialect(), sqlToyContext, realDataSource, pageCacheDataSourceKey);
+					if (recordCnt != null) {
+						if (pageOptimize.isSkipZeroCount() && recordCnt == 0) {
+							SqlExecuteStat.debug("process hint",
+									"pagination optimize condition hit, total records got from cache:{}, but skipZeroCount=true is set, will re-fetch the count!",
+									recordCnt);
+							recordCnt = null;
+						} else {
+							SqlExecuteStat.debug("process hint",
+									"pagination optimize condition hit, total records got from cache:{}!", recordCnt);
+						}
+					}
+				}
+				// 并行且缓存中无总记录数量，执行并行处理
+				if (pageOptimize != null && pageOptimize.isParallel() && pageNo != -1 && recordCnt == null) {
+					queryResult = parallelPage(sqlToyContext, queryExecutor, realSqlToyConfig, extend, pageNo, pageSize,
+							isOverPageToFirst, pageOptimize, conn, profile, realDataSource);
+					recordCnt = queryResult.getRecordCount();
+					// 将并行后得到的总记录数登记到缓存
+					if (null != pageQueryKey) {
+						PageOptimizeUtils.registPageTotalCount(realSqlToyConfig, pageOptimize, pageQueryKey, recordCnt,
+								profile.getDialect(), sqlToyContext, realDataSource, pageCacheDataSourceKey);
+					}
+				} else {
+					// 非并行且分页缓存未命中，执行count查询
+					if (recordCnt == null) {
+						long preTime = System.currentTimeMillis();
+						recordCnt = getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn, profile);
+						SqlExecuteStat.debug("count query cost time", (System.currentTimeMillis() - preTime) + "ms!");
+					}
+					// 将总记录数登记到缓存
+					if (null != pageQueryKey) {
+						PageOptimizeUtils.registPageTotalCount(realSqlToyConfig, pageOptimize, pageQueryKey, recordCnt,
+								profile.getDialect(), sqlToyContext, realDataSource, pageCacheDataSourceKey);
+					}
+					// pageNo=-1时的提取数据量限制
+					int limitSize = sqlToyContext.getPageFetchSizeLimit();
+					// pageNo=-1时,总记录数超出限制则返回空集合
+					boolean illegal = (pageNo == -1 && (limitSize > 0 && recordCnt > limitSize));
+					if (recordCnt == 0 || illegal) {
+						queryResult = new QueryResult();
+						if (recordCnt == 0 && isOverPageToFirst) {
+							queryResult.setPageNo(1L);
+						} else {
+							queryResult.setPageNo(pageNo);
+						}
+						queryResult.setPageSize(pageSize);
+						queryResult.setRecordCount(0L);
+						if (illegal) {
+							SqlExecuteStat.debug("process hint",
+									"illegal page query, total fetched records:{} exceeds the:{} limit, adjustable via parameter:spring.sqltoy.pageFetchSizeLimit (-1 means no limit)",
+									recordCnt, limitSize);
+							logger.warn(
+									"illegal page query, fetched record count:{} exceeds the:{} limit, adjustable via config:spring.sqltoy.pageFetchSizeLimit (-1 means no limit),sql={}",
+									recordCnt, limitSize, sqlToyConfig.getIdOrSql());
+						} else {
+							SqlExecuteStat.debug("process hint", "pagination query count value:0");
+						}
+					} else {
+						SqlExecuteStat.debug("process hint", "pagination query count value:{}", recordCnt);
+						long preTime = System.currentTimeMillis();
+						// 合法的全记录提取,设置页号为1按记录数
+						if (pageNo == -1) {
+							SqlExecuteStat.debug("process hint",
+									"pageNo=-1, the page may be doing a download operation!");
+							// 通过参数处理最终的sql和参数值
+							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
+									extend.getParamsName(), extend.getParamsValue(sqlToyContext, realSqlToyConfig),
+									dialect);
+							// update 2022-9-10 增加sql执行拦截器
+							queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
+									(extend.entityClass == null) ? OperateType.search : OperateType.singleTable,
+									queryParam, extend.entityClass, profile);
+							queryResult = getDialectSqlWrapper(dbType).findBySql(sqlToyContext, realSqlToyConfig,
+									queryParam.getSql(), queryParam.getParamsValue(), extend,
+									wrapDecryptHandler(sqlToyContext, extend.resultType), conn, null, profile,
+									getFetchSize(extend.fetchSize), extend.maxRows);
+							long totalRecord = (queryResult.getRows() == null) ? 0 : queryResult.getRows().size();
+							queryResult.setPageNo(1L);
+							queryResult.setPageSize(Long.valueOf(totalRecord).intValue());
+							queryResult.setRecordCount(totalRecord);
+						} else {
+							// 实际开始页(页数据超出总记录,则从第一页重新开始,相反如继续按指定的页查询则记录为空,且实际页号也不存在)
+							boolean isOverPage = isPageOverTotal(pageNo, pageSize, recordCnt);
+							// 允许页号超出总页数，结果返回空集合
+							if (isOverPage && !isOverPageToFirst) {
+								queryResult = new QueryResult();
+								queryResult.setPageNo(pageNo);
+							} else {
+								long realStartPage = isOverPage ? 1 : pageNo;
+								queryResult = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext,
+										realSqlToyConfig, queryExecutor,
+										wrapDecryptHandler(sqlToyContext, extend.resultType), realStartPage, pageSize,
+										conn, profile, getFetchSize(extend.fetchSize), extend.maxRows);
+								queryResult.setPageNo(realStartPage);
 							}
-							// 以pageModel中指定的为准
-							if (overPageToFirst != null) {
-								isOverPageToFirst = overPageToFirst;
-							}
-							SqlExecuteStat.setDialect(profile);
-							// 处理sql中的?为统一的:named形式，并进行sharding table替换
-							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
-									sqlToyConfig, queryExecutor, profile, true);
-							QueryResult queryResult = null;
-							PageOptimize pageOptimize = extend.pageOptimize;
-							if (pageOptimize == null) {
-								pageOptimize = realSqlToyConfig.getPageOptimize();
-							}
-							Long recordCnt = null;
-							// 通过查询条件构造唯一的key
-							String pageQueryKey = PageOptimizeUtils.generateOptimizeKey(sqlToyContext, sqlToyConfig,
-									queryExecutor, pageOptimize);
-							// 需要进行分页查询优化
-							if (null != pageQueryKey) {
-								// 从缓存中提取总记录数
-								recordCnt = PageOptimizeUtils.getPageTotalCount(realSqlToyConfig, pageOptimize,
-										pageQueryKey, profile.getDialect(), sqlToyContext, realDataSource);
-								if (recordCnt != null) {
-									if (pageOptimize.isSkipZeroCount() && recordCnt == 0) {
-										SqlExecuteStat.debug("process hint",
-												"pagination optimize condition hit, total records got from cache:{}, but skipZeroCount=true is set, will re-fetch the count!",
-												recordCnt);
-										recordCnt = null;
+							queryResult.setPageSize(pageSize);
+							int rowSize = (queryResult.getRows() != null) ? queryResult.getRows().size() : 0;
+							long minCount = (queryResult.getPageNo() - 1) * pageSize + rowSize;
+							// recordCount 跟pageNo、pageSize、rowSize之间逻辑差异校正
+							// 差异原因: 1、count缓存;2、分别执行count和查记录存在的时间差,期间数据发生了变化
+							// 实际记录量> 总记录数(可能从缓存获取),rowSize<=pageSize 防止关联查询导致单页记录数量扩大
+							if (minCount > recordCnt && rowSize <= pageSize) {
+								// 当页没有查到数据，用recordCnt
+								if (rowSize == 0) {
+									queryResult.setRecordCount(recordCnt);
+								} else {
+									// 存在快速分页场景，快速分页内部总记录小于等于外部join后的记录数量
+									if (realSqlToyConfig.isHasFast()) {
+										queryResult.setRecordCount(recordCnt);
 									} else {
-										SqlExecuteStat.debug("process hint",
-												"pagination optimize condition hit, total records got from cache:{}!",
-												recordCnt);
+										queryResult.setRecordCount(minCount);
 									}
 								}
-							}
-							// 并行且缓存中无总记录数量，执行并行处理
-							if (pageOptimize != null && pageOptimize.isParallel() && pageNo != -1
-									&& recordCnt == null) {
-								queryResult = parallelPage(sqlToyContext, queryExecutor, realSqlToyConfig, extend,
-										pageNo, pageSize, isOverPageToFirst, pageOptimize, conn, profile,
-										realDataSource);
-								recordCnt = queryResult.getRecordCount();
-								// 将并行后得到的总记录数登记到缓存
-								if (null != pageQueryKey) {
-									PageOptimizeUtils.registPageTotalCount(realSqlToyConfig, pageOptimize, pageQueryKey,
-											recordCnt, profile.getDialect(), sqlToyContext, realDataSource);
+							} // 第2页，7条不足一页，total>17,说明total过大不正确
+							else if (rowSize < pageSize && recordCnt > minCount && minCount >= 0) {
+								// 存在@fast快速分页，inner join后记录会存在变少的场景
+								if (realSqlToyConfig.isHasFast()) {
+									queryResult.setRecordCount(recordCnt);
+								} else {
+									queryResult.setRecordCount(minCount);
 								}
 							} else {
-								// 非并行且分页缓存未命中，执行count查询
-								if (recordCnt == null) {
-									long preTime = System.currentTimeMillis();
-									recordCnt = getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn,
-											profile);
-									SqlExecuteStat.debug("count query cost time",
-											(System.currentTimeMillis() - preTime) + "ms!");
-								}
-								// 将总记录数登记到缓存
-								if (null != pageQueryKey) {
-									PageOptimizeUtils.registPageTotalCount(realSqlToyConfig, pageOptimize, pageQueryKey,
-											recordCnt, profile.getDialect(), sqlToyContext, realDataSource);
-								}
-								// pageNo=-1时的提取数据量限制
-								int limitSize = sqlToyContext.getPageFetchSizeLimit();
-								// pageNo=-1时,总记录数超出限制则返回空集合
-								boolean illegal = (pageNo == -1 && (limitSize > 0 && recordCnt > limitSize));
-								if (recordCnt == 0 || illegal) {
-									queryResult = new QueryResult();
-									if (recordCnt == 0 && isOverPageToFirst) {
-										queryResult.setPageNo(1L);
-									} else {
-										queryResult.setPageNo(pageNo);
-									}
-									queryResult.setPageSize(pageSize);
-									queryResult.setRecordCount(0L);
-									if (illegal) {
-										SqlExecuteStat.debug("process hint",
-												"illegal page query, total fetched records:{} exceeds the:{} limit, adjustable via parameter:spring.sqltoy.pageFetchSizeLimit (-1 means no limit)",
-												recordCnt, limitSize);
-										logger.warn(
-												"illegal page query, fetched record count:{} exceeds the:{} limit, adjustable via config:spring.sqltoy.pageFetchSizeLimit (-1 means no limit),sql={}",
-												recordCnt, limitSize, sqlToyConfig.getIdOrSql());
-									} else {
-										SqlExecuteStat.debug("process hint", "pagination query count value:0");
-									}
-								} else {
-									SqlExecuteStat.debug("process hint", "pagination query count value:{}", recordCnt);
-									long preTime = System.currentTimeMillis();
-									// 合法的全记录提取,设置页号为1按记录数
-									if (pageNo == -1) {
-										SqlExecuteStat.debug("process hint",
-												"pageNo=-1, the page may be doing a download operation!");
-										// 通过参数处理最终的sql和参数值
-										SqlToyResult queryParam = SqlConfigParseUtils.processSql(
-												realSqlToyConfig.getSql(dialect), extend.getParamsName(),
-												extend.getParamsValue(sqlToyContext, realSqlToyConfig), dialect);
-										// 增加sql执行拦截器 update 2022-9-10
-										queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
-												(extend.entityClass == null) ? OperateType.search
-														: OperateType.singleTable,
-												queryParam, extend.entityClass, profile);
-										queryResult = getDialectSqlWrapper(dbType).findBySql(sqlToyContext,
-												realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-												extend, wrapDecryptHandler(sqlToyContext, extend.resultType), conn,
-												null, profile, getFetchSize(extend.fetchSize), extend.maxRows);
-										long totalRecord = (queryResult.getRows() == null) ? 0
-												: queryResult.getRows().size();
-										queryResult.setPageNo(1L);
-										queryResult.setPageSize(Long.valueOf(totalRecord).intValue());
-										queryResult.setRecordCount(totalRecord);
-									} else {
-										// 实际开始页(页数据超出总记录,则从第一页重新开始,相反如继续按指定的页查询则记录为空,且实际页号也不存在)
-										boolean isOverPage = isPageOverTotal(pageNo, pageSize, recordCnt);
-										// 允许页号超出总页数，结果返回空集合
-										if (isOverPage && !isOverPageToFirst) {
-											queryResult = new QueryResult();
-											queryResult.setPageNo(pageNo);
-										} else {
-											long realStartPage = isOverPage ? 1 : pageNo;
-											queryResult = getDialectSqlWrapper(dbType).findPageBySql(sqlToyContext,
-													realSqlToyConfig, queryExecutor,
-													wrapDecryptHandler(sqlToyContext, extend.resultType), realStartPage,
-													pageSize, conn, profile, getFetchSize(extend.fetchSize),
-													extend.maxRows);
-											queryResult.setPageNo(realStartPage);
-										}
-										queryResult.setPageSize(pageSize);
-										int rowSize = (queryResult.getRows() != null) ? queryResult.getRows().size()
-												: 0;
-										long minCount = (queryResult.getPageNo() - 1) * pageSize + rowSize;
-										// recordCount 跟pageNo、pageSize、rowSize之间逻辑差异校正
-										// 差异原因: 1、count缓存;2、分别执行count和查记录存在的时间差,期间数据发生了变化
-										// 实际记录量> 总记录数(可能从缓存获取),rowSize<=pageSize 防止关联查询导致单页记录数量扩大
-										if (minCount > recordCnt && rowSize <= pageSize) {
-											// 当页没有查到数据，用recordCnt
-											if (rowSize == 0) {
-												queryResult.setRecordCount(recordCnt);
-											} else {
-												// 存在快速分页场景，快速分页内部总记录小于等于外部join后的记录数量
-												if (realSqlToyConfig.isHasFast()) {
-													queryResult.setRecordCount(recordCnt);
-												} else {
-													queryResult.setRecordCount(minCount);
-												}
-											}
-										} // 第2页，7条不足一页，total>17,说明total过大不正确
-										else if (rowSize < pageSize && recordCnt > minCount && minCount >= 0) {
-											// 存在@fast快速分页，inner join后记录会存在变少的场景
-											if (realSqlToyConfig.isHasFast()) {
-												queryResult.setRecordCount(recordCnt);
-											} else {
-												queryResult.setRecordCount(minCount);
-											}
-										} else {
-											queryResult.setRecordCount(recordCnt);
-										}
-									}
-									SqlExecuteStat.debug("page records query cost time",
-											(System.currentTimeMillis() - preTime) + "ms!");
-								}
+								queryResult.setRecordCount(recordCnt);
 							}
-							if (queryResult.getRows() != null && !queryResult.getRows().isEmpty()) {
-								// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
-								List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
-										queryExecutor, conn, profile);
-								// 对查询结果进行计算处理:字段脱敏、格式化、数据旋转、同步环比、分组汇总等
-								boolean changedCols = ResultUtils.calculate(sqlToyContext.getDesensitizeProvider(),
-										realSqlToyConfig, queryResult, pivotCategorySet, extend);
-								// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理
-								// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
-								if (extend.resultType != null) {
-									queryResult
-											.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-													queryResult.getLabelNames(), queryResult.getLabelTypes(),
-													(Class) extend.resultType, changedCols, extend.humpMapLabel,
-													extend.hiberarchy, extend.hiberarchyClasses, extend.fieldsMap));
-								}
-							}
-							SqlExecuteStat.debug("query result",
-									"total records:{} rows, records fetched in this page:{} rows!",
-									((QueryResult) queryResult).getRecordCount(),
-									(queryResult.getRows() == null) ? 0 : queryResult.getRows().size());
-							this.setResult(queryResult);
 						}
-					});
+						SqlExecuteStat.debug("page records query cost time",
+								(System.currentTimeMillis() - preTime) + "ms!");
+					}
+				}
+				mapQueryResult(sqlToyContext, realSqlToyConfig, queryExecutor, conn, profile, queryResult, extend);
+				SqlExecuteStat.debug("query result", "total records:{} rows, records fetched in this page:{} rows!",
+						((QueryResult) queryResult).getRecordCount(),
+						(queryResult.getRows() == null) ? 0 : queryResult.getRows().size());
+				return queryResult;
+			});
 			result.setExecuteTime(System.currentTimeMillis() - startTime);
 			return result;
 		} catch (Exception e) {
@@ -1206,8 +1180,7 @@ public class DialectFactory {
 					// 重新通过dataSource获取conn，避免conn竞争
 					DataSourceUtils.processDataSource(sqlToyContext, dataSource, new DataSourceCallbackHandler() {
 						@Override
-						public void doConnection(Connection countConn, Integer dbType, String dialect)
-								throws Exception {
+						public void doConnection(Connection countConn, DBProfile profile) throws Exception {
 							queryResult.setRecordCount(
 									getCountBySql(sqlToyContext, sqlToyConfig, queryExecutor, countConn, profile));
 						}
@@ -1247,9 +1220,9 @@ public class DialectFactory {
 				throw new DataAccessException("parallel query execution error:" + queryResult.getMessage());
 			}
 			int rowSize = (queryResult.getRows() == null) ? 0 : queryResult.getRows().size();
-			// update 2026-9-14 与串行findPage(L1091-1104)统一超界页处理:原形态始终按请求页号取数并保留该页号,
-			// 仅recordCount==0时回退页号;而串行overPageToFirst=true时会改从第1页取数、=false时结果置空,
-			// 同一配置下并行/串行行为分叉(页号超出总页数时并行返回空数据且页号不回退)
+			// update 2026-9-14
+			// 与串行findPage统一超界页处理:原并行形态始终按请求页号取数并保留该页号,仅recordCount==0时回退页号,
+			// 与串行overPageToFirst=true改从第1页取数、=false结果置空的行为分叉(页号超出总页数时并行返回空数据且页号不回退)
 			boolean overPage = isPageOverTotal(pageNo, pageSize, queryResult.getRecordCount());
 			if (overPage) {
 				if (queryResult.getRecordCount() == 0) {
@@ -1332,60 +1305,38 @@ public class DialectFactory {
 			SqlExecuteStat.start(sqlToyConfig.getId(), operateDetailType,
 					(extend.resultType == null) ? null : (Class) extend.resultType,
 					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql(), extend.contextData);
-			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
+			QueryResult result = (QueryResult) inConnection(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
-					new DataSourceCallbackHandler() {
-						@Override
-						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							DBProfile profile = DataSourceUtils.getDBProfile(conn);
-							SqlExecuteStat.setDialect(profile);
-							// 处理sql中的?为统一的:named形式，并进行sharding table替换
-							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
-									sqlToyConfig, queryExecutor, profile, false);
-							Integer realTopSize;
-							// 小于1表示按比例提取
-							if (topSize < 1) {
-								long preTime = System.currentTimeMillis();
-								Long totalCount = getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn,
-										profile);
-								realTopSize = Double.valueOf(topSize * totalCount.longValue()).intValue();
-								SqlExecuteStat.debug("process hint",
-										"extract by ratio, total records:{} rows, top records to fetch by ratio:{} rows, count query cost time:{} ms!",
-										totalCount, realTopSize, System.currentTimeMillis() - preTime);
-							} else {
-								realTopSize = Double.valueOf(topSize).intValue();
-							}
-							if (realTopSize == 0) {
-								this.setResult(new QueryResult());
-								SqlExecuteStat.debug("query result", "actual top records fetched:0 rows!");
-								return;
-							}
-							// 调用数据库方言查询结果
-							QueryResult queryResult = getDialectSqlWrapper(dbType).findTopBySql(sqlToyContext,
-									realSqlToyConfig, queryExecutor,
-									wrapDecryptHandler(sqlToyContext, extend.resultType), realTopSize, conn, profile,
-									getFetchSize(extend.fetchSize), extend.maxRows);
-							if (queryResult.getRows() != null && !queryResult.getRows().isEmpty()) {
-								// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
-								List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
-										queryExecutor, conn, profile);
-								// 对查询结果进行计算处理:字段脱敏、格式化、数据旋转、同步环比、分组汇总等
-								boolean changedCols = ResultUtils.calculate(sqlToyContext.getDesensitizeProvider(),
-										realSqlToyConfig, queryResult, pivotCategorySet, extend);
-								// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理,后续可能还有旋转、汇总等计算
-								// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
-								if (extend.resultType != null) {
-									queryResult
-											.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-													queryResult.getLabelNames(), queryResult.getLabelTypes(),
-													(Class) extend.resultType, changedCols, extend.humpMapLabel,
-													extend.hiberarchy, extend.hiberarchyClasses, extend.fieldsMap));
-								}
-							}
-							SqlExecuteStat.debug("query result", "actual top records fetched:{} rows!",
-									queryResult.getRecordCount());
-							this.setResult(queryResult);
+					(conn, profile) -> {
+						// 处理sql中的?为统一的:named形式，并进行sharding table替换
+						SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
+								sqlToyConfig, queryExecutor, profile, false);
+						Integer realTopSize;
+						// 小于1表示按比例提取
+						if (topSize < 1) {
+							long preTime = System.currentTimeMillis();
+							Long totalCount = getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn,
+									profile);
+							realTopSize = Double.valueOf(topSize * totalCount.longValue()).intValue();
+							SqlExecuteStat.debug("process hint",
+									"extract by ratio, total records:{} rows, top records to fetch by ratio:{} rows, count query cost time:{} ms!",
+									totalCount, realTopSize, System.currentTimeMillis() - preTime);
+						} else {
+							realTopSize = Double.valueOf(topSize).intValue();
 						}
+						if (realTopSize == 0) {
+							SqlExecuteStat.debug("query result", "actual top records fetched:0 rows!");
+							return new QueryResult();
+						}
+						// 调用数据库方言查询结果
+						QueryResult queryResult = getDialectSqlWrapper(profile.getDbType()).findTopBySql(sqlToyContext,
+								realSqlToyConfig, queryExecutor, wrapDecryptHandler(sqlToyContext, extend.resultType),
+								realTopSize, conn, profile, getFetchSize(extend.fetchSize), extend.maxRows);
+						mapQueryResult(sqlToyContext, realSqlToyConfig, queryExecutor, conn, profile, queryResult,
+								extend);
+						SqlExecuteStat.debug("query result", "actual top records fetched:{} rows!",
+								queryResult.getRecordCount());
+						return queryResult;
 					});
 			result.setExecuteTime(System.currentTimeMillis() - startTime);
 			return result;
@@ -1423,50 +1374,21 @@ public class DialectFactory {
 			SqlExecuteStat.start(sqlToyConfig.getId(), operateDetailType,
 					(extend.resultType == null) ? null : (Class) extend.resultType,
 					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql(), extend.contextData);
-			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
+			QueryResult result = (QueryResult) inConnection(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
-					new DataSourceCallbackHandler() {
-						@Override
-						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							DBProfile profile = DataSourceUtils.getDBProfile(conn);
-							SqlExecuteStat.setDialect(profile);
-							// 处理sql中的?为统一的:named形式，并进行sharding table替换
-							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
-									sqlToyConfig, queryExecutor, profile, false);
-							// 通过参数处理最终的sql和参数值
-							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
-									extend.getParamsName(), extend.getParamsValue(sqlToyContext, realSqlToyConfig),
-									dialect);
-							// 增加sql执行拦截器 update 2022-9-10
-							queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
-									(extend.entityClass == null) ? OperateType.search : OperateType.singleTable,
-									queryParam, extend.entityClass, profile);
-							DefaultDialectUtils.setSessionLockWait(profile, conn, lockMode, extend.lockWaitTimeout);
-							QueryResult queryResult = getDialectSqlWrapper(dbType).findBySql(sqlToyContext,
-									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(), extend,
-									wrapDecryptHandler(sqlToyContext, extend.resultType), conn, lockMode, profile,
-									getFetchSize(extend.fetchSize), extend.maxRows);
-							if (queryResult.getRows() != null && !queryResult.getRows().isEmpty()) {
-								// 存在计算和旋转的数据不能映射到对象(数据类型不一致，如汇总平均以及数据旋转)
-								List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, realSqlToyConfig,
-										queryExecutor, conn, profile);
-								// 对查询结果进行计算处理:字段脱敏、格式化、数据旋转、同步环比、分组汇总等
-								boolean changedCols = ResultUtils.calculate(sqlToyContext.getDesensitizeProvider(),
-										realSqlToyConfig, queryResult, pivotCategorySet, extend);
-								// 结果映射成对象(含Map),为什么不放在rs循环过程中?因为rs循环里面有link、缓存翻译等很多处理,后续可能还有旋转、汇总等计算
-								// 将结果映射对象单独出来为了解耦，性能影响其实可以忽略，上万条也是1毫秒级
-								if (extend.resultType != null) {
-									queryResult
-											.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-													queryResult.getLabelNames(), queryResult.getLabelTypes(),
-													(Class) extend.resultType, changedCols, extend.humpMapLabel,
-													extend.hiberarchy, extend.hiberarchyClasses, extend.fieldsMap));
-								}
-							}
-							SqlExecuteStat.debug("query result", "total records queried={} rows!",
-									queryResult.getRecordCount());
-							this.setResult(queryResult);
-						}
+					(conn, profile) -> {
+						PreparedQuery prepared = prepareQuery(sqlToyContext, sqlToyConfig, queryExecutor, extend,
+								profile, (extend.entityClass == null) ? OperateType.search : OperateType.singleTable);
+						DefaultDialectUtils.setSessionLockWait(profile, conn, lockMode, extend.lockWaitTimeout);
+						QueryResult queryResult = getDialectSqlWrapper(profile.getDbType()).findBySql(sqlToyContext,
+								prepared.config, prepared.queryParam.getSql(), prepared.queryParam.getParamsValue(),
+								extend, wrapDecryptHandler(sqlToyContext, extend.resultType), conn, lockMode, profile,
+								getFetchSize(extend.fetchSize), extend.maxRows);
+						mapQueryResult(sqlToyContext, prepared.config, queryExecutor, conn, profile, queryResult,
+								extend);
+						SqlExecuteStat.debug("query result", "total records queried={} rows!",
+								queryResult.getRecordCount());
+						return queryResult;
 					});
 			result.setExecuteTime(System.currentTimeMillis() - startTime);
 			return result;
@@ -1501,19 +1423,13 @@ public class DialectFactory {
 			SqlExecuteStat.start(sqlToyConfig.getId(), operateDetailType,
 					(extend.resultType == null) ? null : (Class) extend.resultType,
 					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql(), extend.contextData);
-			Long count = (Long) DataSourceUtils.processDataSource(sqlToyContext,
+			Long count = (Long) inConnection(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
-					new DataSourceCallbackHandler() {
-						@Override
-						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							DBProfile profile = DataSourceUtils.getDBProfile(conn);
-							SqlExecuteStat.setDialect(profile);
-							// 处理sql中的?为统一的:named形式，并进行sharding table替换
-							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
-									sqlToyConfig, queryExecutor, profile, false);
-							this.setResult(
-									getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn, profile));
-						}
+					(conn, profile) -> {
+						// 处理sql中的?为统一的:named形式，并进行sharding table替换
+						SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
+								sqlToyConfig, queryExecutor, profile, false);
+						return getCountBySql(sqlToyContext, realSqlToyConfig, queryExecutor, conn, profile);
 					});
 			SqlExecuteStat.debug("query result", "count query result={}!", count);
 			return count;
@@ -1556,8 +1472,8 @@ public class DialectFactory {
 			String rejectWithSql = sql;
 			String withSql = "";
 			boolean hasUnion = false;
-			// update 2019-07-23 进行先判定然后再通过逻辑解析with as 相关语法,提升效率
-			// 存在可以简化的 union all 模式(sql xml 文件通过union-all-count 属性由开发者指定)
+			// update 2019-07-23 先判定再通过逻辑解析with as 相关语法提升效率;存在可以简化的 union all 模式(sql xml
+			// 文件通过union-all-count 属性由开发者指定)
 			if (sqlToyConfig.isUnionAllCount()) {
 				if (sqlToyConfig.isHasWith()) {
 					SqlWithAnalysis sqlWith = new SqlWithAnalysis(sql);
@@ -1638,7 +1554,7 @@ public class DialectFactory {
 		// 通过参数处理最终的sql和参数值
 		SqlToyResult queryParam = SqlConfigParseUtils.processSql(sql, extend.getParamsName(),
 				extend.getParamsValue(sqlToyContext, sqlToyConfig), dialect);
-		// 增加sql执行拦截器 update 2022-9-10
+		// update 2022-9-10 增加sql执行拦截器
 		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig,
 				(extend.entityClass == null) ? OperateType.count : OperateType.singleTable, queryParam,
 				extend.entityClass, profile);
@@ -1712,8 +1628,8 @@ public class DialectFactory {
 			// 启动执行日志
 			SqlExecuteStat.start(BeanUtil.getEntityClass(entityClass).getName(), OperateDetailType.saveOrUpdateAll,
 					entityClass, Long.valueOf(entities.size()), sqlToyContext.isDebug());
-			// 改进说明:利用目前分库分表的策略，针对超大数据集，比如1万条，按2500条记录作为一个并行度(限制最大并行度)进行并行执行
-			// update 2025-12-30将原本自动给主键赋值由true改为false
+			// update 2025-12-30
+			// 改进说明:利用目前分库分表的策略，针对超大数据集，比如1万条，按2500条记录作为一个并行度(限制最大并行度)进行并行执行;原本自动给主键赋值由true改为false
 			List<Long> result = ParallelUtils.execute(sqlToyContext, entities, false, false, SqlType.update, dataSource,
 					parallelConfig, (context, batchModel) -> {
 						ShardingModel shardingModel = batchModel.getShardingModel();
@@ -1879,43 +1795,34 @@ public class DialectFactory {
 			List result = ParallelUtils.execute(sqlToyContext, entities, false, false, SqlType.search, dataSource,
 					parallelConfig, (context, batchModel) -> {
 						ShardingModel shardingModel = batchModel.getShardingModel();
-						return (List) DataSourceUtils.processDataSource(context, shardingModel.getDataSource(),
-								new DataSourceCallbackHandler() {
-									@Override
-									public void doConnection(Connection conn, Integer dbType, String dialect)
-											throws Exception {
-										DBProfile profile = DataSourceUtils.getDBProfile(conn);
-										DefaultDialectUtils.setSessionLockWait(profile, conn, lockMode,
-												lockWaitTimeout);
-										List parallelEntities = batchModel.getEntities();
-										int totalSize = parallelEntities.size();
-										if (totalSize <= realBatchSize) {
-											SqlExecuteStat.debug("single batch load",
-													"load records:{} <= batch size:{}!", totalSize, realBatchSize);
-											this.setResult(getDialectSqlWrapper(dbType).loadAll(context,
-													parallelEntities, parallelOnlySubTable, cascadeTypesList, lockMode,
-													lockWaitTimeout, conn, profile, shardingModel.getTableName(),
-													fetchSize, -1, queryTimeout));
-										} else {
-											int batchCnt = (totalSize + realBatchSize - 1) / realBatchSize;
-											List parallelResult = new ArrayList();
-											List batchEntities;
-											SqlExecuteStat.debug("batch load",
-													"total records:{}, split into:{} batches!", totalSize, batchCnt);
-											for (int i = 0; i < batchCnt; i++) {
-												batchEntities = parallelEntities.subList(i * realBatchSize,
-														(i == batchCnt - 1) ? totalSize : (i + 1) * realBatchSize);
-												SqlExecuteStat.debug("batch load", "loading batch:{} with:{} rows!",
-														i + 1, batchEntities.size());
-												parallelResult.addAll(getDialectSqlWrapper(dbType).loadAll(context,
-														batchEntities, parallelOnlySubTable, cascadeTypesList, lockMode,
-														lockWaitTimeout, conn, profile, shardingModel.getTableName(),
-														fetchSize, -1, queryTimeout));
-											}
-											this.setResult(parallelResult);
-										}
-									}
-								});
+						return (List) inConnection(context, shardingModel.getDataSource(), (conn, profile) -> {
+							Integer dbType = profile.getDbType();
+							DefaultDialectUtils.setSessionLockWait(profile, conn, lockMode, lockWaitTimeout);
+							List parallelEntities = batchModel.getEntities();
+							int totalSize = parallelEntities.size();
+							if (totalSize <= realBatchSize) {
+								SqlExecuteStat.debug("single batch load", "load records:{} <= batch size:{}!",
+										totalSize, realBatchSize);
+								return getDialectSqlWrapper(dbType).loadAll(context, parallelEntities,
+										parallelOnlySubTable, cascadeTypesList, lockMode, lockWaitTimeout, conn,
+										profile, shardingModel.getTableName(), fetchSize, -1, queryTimeout);
+							}
+							int batchCnt = (totalSize + realBatchSize - 1) / realBatchSize;
+							List parallelResult = new ArrayList();
+							List batchEntities;
+							SqlExecuteStat.debug("batch load", "total records:{}, split into:{} batches!", totalSize,
+									batchCnt);
+							for (int i = 0; i < batchCnt; i++) {
+								batchEntities = parallelEntities.subList(i * realBatchSize,
+										(i == batchCnt - 1) ? totalSize : (i + 1) * realBatchSize);
+								SqlExecuteStat.debug("batch load", "loading batch:{} with:{} rows!", i + 1,
+										batchEntities.size());
+								parallelResult.addAll(getDialectSqlWrapper(dbType).loadAll(context, batchEntities,
+										parallelOnlySubTable, cascadeTypesList, lockMode, lockWaitTimeout, conn,
+										profile, shardingModel.getTableName(), fetchSize, -1, queryTimeout));
+							}
+							return parallelResult;
+						});
 					});
 			SqlExecuteStat.debug("execution result", "query result records:{} rows!", result.size());
 			return result;
@@ -2286,44 +2193,32 @@ public class DialectFactory {
 					extend.contextData);
 			// 组织参数和参数校验，但忽视数据权限数据的传参和校验
 			QueryExecutorBuilder.initQueryExecutor(sqlToyContext, extend, sqlToyConfig, false);
-			QueryResult result = (QueryResult) DataSourceUtils.processDataSource(sqlToyContext,
+			QueryResult result = (QueryResult) inConnection(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
-					new DataSourceCallbackHandler() {
-						@Override
-						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							DBProfile profile = DataSourceUtils.getDBProfile(conn);
-							SqlExecuteStat.setDialect(profile);
-							// 处理sql中的?为统一的:named形式
-							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
-									sqlToyConfig, queryExecutor, profile, false);
-							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
-									extend.getParamsName(), extend.getParamsValue(sqlToyContext, realSqlToyConfig),
-									dialect);
-							// 增加sql执行拦截器 update 2022-9-10
-							queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
-									OperateType.fetchUpdate, queryParam, null, profile);
-							LockMode lockMode = (extend.lockMode == null) ? LockMode.UPGRADE : extend.lockMode;
-							DefaultDialectUtils.setSessionLockWait(profile, conn, lockMode, extend.lockWaitTimeout);
-							QueryResult queryResult = getDialectSqlWrapper(dbType).updateFetch(sqlToyContext,
-									realSqlToyConfig, queryParam.getSql(), queryParam.getParamsValue(),
-									updateRowHandler, conn, profile, lockMode, extend.lockWaitTimeout,
-									getFetchSize(extend.fetchSize), extend.maxRows);
-							if (extend.resultType != null) {
-								queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-										queryResult.getLabelNames(), queryResult.getLabelTypes(),
-										(Class) extend.resultType, false, extend.humpMapLabel, extend.hiberarchy,
-										extend.hiberarchyClasses, extend.fieldsMap));
-							}
-							if (queryResult.getRecordCount() > sqlToyContext.getUpdateTipCount()) {
-								SqlExecuteStat.debug("execution result",
-										"updateFetch affected rows: {}, greater than the update alert threshold:{} rows!",
-										queryResult.getRecordCount(), sqlToyContext.getUpdateTipCount());
-							} else {
-								SqlExecuteStat.debug("execution result", "updateFetch affected rows: {}!",
-										queryResult.getRecordCount());
-							}
-							this.setResult(queryResult);
+					(conn, profile) -> {
+						PreparedQuery prepared = prepareQuery(sqlToyContext, sqlToyConfig, queryExecutor, extend,
+								profile, OperateType.fetchUpdate, null);
+						LockMode lockMode = (extend.lockMode == null) ? LockMode.UPGRADE : extend.lockMode;
+						DefaultDialectUtils.setSessionLockWait(profile, conn, lockMode, extend.lockWaitTimeout);
+						QueryResult queryResult = getDialectSqlWrapper(profile.getDbType()).updateFetch(sqlToyContext,
+								prepared.config, prepared.queryParam.getSql(), prepared.queryParam.getParamsValue(),
+								updateRowHandler, conn, profile, lockMode, extend.lockWaitTimeout,
+								getFetchSize(extend.fetchSize), extend.maxRows);
+						if (extend.resultType != null) {
+							queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
+									queryResult.getLabelNames(), queryResult.getLabelTypes(), (Class) extend.resultType,
+									false, extend.humpMapLabel, extend.hiberarchy, extend.hiberarchyClasses,
+									extend.fieldsMap));
 						}
+						if (queryResult.getRecordCount() > sqlToyContext.getUpdateTipCount()) {
+							SqlExecuteStat.debug("execution result",
+									"updateFetch affected rows: {}, greater than the update alert threshold:{} rows!",
+									queryResult.getRecordCount(), sqlToyContext.getUpdateTipCount());
+						} else {
+							SqlExecuteStat.debug("execution result", "updateFetch affected rows: {}!",
+									queryResult.getRecordCount());
+						}
+						return queryResult;
 					});
 			result.setExecuteTime(System.currentTimeMillis() - startTime);
 			return result;
@@ -2351,96 +2246,91 @@ public class DialectFactory {
 		try {
 			Long startTime = System.currentTimeMillis();
 			SqlExecuteStat.start(sqlToyConfig.getId(), OperateDetailType.executeStore, null, sqlToyConfig.isShowSql());
-			StoreResult result = (StoreResult) DataSourceUtils.processDataSource(sqlToyContext, dataSource,
-					new DataSourceCallbackHandler() {
-						@Override
-						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							DBProfile profile = DataSourceUtils.getDBProfile(conn);
-							SqlExecuteStat.setDialect(profile);
-							String dialectSql = sqlToyConfig.getSql(dialect);
-							int inCount = (inParamsValue == null) ? 0 : inParamsValue.length;
-							int outCount = (outParamsType == null) ? 0 : outParamsType.length;
-							// sql中问号数量
-							int paramCnt = StringUtil.matchCnt(dialectSql, ARG_PATTERN, 0);
-							// 处理参数注入
-							if (paramCnt != inCount + outCount) {
-								throw new IllegalArgumentException(
-										"the number of input and output parameters in the stored procedure statement does not match the number of actually passed parameters, please check!");
-							}
-							SqlToyResult sqlToyResult = new SqlToyResult(dialectSql, inParamsValue);
-							// 判断是否是{?=call xxStore()} 模式(oracle 不支持此模式)
-							boolean isFirstResult = StringUtil.matches(dialectSql, STORE_PATTERN);
-							// 将call xxxStore(?,?) 后的条件参数判断是否为null，如果是null则改为call xxxStore(null,?,null)
-							// 避免设置类型错误
-							SqlConfigParseUtils.replaceNull(sqlToyResult, isFirstResult ? 1 : 0);
-							// 针对不同数据库执行存储过程调用
-							SqlExecuteStat.showSql("execute stored procedure", sqlToyResult.getSql(),
-									sqlToyResult.getParamsValue());
-							StoreResult queryResult = getDialectSqlWrapper(dbType).executeStore(sqlToyContext,
-									sqlToyConfig, sqlToyResult.getSql(), sqlToyResult.getParamsValue(), outParamsType,
-									moreResult, conn, profile, -1, timeout);
-							// 进行数据必要的数据处理(一般存储过程不会结合旋转sql进行数据旋转操作)
-							// {此区域代码正常情况下不会使用
-							QueryExecutor queryExecutor = new QueryExecutor(null, sqlToyConfig.getParamsName(),
-									inParamsValue);
-							List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, sqlToyConfig,
-									queryExecutor, conn, profile);
-							boolean changedCols = ResultUtils.calculate(sqlToyContext.getDesensitizeProvider(),
-									sqlToyConfig, queryResult, pivotCategorySet, null);
-							// }
-							// 映射成对象
-							if (resultTypes != null && resultTypes.length > 0) {
-								// 存储过程返回多个集合
-								if (moreResult) {
-									int rowsSize = queryResult.getMoreResults().length;
-									// 存储过程未返回任何结果集时moreResults长度为0,跳过回写避免越界
-									if (rowsSize > 0) {
-										// 回写被计算后的集合(getRows()以第一个为基准)
-										queryResult.getMoreResults()[0] = queryResult.getRows();
-									}
-									int endSize = rowsSize;
-									if (resultTypes.length < endSize) {
-										endSize = resultTypes.length;
-									}
-									Class resultType;
-									List row;
-									List<String[]> labelNamesList = queryResult.getLabelsList();
-									List<String[]> labelTypesList = queryResult.getLabelTypesList();
-									String totalCount = "";
-									for (int i = 0; i < endSize; i++) {
-										row = queryResult.getMoreResults()[i];
-										if (i > 0) {
-											totalCount = totalCount.concat(",");
-										}
-										totalCount = totalCount.concat("" + (row == null ? 0 : row.size()));
-										resultType = resultTypes[i];
-										if (resultType != null) {
-											queryResult.getMoreResults()[i] = ResultUtils.wrapQueryResult(sqlToyContext,
-													row, labelNamesList.get(i), labelTypesList.get(i), resultType,
-													(i == 0) ? changedCols : false, null, false, null, null);
-
-										}
-									}
-									SqlExecuteStat.debug("execution result",
-											"executeStore returned multiple collections, records respectively:{} rows, update affected rows:{} rows!",
-											totalCount, queryResult.getUpdateCount());
-								} else if (null != resultTypes[0]) {
-									queryResult
-											.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
-													queryResult.getLabelNames(), queryResult.getLabelTypes(),
-													resultTypes[0], changedCols, null, false, null, null));
-									SqlExecuteStat.debug("execution result",
-											"executeStore returned single collection records:{} rows, update affected rows:{} rows!",
-											queryResult.getRecordCount(), queryResult.getUpdateCount());
-								}
-							} else {
-								SqlExecuteStat.debug("execution result",
-										"executeStore returned collection records:{} rows, update affected rows:{} rows!",
-										queryResult.getRecordCount(), queryResult.getUpdateCount());
-							}
-							this.setResult(queryResult);
+			StoreResult result = (StoreResult) inConnection(sqlToyContext, dataSource, (conn, profile) -> {
+				Integer dbType = profile.getDbType();
+				String dialect = profile.getDialect();
+				String dialectSql = sqlToyConfig.getSql(dialect);
+				int inCount = (inParamsValue == null) ? 0 : inParamsValue.length;
+				int outCount = (outParamsType == null) ? 0 : outParamsType.length;
+				// sql中问号数量:按字面量掩码计数,规避存储过程字符串参数内的?被误计
+				int paramCnt = DialectUtils.getQuestionMarkCount(dialectSql,
+						SqlConfigParseUtils.isBackslashEscapeDialect(dbType));
+				// 处理参数注入
+				if (paramCnt != inCount + outCount) {
+					throw new IllegalArgumentException(
+							"the number of input and output parameters in the stored procedure statement does not match the number of actually passed parameters, please check!");
+				}
+				SqlToyResult sqlToyResult = new SqlToyResult(dialectSql, inParamsValue);
+				// 判断是否是{?=call xxStore()} 模式(oracle 不支持此模式)
+				boolean isFirstResult = StringUtil.matches(dialectSql, STORE_PATTERN);
+				// 将call xxxStore(?,?) 后的条件参数判断是否为null，如果是null则改为call xxxStore(null,?,null)
+				// 避免设置类型错误
+				SqlConfigParseUtils.replaceNull(sqlToyResult, isFirstResult ? 1 : 0);
+				// 针对不同数据库执行存储过程调用
+				SqlExecuteStat.showSql("execute stored procedure", sqlToyResult.getSql(),
+						sqlToyResult.getParamsValue());
+				StoreResult queryResult = getDialectSqlWrapper(dbType).executeStore(sqlToyContext, sqlToyConfig,
+						sqlToyResult.getSql(), sqlToyResult.getParamsValue(), outParamsType, moreResult, conn, profile,
+						-1, timeout);
+				// 进行数据必要的数据处理(一般存储过程不会结合旋转sql进行数据旋转操作)
+				// {此区域代码正常情况下不会使用
+				QueryExecutor queryExecutor = new QueryExecutor(null, sqlToyConfig.getParamsName(), inParamsValue);
+				List pivotCategorySet = ResultUtils.getPivotCategory(sqlToyContext, sqlToyConfig, queryExecutor, conn,
+						profile);
+				boolean changedCols = ResultUtils.calculate(sqlToyContext.getDesensitizeProvider(), sqlToyConfig,
+						queryResult, pivotCategorySet, null);
+				// }
+				// 映射成对象
+				if (resultTypes != null && resultTypes.length > 0) {
+					// 存储过程返回多个集合
+					if (moreResult) {
+						int rowsSize = queryResult.getMoreResults().length;
+						// 存储过程未返回任何结果集时moreResults长度为0,跳过回写避免越界
+						if (rowsSize > 0) {
+							// 回写被计算后的集合(getRows()以第一个为基准)
+							queryResult.getMoreResults()[0] = queryResult.getRows();
 						}
-					});
+						int endSize = rowsSize;
+						if (resultTypes.length < endSize) {
+							endSize = resultTypes.length;
+						}
+						Class resultType;
+						List row;
+						List<String[]> labelNamesList = queryResult.getLabelsList();
+						List<String[]> labelTypesList = queryResult.getLabelTypesList();
+						String totalCount = "";
+						for (int i = 0; i < endSize; i++) {
+							row = queryResult.getMoreResults()[i];
+							if (i > 0) {
+								totalCount = totalCount.concat(",");
+							}
+							totalCount = totalCount.concat("" + (row == null ? 0 : row.size()));
+							resultType = resultTypes[i];
+							if (resultType != null) {
+								queryResult.getMoreResults()[i] = ResultUtils.wrapQueryResult(sqlToyContext, row,
+										labelNamesList.get(i), labelTypesList.get(i), resultType,
+										(i == 0) ? changedCols : false, null, false, null, null);
+
+							}
+						}
+						SqlExecuteStat.debug("execution result",
+								"executeStore returned multiple collections, records respectively:{} rows, update affected rows:{} rows!",
+								totalCount, queryResult.getUpdateCount());
+					} else if (null != resultTypes[0]) {
+						queryResult.setRows(ResultUtils.wrapQueryResult(sqlToyContext, queryResult.getRows(),
+								queryResult.getLabelNames(), queryResult.getLabelTypes(), resultTypes[0], changedCols,
+								null, false, null, null));
+						SqlExecuteStat.debug("execution result",
+								"executeStore returned single collection records:{} rows, update affected rows:{} rows!",
+								queryResult.getRecordCount(), queryResult.getUpdateCount());
+					}
+				} else {
+					SqlExecuteStat.debug("execution result",
+							"executeStore returned collection records:{} rows, update affected rows:{} rows!",
+							queryResult.getRecordCount(), queryResult.getUpdateCount());
+				}
+				return queryResult;
+			});
 			result.setExecuteTime(System.currentTimeMillis() - startTime);
 			return result;
 		} catch (Exception e) {
@@ -2476,69 +2366,58 @@ public class DialectFactory {
 			SqlExecuteStat.start(sqlToyConfig.getId(), operateDetailType,
 					(extend.resultType == null) ? null : (Class) extend.resultType,
 					(extend.showSql != null) ? extend.showSql : sqlToyConfig.isShowSql(), extend.contextData);
-			DataSourceUtils.processDataSource(sqlToyContext,
+			inConnection(sqlToyContext,
 					ShardingUtils.getShardingDataSource(sqlToyContext, sqlToyConfig, queryExecutor, dataSource),
-					new DataSourceCallbackHandler() {
-						@Override
-						public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-							DBProfile profile = DataSourceUtils.getDBProfile(conn);
-							SqlExecuteStat.setDialect(profile);
-							// 处理sql中的?为统一的:named形式，并进行sharding table替换
-							SqlToyConfig realSqlToyConfig = DialectUtils.getUnifyParamsNamedConfig(sqlToyContext,
-									sqlToyConfig, queryExecutor, profile, false);
-							// 通过参数处理最终的sql和参数值
-							SqlToyResult queryParam = SqlConfigParseUtils.processSql(realSqlToyConfig.getSql(dialect),
-									extend.getParamsName(), extend.getParamsValue(sqlToyContext, realSqlToyConfig),
-									dialect);
-							// 增加sql执行拦截器 update 2022-9-10
-							queryParam = DialectUtils.doInterceptors(sqlToyContext, realSqlToyConfig,
-									OperateType.search, queryParam, null, profile);
-							// 做sql签名
-							String lastSql = SqlUtilsExt.signSql(queryParam.getSql(), dbType, realSqlToyConfig);
-							Object[] paramsValue = queryParam.getParamsValue();
-							// 打印sql
-							SqlExecuteStat.showSql("execute query", lastSql, paramsValue);
-							PreparedStatement pst = conn.prepareStatement(lastSql, ResultSet.TYPE_FORWARD_ONLY,
-									ResultSet.CONCUR_READ_ONLY);
-							if (extend.fetchSize != -1) {
-								pst.setFetchSize(extend.fetchSize);
-							} // mysql 有点特殊必须要设置为MIN_VALUE
-							else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.DORIS
-									|| dbType == DBType.STARROCKS) {
-								pst.setFetchSize(Integer.MIN_VALUE);
-							} // 默认为1000
-							else {
-								pst.setFetchSize(1000);
-							}
-							pst.setFetchDirection(ResultSet.FETCH_FORWARD);
-							if (extend.timeout != null && extend.timeout > 0) {
-								pst.setQueryTimeout(extend.timeout);
-							} else if (SqlToyConstants.defaultStatementTimeout != null
-									&& SqlToyConstants.defaultStatementTimeout > 0) {
-								pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
-							}
-							ResultSet rs = null;
-							SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
-								@Override
-								public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
-									try {
-										SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, profile, pst,
-												paramsValue, null, 0);
-										rs = pst.executeQuery();
-										ResultUtils.consumeResult(dbType, sqlToyContext, extend, sqlToyConfig, conn, rs,
-												streamResultHandler, (Class) extend.resultType, extend.humpMapLabel,
-												extend.fieldsMap);
-									} catch (Exception e) {
-										throw e;
-									} finally {
-										if (rs != null) {
-											rs.close();
-											rs = null;
-										}
+					(conn, profile) -> {
+						Integer dbType = profile.getDbType();
+						PreparedQuery prepared = prepareQuery(sqlToyContext, sqlToyConfig, queryExecutor, extend,
+								profile, OperateType.search, null);
+						// 做sql签名
+						String lastSql = SqlUtilsExt.signSql(prepared.queryParam.getSql(), dbType, prepared.config);
+						Object[] paramsValue = prepared.queryParam.getParamsValue();
+						// 打印sql
+						SqlExecuteStat.showSql("execute query", lastSql, paramsValue);
+						PreparedStatement pst = conn.prepareStatement(lastSql, ResultSet.TYPE_FORWARD_ONLY,
+								ResultSet.CONCUR_READ_ONLY);
+						if (extend.fetchSize != -1) {
+							pst.setFetchSize(extend.fetchSize);
+						} // mysql 有点特殊必须要设置为MIN_VALUE
+						else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.DORIS
+								|| dbType == DBType.STARROCKS) {
+							pst.setFetchSize(Integer.MIN_VALUE);
+						} // 默认为1000
+						else {
+							pst.setFetchSize(1000);
+						}
+						pst.setFetchDirection(ResultSet.FETCH_FORWARD);
+						if (extend.timeout != null && extend.timeout > 0) {
+							pst.setQueryTimeout(extend.timeout);
+						} else if (SqlToyConstants.defaultStatementTimeout != null
+								&& SqlToyConstants.defaultStatementTimeout > 0) {
+							pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
+						}
+						ResultSet rs = null;
+						SqlUtil.preparedStatementProcess(null, pst, rs, new PreparedStatementResultHandler() {
+							@Override
+							public void execute(Object obj, PreparedStatement pst, ResultSet rs) throws Exception {
+								try {
+									SqlUtil.setParamsValue(sqlToyContext.getTypeHandler(), conn, profile, pst,
+											paramsValue, null, 0);
+									rs = pst.executeQuery();
+									ResultUtils.consumeResult(dbType, sqlToyContext, extend, sqlToyConfig, conn, rs,
+											streamResultHandler, (Class) extend.resultType, extend.humpMapLabel,
+											extend.fieldsMap);
+								} catch (Exception e) {
+									throw e;
+								} finally {
+									if (rs != null) {
+										rs.close();
+										rs = null;
 									}
 								}
-							});
-						}
+							}
+						});
+						return null;
 					});
 		} catch (Exception e) {
 			SqlExecuteStat.error(e);

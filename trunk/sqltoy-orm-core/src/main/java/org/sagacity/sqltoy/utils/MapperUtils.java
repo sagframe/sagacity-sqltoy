@@ -43,8 +43,7 @@ public class MapperUtils {
 	protected final static Logger logger = LoggerFactory.getLogger(MapperUtils.class);
 
 	/**
-	 * 利用缓存来提升匹配效率
-	 * update 2026-11-10 由sourceClass的ClassValue承载(条目挂Class自身,类卸载即回收),
+	 * 利用缓存来提升匹配效率 update 2026-11-10 由sourceClass的ClassValue承载(条目挂Class自身,类卸载即回收),
 	 * 内层key仍含resultType Class以保持"类身份"判定,规避类重载场景命中旧加载器的映射
 	 */
 	private static final ClassValue<ConcurrentHashMap<List, DTOEntityMapModel>> dtoEntityMapperCache = new ClassValue<ConcurrentHashMap<List, DTOEntityMapModel>>() {

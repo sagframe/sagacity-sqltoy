@@ -59,7 +59,7 @@ public class HanaDialectUtils {
 	 * (无skip locked语法)
 	 * 
 	 * @param sql
-	 * @param dbType
+	 * @param profile
 	 * @param lockMode
 	 * @param lockWaitTimeout
 	 * @return
@@ -78,7 +78,7 @@ public class HanaDialectUtils {
 	 * @param schema
 	 * @param tableName
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param dialect
 	 * @return
 	 * @throws Exception
@@ -153,7 +153,7 @@ public class HanaDialectUtils {
 	 * @param schema
 	 * @param tableName
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param dialect
 	 * @return
 	 * @throws Exception

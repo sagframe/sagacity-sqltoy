@@ -5,12 +5,11 @@ import java.util.Locale;
 import org.sagacity.sqltoy.utils.GeometryTypeUtil;
 
 /**
- * update 2026-9-12 查询结果列元数据(优化步骤2):将查询链路上按列下标对齐的并行数组
- * (labelNames[]/labelTypes[]/columnTypeNames[]/columnKinds[]/columnJdbcTypes[]中的
- * 分类与标记信息)收敛为单列对象,由ResultUtils.resolveColumns按ResultSetMetaData
- * 查询级一次性构建(元数据对同一结果集恒定,行循环零新增分配),整体向后传递替代 多数组同步下标维护。实体绑定机制数组(setter
- * Method/泛型类型等)不入本对象—— 本对象只承载"列是什么、怎么读"的分类事实,BeanUtil.reflectRowToBean的既有
- * 数组签名保持不变。
+ * update 2026-9-12 查询结果列元数据(优化步骤2):将查询链路上按列下标对齐的并行数组(labelNames[]/labelTypes[]/
+ * columnTypeNames[]/columnKinds[]/columnJdbcTypes[]中的分类与标记信息)收敛为单列对象,
+ * 由ResultUtils.resolveColumns按ResultSetMetaData查询级一次性构建(元数据对同一结果集恒定,行循环零新增分配),
+ * 整体向后传递替代多数组同步下标维护。实体绑定机制数组(setter Method/泛型类型等)不入本对象——
+ * 本对象只承载"列是什么、怎么读"的分类事实,BeanUtil.reflectRowToBean的既有数组签名保持不变。
  */
 public class ResultColumnMeta {
 
@@ -55,7 +54,8 @@ public class ResultColumnMeta {
 	 * NORMAL常规getObject;TEXT_READ文本化读取(oracle的JSON/VECTOR列getObject直接抛
 	 * ORA-17004/18722、db2gse的ST_Geometry读回驱动混淆对象,getString规避);
 	 * EXT_BYTE取值后按列类型归一(sqlserver/mysql系的vector与geometry byte[]内部格式、 h2的json
-	 * byte[]、hana的ST_GEOMETRY标准WKB byte[])。
+	 * byte[]、hana的ST_GEOMETRY标准WKB byte[]); 均不可用而getBytes返回的即UTF-8
+	 * JSON文本,真库实测中英文与::lvarchar完全一致)。
 	 */
 	public enum ReadStrategy {
 		NORMAL, TEXT_READ, EXT_BYTE;

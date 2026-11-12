@@ -123,10 +123,7 @@ public class SqlUtil {
 	// union 匹配模式
 	public static final Pattern UNION_PATTERN = Pattern.compile("(?i)\\W+union\\W+");
 	// 集合运算匹配模式:union/intersect/except/minus(分页派生表包裹判定,与 UNION_PATTERN 同风格)
-	// update 2026-11-10 sqlserver分页/top的派生表包裹判定由仅认union扩展为全部集合运算——
-	// except/intersect/minus语句上直接追加top/order by在sqlserver报Msg 104,且select top N会错误修饰集合首分支
-	public static final Pattern SET_OPERATION_PATTERN = Pattern
-			.compile("(?i)\\W+(union|intersect|except|minus)\\W+");
+	public static final Pattern SET_OPERATION_PATTERN = Pattern.compile("(?i)\\W+(union|intersect|except|minus)\\W+");
 	public final static String BLANK = " ";
 	// 为了便于sql调试(@fast不方便调试)利用/*@fast_start*/代替@fast标记位置
 	private final static String[] FAST_START_REGEXS = { "(?i)\\-{2}\\s+\\@fast\\_start",
@@ -173,7 +170,7 @@ public class SqlUtil {
 	// convertSqlMap的key含updateByQuery等动态sql,必须有容量上限防止无界内存增长
 	private static final int CONVERT_SQL_CACHE_MAX_SIZE = 2000;
 
-	// sql 注释过滤器(update 2026-9-13 ConcurrentHashMap,与convertSqlMap同并发策略)
+	// update 2026-9-13 sql 注释过滤器(ConcurrentHashMap,与convertSqlMap同并发策略)
 	private static final ConcurrentHashMap<String, String> sqlCommentfilters = new ConcurrentHashMap<>();
 
 	static {
@@ -183,8 +180,8 @@ public class SqlUtil {
 		sqlCommentfilters.put("{", "}");
 	}
 
-	// update 2026-9-13 mssql-jdbc Geometry反射句柄缓存(同ResultUtils.MSSQL_GEO_*模式):
-	// 驱动不在classpath时句柄为null整体回退,避免rs逐行回写时重复Class.forName/getMethod
+	// update 2026-9-13 mssql-jdbc
+	// Geometry反射句柄缓存(同ResultUtils.MSSQL_GEO_*模式):驱动不在classpath时句柄为null整体回退,避免rs逐行回写时重复Class.forName/getMethod
 	private static final java.lang.reflect.Method MSSQL_GEOMETRY_PARSE;
 	private static final java.lang.reflect.Method MSSQL_GEOMETRY_SERIALIZE;
 
@@ -305,7 +302,7 @@ public class SqlUtil {
 	 * 
 	 * @param typeHandler 自定义类型处理器，非null时优先通过其完成参数设置
 	 * @param conn        数据库连接对象
-	 * @param dbType      数据库类型，参见DataSourceUtils.DBType
+	 * @param profile     数据库类型，参见DataSourceUtils.DBType
 	 * @param pst         PreparedStatement预编译语句对象
 	 * @param params      参数值数组
 	 * @param paramsType  参数对应的java.sql.Types类型数组，null时按参数值自动判断类型
@@ -341,7 +338,7 @@ public class SqlUtil {
 	 * 
 	 * @param typeHandler 自定义类型处理器，非null时优先通过其完成参数设置
 	 * @param conn        数据库连接对象(clob、blob等类型创建需要)
-	 * @param dbType      数据库类型，参见DataSourceUtils.DBType
+	 * @param dbProfile   数据库类型，参见DataSourceUtils.DBType
 	 * @param pst         PreparedStatement预编译语句对象
 	 * @param paramValue  参数值，null时按jdbcType设置null
 	 * @param jdbcType    java.sql.Types定义的JDBC类型，-1表示按参数值自动判断
@@ -821,7 +818,7 @@ public class SqlUtil {
 	/**
 	 * vector向量类型参数赋值,统一转为'[1,2,3]'字符串形式(pgvector、oracle 23ai、mysql heatwave等均支持)
 	 * 
-	 * @param dbType     数据库类型，参见DataSourceUtils.DBType
+	 * @param profile    数据库类型，参见DataSourceUtils.DBType
 	 * @param pst        PreparedStatement预编译语句对象
 	 * @param paramIndex 参数位置下标(从1开始)
 	 * @param value      向量值，支持字符串、数组、集合或驱动专属向量对象
@@ -836,9 +833,9 @@ public class SqlUtil {
 			pst.setObject(paramIndex, value);
 			return;
 		}
-		// postgresql系需要用PGobject明确指定向量类型,避免因参数按varchar发送导致无法隐式转换
+		// update 2026-9-10 postgresql系需要用PGobject明确指定向量类型,避免因参数按varchar发送导致无法隐式转换
 		// gaussdb企业版向量类型名为floatvector,其余为vector
-		// update 2026-9-10 vastbase G100 3.0(Build9)实测向量类型名同为floatvector:无vector别名
+		// vastbase G100 3.0(Build9)实测向量类型名同为floatvector:无vector别名
 		// (create table vector(3)报type "vector" does not exist,floatvector(3)建表/字符串隐式
 		// 写入/文本读回/'[..]'::floatvector cast+nvl包裹全部实测可行)
 		String pgTypeName = (profile.getDbType() == DBType.GAUSSDB || profile.getDbType() == DBType.VASTBASE)
@@ -858,8 +855,8 @@ public class SqlUtil {
 	}
 
 	/**
-	 * update 2026-9-6 判定是否为PG系内核方言(PGobject类型包装的适用范围):
-	 * 非PG系(mysql/oracle/db2/sqlserver等)直接以字符串绑定,不得构造PGobject update 2026-9-16
+	 * update 2026-9-16 判定是否为PG系内核方言(PGobject类型包装的适用范围):
+	 * 非PG系(mysql/oracle/db2/sqlserver等)直接以字符串绑定,不得构造PGobject
 	 * 委托DBProfile.isPGFamily静态白名单(单一事实源,消除逐字拷贝)
 	 */
 	private static boolean isPGFamily(Integer dbType) {
@@ -872,7 +869,7 @@ public class SqlUtil {
 	 * type, 反向同理);此前按dbType+classpath静态探测的分支在混合驱动场景(如classpath同时有postgresql与
 	 * opengauss-jdbc,连接走其一)会错配。以连接JDBC URL的scheme段为准(穿透Hikari等连接池代理),
 	 * 对应不上classpath中的驱动类时返回null,由调用方回退setObject(str,Types.OTHER)交服务器按列推断。
-	 * 
+	 *
 	 * @param pst      预编译语句(取其连接的JDBC URL判定驱动来源)
 	 * @param typeName PG扩展类型名(json/jsonb/vector/geometry等)
 	 * @param value    字符串形式的类型值
@@ -908,7 +905,7 @@ public class SqlUtil {
 	/**
 	 * vector向量列回写(upsert等场景通过ResultSet回写)
 	 * 
-	 * @param dbType     数据库类型，参见DataSourceUtils.DBType
+	 * @param profile    数据库类型，参见DataSourceUtils.DBType
 	 * @param rs         ResultSet结果集对象
 	 * @param columnName 列名称
 	 * @param value      向量值，支持字符串、数组、集合或驱动专属向量对象
@@ -922,10 +919,9 @@ public class SqlUtil {
 			rs.updateObject(columnName, value);
 			return;
 		}
-		// gaussdb企业版向量类型名为floatvector,其余为vector
-		// update 2026-9-10 vastbase G100
-		// 3.0实测向量类型名同为floatvector(无vector别名),与setVectorValue同步
-		// update 2026-9-6 按连接URL scheme选择同源驱动PGobject(同setVectorValue,规避跨驱动错配)
+		// update 2026-9-6 gaussdb企业版向量类型名为floatvector,其余为vector
+		// vastbase G100 3.0实测向量类型名同为floatvector(无vector别名),与setVectorValue同步
+		// 按连接URL scheme选同源驱动PGobject,同setVectorValue规避跨驱动错配
 		String pgTypeName = (profile.getDbType() == DBType.GAUSSDB || profile.getDbType() == DBType.VASTBASE)
 				? "floatvector"
 				: "vector";
@@ -1051,7 +1047,7 @@ public class SqlUtil {
 	 * 2026-9-6起废弃SQL层包装,insert/update/merge共用本绑定逻辑), sqlserver需SQL层cast(? as
 	 * geometry)配合
 	 *
-	 * @param dbType     数据库类型，参见DataSourceUtils.DBType
+	 * @param profile    数据库类型，参见DataSourceUtils.DBType
 	 * @param pst        PreparedStatement预编译语句对象
 	 * @param paramIndex 参数位置下标(从1开始)
 	 * @param value      空间类型值，支持WKT字符串、JTS Geometry或驱动专属对象
@@ -1105,7 +1101,7 @@ public class SqlUtil {
 	/**
 	 * geometry空间列回写(upsert等场景通过ResultSet回写)
 	 * 
-	 * @param dbType     数据库类型，参见DataSourceUtils.DBType
+	 * @param profile    数据库类型，参见DataSourceUtils.DBType
 	 * @param rs         ResultSet结果集对象
 	 * @param columnName 列名称
 	 * @param value      空间类型值，支持WKT字符串、JTS Geometry或驱动专属对象
@@ -1146,11 +1142,11 @@ public class SqlUtil {
 			}
 		} else if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.OCEANBASE
 				|| profile.isOceanBase()) {
-			// update 2026-9-7 实测mysql9的rs回写拒绝字符串(geometry仅收内部格式:
+			// update 2026-9-9 实测mysql9的rs回写拒绝字符串(geometry仅收内部格式:
 			// 4字节小端SRID前缀+小端WKB),编码失败回退字符串交由服务器报原始错误;
-			// update 2026-9-8 实测ob同样:rs回写字符串报"Cannot get geometry object",
+			// 实测ob同样:rs回写字符串报"Cannot get geometry object",
 			// 内部格式字节updateBytes回写实测落库正确(ST_AsText回读一致),ob纳入本分支
-			// update 2026-9-9 编码下沉JtsGeometryCodec经hasJts门控(本类不得含JTS符号引用)
+			// 编码下沉JtsGeometryCodec经hasJts门控(本类不得含JTS符号引用)
 			byte[] geomBytes = GeometryTypeUtil.wktToMysqlInternalBytes(geomStr);
 			if (geomBytes != null) {
 				rs.updateBytes(columnName, geomBytes);
@@ -1259,7 +1255,8 @@ public class SqlUtil {
 				Array array = conn.createArrayOf("FLOAT", (Float[]) paramValue);
 				pst.setArray(paramIndex, array);
 			} else if (paramValue instanceof Long[]) {
-				// update 2026-11-10 INTEGER→BIGINT:与SqlUtilsExt.setArray(ResultSet回写路径)及BigInteger[]口径对齐,
+				// update 2026-11-10
+				// INTEGER→BIGINT:与SqlUtilsExt.setArray(ResultSet回写路径)及BigInteger[]口径对齐,
 				// openGauss真库实测int4数组无法承载long范围值(4000000000报out of range),回写路径BIGINT则成功
 				Array array = conn.createArrayOf("BIGINT", (Long[]) paramValue);
 				pst.setArray(paramIndex, array);
@@ -1426,8 +1423,8 @@ public class SqlUtil {
 			DecryptHandler decryptHandler, ResultSet rs, String[] columnLabels, String[] columnTypes, int[] columnKinds,
 			int[] propertySqlTypes, Method[] setMethods, int[] propTypeValues, String[] propTypes, Class[] genericTypes,
 			Class voClass, boolean ignoreAllEmptySet) throws Exception {
-		// 根据匹配的字段通过java reflection将rs中的值映射到VO中
-		// update 2026-9-14 走BeanUtil.newBean的无参构造器缓存(原逐行getDeclaredConstructor做反射成员查找)
+		// update 2026-9-14 根据匹配的字段通过java reflection将rs中的值映射到VO中
+		// 走BeanUtil.newBean的无参构造器缓存(原逐行getDeclaredConstructor做反射成员查找)
 		Object bean = BeanUtil.newBean(voClass);
 		Object fieldValue;
 		boolean allNull = true;
@@ -1444,12 +1441,17 @@ public class SqlUtil {
 			typeName = propTypes[i];
 			typeValue = propTypeValues[i];
 			if (method != null) {
-				// update 2026-9-8 按下标取值(与labelNames同下标,驱动按下标直达,按label需查找)
+				// update 2026-9-9 按下标取值(与labelNames同下标,驱动按下标直达,按label需查找)
 				// fieldValue = rs.getObject(label);
-				// update 2026-9-9 TEXT_READ列文本化读取(oracle的JSON/VECTOR列getObject直接抛错),
-				// 取值后统一经扩展类型归一化(byte[]形态按列类型解码),与Map路径processResultRow对齐
+				// TEXT_READ列文本化读取(oracle的JSON/VECTOR列getObject直接抛错),
+				// getObject/getString均不可用而getBytes即文本),取值后统一经扩展类型归一化
+				// (byte[]形态按列类型解码),与Map路径processResultRow对齐
 				int kind = (columnKinds == null) ? ResultUtils.COLUMN_NORMAL : columnKinds[i];
-				fieldValue = (kind == ResultUtils.COLUMN_TEXT_READ) ? rs.getString(i + 1) : rs.getObject(i + 1);
+				if (kind == ResultUtils.COLUMN_TEXT_READ) {
+					fieldValue = rs.getString(i + 1);
+				} else {
+					fieldValue = rs.getObject(i + 1);
+				}
 				if (null != fieldValue) {
 					// update 2026-9-11 java.sql.Array经normalizeExtTypeValue归一为原生java数组
 					// (保结构),目标形态转换由下方convertType按属性类型分派(String→'[a,b]'文本、
@@ -1482,7 +1484,9 @@ public class SqlUtil {
 		int fieldCnt = rsmd.getColumnCount();
 		String[][] columnLabelAndTypes = new String[2][fieldCnt];
 		for (int i = 1; i < fieldCnt + 1; i++) {
-			columnLabelAndTypes[0][i - 1] = rsmd.getColumnLabel(i);
+			// update 2026-11-12 防御驱动null列标签(MySQL对select ''返回null),下游toLowerCase会NPE,归一为空串
+			String colLabel = rsmd.getColumnLabel(i);
+			columnLabelAndTypes[0][i - 1] = (colLabel == null) ? "" : colLabel;
 			columnLabelAndTypes[1][i - 1] = rsmd.getColumnTypeName(i);
 		}
 		return columnLabelAndTypes;
@@ -1575,154 +1579,200 @@ public class SqlUtil {
 	 * @return 剔除<!-- -->、斜杠星注释和--三种注释(保留oracle hint)并去除末尾分号后的sql语句
 	 */
 	public static String clearMark(String sql) {
+		return clearMark(sql, false);
+	}
+
+	/**
+	 * @description 剔除sql注释(单引号字符串/双引号及反引号标识符/方括号标识符内部不识别注释), 保留 oracle hint 与 mysql
+	 *              可执行注释形式的块注释,未闭合注释原样保留交数据库报错; 末尾分号/逗号及空白按原逻辑剔除
+	 * @param sql             原始sql
+	 * @param backslashEscape true时单引号内的\'为转义(mysql系)
+	 * @return 剔除注释后的sql
+	 */
+	public static String clearMark(String sql, boolean backslashEscape) {
 		if (StringUtil.isBlank(sql)) {
 			return sql;
 		}
-		int endMarkIndex;
-		// 剔除<!-- -->形式的多行注释
-		int markIndex = sql.indexOf("<!--");
-		while (markIndex != -1) {
-			endMarkIndex = sql.indexOf("-->", markIndex);
-			// update 2024-7-8 兼容sql中存在<!-- 但没有-->收尾的情况
-			if (endMarkIndex == -1) {
-				break;
-			} else if (endMarkIndex == sql.length() - 3) {
-				sql = sql.substring(0, markIndex);
-				break;
-			} else {
-				sql = sql.substring(0, markIndex).concat(BLANK).concat(sql.substring(endMarkIndex + 3));
+		StringBuilder out = new StringBuilder(sql.length());
+		int n = sql.length();
+		int i = 0;
+		while (i < n) {
+			char c = sql.charAt(i);
+			// PostgreSQL E'...'转义字符串:反斜杠转义优先于方言开关
+			if ((c == 'E' || c == 'e') && i + 1 < n && sql.charAt(i + 1) == '\'') {
+				int end = findQuotedEnd(sql, i + 1, '\'', true, false);
+				out.append(sql, i, end);
+				i = end;
+				continue;
 			}
-			markIndex = sql.indexOf("<!--");
-		}
-		// 剔除/* */形式的多行注释(如果是/*+ALL_ROWS*/ 或 /*! ALL_ROWS*/形式的诸如oracle hint的用法不看作是注释)
-		markIndex = StringUtil.matchIndex(sql, maskPattern);
-		while (markIndex != -1) {
-			endMarkIndex = sql.indexOf("*/", markIndex);
-			// update 2024-7-8 兼容sql中存在/* 但没有*/收尾的情况
-			if (endMarkIndex == -1) {
-				break;
-			} else if (endMarkIndex == sql.length() - 2) {
-				sql = sql.substring(0, markIndex);
-				break;
-			} else {
-				sql = sql.substring(0, markIndex).concat(BLANK).concat(sql.substring(endMarkIndex + 2));
-			}
-			markIndex = StringUtil.matchIndex(sql, maskPattern);
-		}
-		// 单行注释，必须要放在最后处理，避免跟<!-- --> 这类冲突
-		if (sql.contains("--")) {
-			String[] sqlAry = sql.split("\n");
-			StringBuilder sqlBuffer = new StringBuilder();
-			int startMask;
-			int lineMaskIndex;
-			String lineStr;
-			int meter = 0;
-			for (String line : sqlAry) {
-				lineStr = line.trim();
-				// 排除掉-- 开头和空行
-				if (!"".equals(lineStr) && !lineStr.startsWith("--")) {
-					// 不包含-- 直接拼接
-					lineMaskIndex = line.indexOf("--");
-					if (meter > 0) {
-						sqlBuffer.append("\n");
-					}
-					// 增加一个空白
-					sqlBuffer.append(BLANK);
-					if (lineMaskIndex == -1) {
-						sqlBuffer.append(line);
-					} else {
-						// 找到-- 单行注释开始位置(排除在'',""中间的场景)
-						startMask = findStartLineMask(line, lineMaskIndex);
-						if (startMask > 0) {
-							sqlBuffer.append(line.substring(0, startMask));
-						} else {
-							sqlBuffer.append(line);
-						}
-					}
-					meter++;
+			// PostgreSQL $tag$...$tag$ 美元引用字符串
+			if (c == '$') {
+				int end = findDollarQuoteEnd(sql, i);
+				if (end > i) {
+					out.append(sql, i, end);
+					i = end;
+					continue;
 				}
 			}
-			sql = sqlBuffer.toString();
+			// Oracle q'[...]' / q'{...}' / q'(...)' / q'<...>' / q'!...!' 引用字符串
+			if ((c == 'q' || c == 'Q') && i + 1 < n && sql.charAt(i + 1) == '\'') {
+				int end = findQQuoteEnd(sql, i);
+				if (end > i) {
+					out.append(sql, i, end);
+					i = end;
+					continue;
+				}
+			}
+			// 字符串/标识符整体原样保留,内部注释标记不参与注释剔除
+			if (c == '\'' || c == '"' || c == '`') {
+				int end = findQuotedEnd(sql, i, c, backslashEscape, false);
+				out.append(sql, i, end);
+				i = end;
+				continue;
+			}
+			if (c == '[') {
+				int end = findQuotedEnd(sql, i, ']', false, true);
+				out.append(sql, i, end);
+				i = end;
+				continue;
+			}
+			// -- 行注释:替换为空白,保留换行以便后续按行处理
+			if (c == '-' && i + 1 < n && sql.charAt(i + 1) == '-') {
+				out.append(BLANK);
+				i += 2;
+				while (i < n && sql.charAt(i) != '\n' && sql.charAt(i) != '\r') {
+					i++;
+				}
+				continue;
+			}
+			// /*+*&#47;与/*!*&#47;为oracle hint/mysql可执行注释,保留
+			if (c == '/' && i + 1 < n && sql.charAt(i + 1) == '*') {
+				if (i + 2 < n && (sql.charAt(i + 2) == '+' || sql.charAt(i + 2) == '!')) {
+					int end = sql.indexOf("*/", i + 2);
+					if (end == -1) {
+						out.append(sql, i, n);
+						break;
+					}
+					out.append(sql, i, end + 2);
+					i = end + 2;
+					continue;
+				}
+				int end = sql.indexOf("*/", i + 2);
+				if (end == -1) {
+					// 未闭合块注释不静默删除,保留原样交数据库报错
+					out.append(sql, i, n);
+					break;
+				}
+				out.append(BLANK);
+				i = end + 2;
+				continue;
+			}
+			// 框架历史<!-- -->注释
+			if (c == '<' && i + 3 < n && sql.charAt(i + 1) == '!' && sql.charAt(i + 2) == '-'
+					&& sql.charAt(i + 3) == '-') {
+				int end = sql.indexOf("-->", i + 4);
+				if (end == -1) {
+					out.append(sql, i, n);
+					break;
+				}
+				out.append(BLANK);
+				i = end + 3;
+				continue;
+			}
+			out.append(c);
+			i++;
 		}
-		// 剔除sql末尾的分号逗号(开发过程中容易忽视)
-		if (sql.endsWith(";") || sql.endsWith(",")) {
-			sql = sql.substring(0, sql.length() - 1);
+		// 剔除末尾空白与分号/逗号(保持原行为)
+		int end = out.length();
+		while (end > 0 && Character.isWhitespace(out.charAt(end - 1))) {
+			end--;
 		}
-		// 剔除全角(update 2023-10-24 框架不做干涉)
-		// sql = sql.replaceAll("\\：", ":").replaceAll("\\＝", "=").replaceAll("\\．",
-		// ".");
-		return sql;
+		if (end > 0 && (out.charAt(end - 1) == ';' || out.charAt(end - 1) == ',')) {
+			end--;
+		}
+		return out.substring(0, end);
 	}
 
 	/**
-	 * 找到行注释的开始位置
-	 * 
-	 * @param sql           单行sql内容
-	 * @param lineMaskIndex --注释符号的位置
-	 * @return 行注释的有效开始位置(排除引号和hint注释内部的--)，位于引号内时返回实际注释起始下标
+	 * @description 从start处的引号开始找闭合位置,支持''、""、``双写转义及[]的]]转义;
+	 *              mysql系backslashEscape=true时\'不终结字符串
+	 * @return 闭合引号后的下标,未闭合返回sql长度
 	 */
-	private static int findStartLineMask(String sql, int lineMaskIndex) {
-		// 单引号、双引号、hint注释结尾 的最后位置
-		int lastIndex = StringUtil.matchLastIndex(sql, "\'|\"|\\*\\/");
-		// 行注释的位置在单引号等最后位置后面,直接返回
-		if (lineMaskIndex > lastIndex) {
-			return lineMaskIndex;
-		}
-		// 单引号之间
-		int start = StringUtil.matchIndex(sql, "\'");
-		int symMarkEnd;
-		while (start != -1) {
-			symMarkEnd = StringUtil.getSymMarkIndex("'", "'", sql, start);
-			if (symMarkEnd != -1) {
-				sql = sql.substring(0, start).concat(repeatBlank(symMarkEnd - start + 1))
-						.concat(sql.substring(symMarkEnd + 1));
-				start = StringUtil.matchIndex(sql, "\'");
-			} else {
-				break;
+	private static int findQuotedEnd(String sql, int start, char quote, boolean backslashEscape, boolean bracket) {
+		int i = start + 1;
+		int n = sql.length();
+		while (i < n) {
+			char c = sql.charAt(i);
+			if (!bracket && backslashEscape && c == '\\' && i + 1 < n) {
+				i += 2;
+				continue;
 			}
-		}
-		// 双引号之间
-		start = StringUtil.matchIndex(sql, "\"");
-		while (start != -1) {
-			symMarkEnd = StringUtil.getSymMarkIndex("\"", "\"", sql, start);
-			if (symMarkEnd != -1) {
-				sql = sql.substring(0, start).concat(repeatBlank(symMarkEnd - start + 1))
-						.concat(sql.substring(symMarkEnd + 1));
-				start = StringUtil.matchIndex(sql, "\"");
-			} else {
-				break;
+			if (c == quote) {
+				if (i + 1 < n && sql.charAt(i + 1) == quote) {
+					i += 2;
+					continue;
+				}
+				return i + 1;
 			}
+			i++;
 		}
-		// hint /*+ all */ 或 /*! all*/ 注释
-		start = sql.indexOf("/*");
-		while (start != -1) {
-			symMarkEnd = StringUtil.getSymMarkIndex("/*", "*/", sql, start);
-			if (symMarkEnd != -1) {
-				sql = sql.substring(0, start).concat(repeatBlank(symMarkEnd - start + 2))
-						.concat(sql.substring(symMarkEnd + 2));
-				start = sql.indexOf("/*");
-			} else {
-				break;
-			}
-		}
-		return sql.indexOf("--");
+		return n;
 	}
 
 	/**
-	 * 将剔除掉n的字符串替换为等长度的空白字符串，避免对sql解析造成影响
-	 * 
-	 * @param size 需要生成的空白字符个数
-	 * @return 指定个数的空白字符串，size小于等于0返回空字符串
+	 * @description 定位PostgreSQL美元引用字符串($tag$...$tag$)闭合位置
+	 * @return 闭合分隔符后的下标,非美元引用或未闭合返回-1
 	 */
-	private static String repeatBlank(int size) {
-		if (size <= 0) {
-			return "";
+	private static int findDollarQuoteEnd(String sql, int start) {
+		int n = sql.length();
+		int j = start + 1;
+		// tag可为空或由字母/下划线开头,后续字母数字/下划线
+		if (j < n && (Character.isLetter(sql.charAt(j)) || sql.charAt(j) == '_')) {
+			j++;
+			while (j < n && (Character.isLetterOrDigit(sql.charAt(j)) || sql.charAt(j) == '_')) {
+				j++;
+			}
 		}
-		StringBuilder result = new StringBuilder();
-		for (int i = 0; i < size; i++) {
-			result.append(BLANK);
+		if (j >= n || sql.charAt(j) != '$') {
+			return -1;
 		}
-		return result.toString();
+		String delimiter = sql.substring(start, j + 1);
+		int close = sql.indexOf(delimiter, j + 1);
+		return close < 0 ? -1 : close + delimiter.length();
+	}
+
+	/**
+	 * @description 定位Oracle
+	 *              q-quote(q'[...]'/q'{...}'/q'(...)'/q'&lt;...&gt;'/q'!...!')
+	 *              的闭合位置
+	 * @return 闭合位置后的下标,非q-quote或未闭合返回-1
+	 */
+	private static int findQQuoteEnd(String sql, int start) {
+		int n = sql.length();
+		if (start + 2 >= n) {
+			return -1;
+		}
+		char open = sql.charAt(start + 2);
+		char close;
+		switch (open) {
+		case '[':
+			close = ']';
+			break;
+		case '{':
+			close = '}';
+			break;
+		case '(':
+			close = ')';
+			break;
+		case '<':
+			close = '>';
+			break;
+		default:
+			close = open;
+			break;
+		}
+		int end = sql.indexOf(close + "'", start + 3);
+		return end < 0 ? -1 : end + 2;
 	}
 
 	/**
@@ -1734,7 +1784,7 @@ public class SqlUtil {
 	 * @param voClass            目标VO对象类型
 	 * @param rowCallbackHandler 行数据处理回调接口，非null时逐行回调处理
 	 * @param conn               数据库连接对象
-	 * @param dbType             数据库类型，参见DataSourceUtils.DBType
+	 * @param profile            数据库类型，参见DataSourceUtils.DBType
 	 * @param ignoreAllEmptySet  true表示整行数据全为空值时跳过不构造对象
 	 * @param colFieldMap        数据库列名与对象属性的对照映射，null时按列名去除下划线映射
 	 * @return 单条记录对应的VO对象，无数据返回null，结果多于一条抛出IllegalAccessException
@@ -1830,7 +1880,7 @@ public class SqlUtil {
 	 * @param rowCallbackHandler 行数据处理回调接口，非null时逐行回调处理
 	 * @param decryptHandler     字段解密处理器，非null时对列值做解密处理
 	 * @param conn               数据库连接对象
-	 * @param dbType             数据库类型，参见DataSourceUtils.DBType
+	 * @param profile            数据库类型，参见DataSourceUtils.DBType
 	 * @param ignoreAllEmptySet  true表示整行数据全为空值时跳过
 	 * @param colFieldMap        数据库列名与对象属性的对照映射，null时按列名去除下划线映射
 	 * @param fetchSize          批量提取行数，小于等于0不设置
@@ -1857,8 +1907,7 @@ public class SqlUtil {
 				pst.setQueryTimeout(queryTimeout);
 			}
 			// 设置全局statementTimeout，默认为null
-			else if (SqlToyConstants.defaultStatementTimeout != null
-					&& SqlToyConstants.defaultStatementTimeout > 0) {
+			else if (SqlToyConstants.defaultStatementTimeout != null && SqlToyConstants.defaultStatementTimeout > 0) {
 				pst.setQueryTimeout(SqlToyConstants.defaultStatementTimeout);
 			}
 		} catch (Exception e) {
@@ -1966,8 +2015,8 @@ public class SqlUtil {
 				allNull = true;
 				List rowData = new ArrayList();
 				for (int i = startColIndex; i < rowCnt; i++) {
-					// 处理clob;TEXT_READ列(oracle JSON/VECTOR、db2gse空间列)改文本化读取,
-					// EXT_BYTE列按字节读取后UTF-8解码去尾空白,与processResultRow/VO路径三策略同口径
+					// 处理clob;TEXT_READ列(oracle JSON/VECTOR、db2gse空间列)改文本化读取;
+					// 均不可用)按字节读取后UTF-8解码去尾空白,与processResultRow/VO路径三策略同口径
 					if (columnKinds[i] == ResultUtils.COLUMN_TEXT_READ) {
 						fieldValue = rs.getString(i + 1);
 					} else {
@@ -2071,7 +2120,7 @@ public class SqlUtil {
 	 * @param updateTypes       各参数对应的java.sql.Types类型数组，null时按参数值自动判断
 	 * @param autoCommit        是否自动提交，null时保持连接原有提交方式
 	 * @param conn              数据库连接对象
-	 * @param dbType            数据库类型，参见DataSourceUtils.DBType
+	 * @param profile           数据库类型，参见DataSourceUtils.DBType
 	 * @return 实际影响的行数统计
 	 * @throws Exception
 	 */
@@ -2238,7 +2287,7 @@ public class SqlUtil {
 	 * @param typeHandler    自定义类型处理器，非null时优先通过其完成参数设置
 	 * @param treeTableModel 树形表模型(表名、id/pid字段、层级字段、路径字段、叶子字段等)
 	 * @param conn           数据库连接对象
-	 * @param dbType         数据库类型，参见DataSourceUtils.DBType
+	 * @param profile        数据库类型，参见DataSourceUtils.DBType
 	 * @return 处理成功返回true，模型必填字段缺失抛出IllegalArgumentException
 	 * @throws Exception
 	 */
@@ -2253,7 +2302,7 @@ public class SqlUtil {
 	 * @param typeHandler       自定义类型处理器，非null时优先通过其完成参数设置
 	 * @param treeTableModel    树形表模型(表名、id/pid字段、层级字段、路径字段、叶子字段等)
 	 * @param conn              数据库连接对象
-	 * @param dbType            数据库类型，参见DataSourceUtils.DBType
+	 * @param profile           数据库类型，参见DataSourceUtils.DBType
 	 * @param queryTimeout      查询超时时间(秒)，null时使用默认值
 	 * @param unifyUpdateFields 公共更新字段(数据库列名->值,如最后修改人、最后修改时间),
 	 *                          非null时附加到全部路由update语句的set子句并绑定参数
@@ -2389,7 +2438,7 @@ public class SqlUtil {
 			// 再设置父节点的记录为非叶子节点(isLeaf=0)
 			StringBuilder updateTrunkLeafSql = new StringBuilder();
 			updateTrunkLeafSql.append("update ").append(tableName);
-			// 支持mysql8 update 2018-5-11
+			// update 2018-5-11 支持mysql8
 			if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.DORIS
 					|| dbType == DBType.STARROCKS) {
 				// update sys_organ_info a inner join (select t.organ_pid from
@@ -2452,7 +2501,7 @@ public class SqlUtil {
 	 * @param ids                 下一层级待处理的节点数据(id、路径、pid)
 	 * @param nodeLevel           当前处理的节点层级
 	 * @param conn                数据库连接对象
-	 * @param dbType              数据库类型，参见DataSourceUtils.DBType
+	 * @param profile             数据库类型，参见DataSourceUtils.DBType
 	 * @param queryTimeout        查询超时时间(秒)
 	 * @param unifyValues         公共更新字段对应的参数值数组，null时不绑定
 	 * @throws Exception
@@ -2723,7 +2772,7 @@ public class SqlUtil {
 	 * @param params      sql中?对应的参数值数组
 	 * @param paramsType  参数对应的java.sql.Types类型数组，null时按参数值自动判断类型
 	 * @param conn        数据库连接对象
-	 * @param dbType      数据库类型，参见DataSourceUtils.DBType
+	 * @param profile     数据库类型，参见DataSourceUtils.DBType
 	 * @param autoCommit  是否自动提交，null时保持连接原有提交方式，执行完毕后恢复
 	 * @param processWord true对sql中的关键词做保留字转义处理
 	 * @return 实际影响的记录行数
@@ -2759,8 +2808,8 @@ public class SqlUtil {
 					// rowversion的排除已上收到语句生成与调用方参数过滤(目标库元数据校准判据),
 					// 语句占位符与参数严格1:1,此层按类型跳过反而造成占位符缺参错位
 					setParamsValue(typeHandler, conn, profile, pst, params, paramsType, 0);
-					// 返回update的记录数量
-					// update 2026-9-10 改用executeUpdate返回值(JDBC规范即影响行数):sqlite-jdbc
+					// update 2026-9-10 返回update的记录数量
+					// 改用executeUpdate返回值(JDBC规范即影响行数):sqlite-jdbc
 					// 的getUpdateCount()恒返回0(驱动实现缺陷,update/delete/executeSql计数全部
 					// 失真为0,实测),executeUpdate返回值各驱动均正确
 					this.setResult(Long.valueOf(pst.executeUpdate()));
@@ -2919,7 +2968,7 @@ public class SqlUtil {
 	 * 判断是否内包含union 查询,即是否是select * from (select * from t union select * from t2 )
 	 * 形式的查询,将所有()剔除后判定是否有union 存在
 	 * 字面量内容不参与判定:先将'...'字面量内部掩为等长空白,规避字面量内的union、'('、')'误报或干扰括号剔除
-	 *
+	 * 
 	 * @param sql             sql语句
 	 * @param clearMistyChar  true剔除子查询和括号内容后再判断(只判断最外层)，false直接匹配union关键词
 	 * @param backslashEscape true时字面量内\'不终结字面量(mysql系),掩码须与方言一致否则\'后错位
@@ -2930,8 +2979,8 @@ public class SqlUtil {
 	}
 
 	/**
-	 * 判断是否包含任意集合运算(union/intersect/except/minus),口径与 hasUnion 一致:
-	 * 剔除 with、子查询与括号、掩码字面量后只判定最外层是否出现集合关键字。
+	 * 判断是否包含任意集合运算(union/intersect/except/minus),口径与 hasUnion 一致: 剔除
+	 * with、子查询与括号、掩码字面量后只判定最外层是否出现集合关键字。
 	 *
 	 * @param sql            sql语句
 	 * @param clearMistyChar true剔除子查询和括号内容后再判断(只判断最外层)
@@ -2946,8 +2995,7 @@ public class SqlUtil {
 	}
 
 	/**
-	 * 集合关键字通用判定:hasUnion 与 hasSetOperation 共用同一套剔除/掩码逻辑,
-	 * 仅匹配的关键字模式不同。
+	 * 集合关键字通用判定:hasUnion 与 hasSetOperation 共用同一套剔除/掩码逻辑, 仅匹配的关键字模式不同。
 	 */
 	private static boolean hasSetKeyword(String sql, boolean clearMistyChar, boolean backslashEscape,
 			Pattern keywordPattern) {
@@ -3004,8 +3052,8 @@ public class SqlUtil {
 		// "info_x"与表"staff_info"+sql "x"产生相同key,后调用者命中前者缓存得到错误转换结果),
 		// 改用表名与sql中均不可能出现的\u0000作分隔符
 		String key = entityMeta.getTableName() + "\u0000" + sql;
-		// 从缓存中直接获取,避免每次都处理提升效率
-		// update 2026-9-9 单次get判空替代containsKey+get双查找
+		// update 2026-9-9 从缓存中直接获取,避免每次都处理提升效率
+		// 单次get判空替代containsKey+get双查找
 		String cachedSql = convertSqlMap.get(key);
 		if (cachedSql != null) {
 			return cachedSql;
@@ -3089,10 +3137,9 @@ public class SqlUtil {
 				}
 			}
 		}
-		// 放入缓存(key含动态拼接的sql条件,设置容量上限防止无界增长,超限后不再缓存直接计算)
-		if (convertSqlMap.size() < CONVERT_SQL_CACHE_MAX_SIZE) {
-			convertSqlMap.put(key, realSql);
-		}
+		// update 2026-11-10 放入缓存(key含动态拼接的sql条件,设容量上限防止无界增长):
+		// 超限时回收约1/4后继续写入,避免"超限即永久不缓存"让动态sql每次重算的性能悬崖
+		CollectionUtil.putBounded(convertSqlMap, key, realSql, CONVERT_SQL_CACHE_MAX_SIZE);
 		return realSql;
 	}
 
@@ -3233,11 +3280,105 @@ public class SqlUtil {
 	 * @return 替换后的字符串(回车换行前后空白一并剔除)
 	 */
 	public static String clearMistyChars(String source, String target) {
+		return clearMistyChars(source, target, false);
+	}
+
+	/**
+	 * @description 压缩sql结构空白:换行前后空白与制表符替换为target,字符串/标识符内部原样保留
+	 *              (原实现全串replaceAll,多行字面量的换行、缩进、Tab会被静默改写)
+	 * @param source          原始sql
+	 * @param target          替换字符
+	 * @param backslashEscape true时单引号内的\'为转义(mysql系)
+	 * @return 压缩后的sql
+	 */
+	public static String clearMistyChars(String source, String target, boolean backslashEscape) {
 		if (source == null) {
 			return null;
 		}
-		// 回车换行前后的空白也剔除
-		return source.replaceAll("\\s*(\r|\n)\\s*", target).replaceAll("\t", target);
+		String replacement = (target == null) ? "" : target;
+		boolean targetBlank = !replacement.isEmpty() && Character.isWhitespace(replacement.charAt(0));
+		StringBuilder out = new StringBuilder(source.length());
+		int n = source.length();
+		int i = 0;
+		// 记录输出末尾连续的结构空白起点,换行时需连同换行前空白一起替换
+		int outsideWsStart = -1;
+		while (i < n) {
+			char c = source.charAt(i);
+			// PostgreSQL E'...'转义字符串
+			if ((c == 'E' || c == 'e') && i + 1 < n && source.charAt(i + 1) == '\'') {
+				int end = findQuotedEnd(source, i + 1, '\'', true, false);
+				out.append(source, i, end);
+				i = end;
+				outsideWsStart = -1;
+				continue;
+			}
+			// PostgreSQL $tag$...$tag$
+			if (c == '$') {
+				int end = findDollarQuoteEnd(source, i);
+				if (end > i) {
+					out.append(source, i, end);
+					i = end;
+					outsideWsStart = -1;
+					continue;
+				}
+			}
+			// Oracle q'[...]'等q-quote
+			if ((c == 'q' || c == 'Q') && i + 1 < n && source.charAt(i + 1) == '\'') {
+				int end = findQQuoteEnd(source, i);
+				if (end > i) {
+					out.append(source, i, end);
+					i = end;
+					outsideWsStart = -1;
+					continue;
+				}
+			}
+			if (c == '\'' || c == '"' || c == '`') {
+				int end = findQuotedEnd(source, i, c, backslashEscape, false);
+				out.append(source, i, end);
+				i = end;
+				outsideWsStart = -1;
+				continue;
+			}
+			if (c == '[') {
+				int end = findQuotedEnd(source, i, ']', false, true);
+				out.append(source, i, end);
+				i = end;
+				outsideWsStart = -1;
+				continue;
+			}
+			if (c == '\r' || c == '\n') {
+				// 等价于 \s*(\r|\n)\s* -> target,但只作用于字面量外部
+				if (outsideWsStart >= 0) {
+					out.setLength(outsideWsStart);
+				}
+				i++;
+				while (i < n && Character.isWhitespace(source.charAt(i))) {
+					i++;
+				}
+				out.append(replacement);
+				outsideWsStart = targetBlank ? out.length() - replacement.length() : -1;
+				continue;
+			}
+			if (c == '\t') {
+				// 与旧实现一致:每个tab替换为target;字面量内已在上面整体复制
+				out.append(replacement);
+				outsideWsStart = targetBlank ? out.length() - replacement.length() : -1;
+				i++;
+				continue;
+			}
+			if (Character.isWhitespace(c)) {
+				if (outsideWsStart < 0) {
+					outsideWsStart = out.length();
+				}
+				out.append(c);
+				i++;
+				continue;
+			}
+			out.append(c);
+			outsideWsStart = -1;
+			i++;
+		}
+		return out.toString();
 	}
 
 	/**
@@ -3253,8 +3394,8 @@ public class SqlUtil {
 			return null;
 		}
 		int fieldType = fieldMeta.getType();
-		// 统一需要处理的字段
-		// update 2026-9-15 fieldType字符串比较忽略大小写:实际VO的fieldType为驼峰
+		// update 2026-9-15 统一需要处理的字段
+		// fieldType字符串比较忽略大小写:实际VO的fieldType为驼峰
 		// (java.time.LocalTime/LocalDate),原全小写常量比较永远不成立,时间字段携带
 		// 驼峰fieldType时分支失灵(实测localdate形态落到current_timestamp)
 		String realFieldType = (fieldMeta.getFieldType() == null) ? ""
@@ -3597,7 +3738,7 @@ public class SqlUtil {
 				return "CONVERT(time(3)," + dateStr + ")";
 			}
 		}
-		// mysql和tidb;update 2026-9-8 oceanbase主流为mysql模式纳入本分支(实测STR_TO_DATE可用,
+		// update 2026-9-8 mysql和tidb;oceanbase主流为mysql模式纳入本分支(实测STR_TO_DATE可用,
 		// 而TO_DATE报"FUNCTION TO_DATE does not exist")
 		if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB || dbType == DBType.DORIS
 				|| dbType == DBType.STARROCKS || dbType == DBType.OCEANBASE) {
@@ -3622,10 +3763,12 @@ public class SqlUtil {
 				return "STR_TO_DATE(" + dateStr + ",'%H:%i:%s.%f')";
 			}
 		}
-		// postgresql系列
+		// update 2026-10-12 postgresql系列
+		// 补HIGHGO(PG系全形态真库实测:TO_DATE/TO_TIMESTAMP(含.MS/.US)
+		// 与::TIME均可用;::TIME带小数被引擎截到整秒,日志形态可接受)
 		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 				|| dbType == DBType.STARDB || dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB
-				|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE) {
+				|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.HIGHGO) {
 			// day
 			if (type == 1) {
 				return "TO_DATE(" + dateStr + ",'YYYY-MM-DD')";
@@ -3656,8 +3799,8 @@ public class SqlUtil {
 			if (type == 1) {
 				return "TO_DATE(" + dateStr + ",'YYYY-MM-DD')";
 			}
-			// datetime
-			// update 2026-9-15 改TO_TIMESTAMP:KES的PG兼容模式下to_date返回纯DATE会静默截断
+			// update 2026-9-15 datetime
+			// 改TO_TIMESTAMP:KES的PG兼容模式下to_date返回纯DATE会静默截断
 			// 时间部分(日志SQL可执行但比较结果错误),TO_TIMESTAMP在PG/oracle两种模式下均保留时间
 			if (type == 2) {
 				return "TO_TIMESTAMP(" + dateStr + ",'YYYY-MM-DD HH24:MI:SS')";
@@ -3670,8 +3813,8 @@ public class SqlUtil {
 					return "TO_TIMESTAMP(" + dateStr + ",'YYYY-MM-DD HH24:MI:SS.MS')";
 				}
 			}
-			// time/毫秒time
-			// update 2026-9-15 原TIME(TO_TIMESTAMP(纯时间串,'YYYY-MM-DD HH24:MI:SS...'))格式与
+			// update 2026-9-15 time/毫秒time
+			// 原TIME(TO_TIMESTAMP(纯时间串,'YYYY-MM-DD HH24:MI:SS...'))格式与
 			// 输入不匹配必报错(PG模式报invalid value for MM,oracle模式报ORA-01861同类),KES为
 			// PG内核,改与PG分支同款::TIME cast(小数秒由内核自动截断到微秒,无需按长度区分)
 			if (type == 4 || type == 5) {
@@ -3696,8 +3839,8 @@ public class SqlUtil {
 					return "toDateTime64(" + dateStr + ",3)";
 				}
 			}
-			// time/毫秒time
-			// update 2026-9-15 原formatDateTime(toDateTime(纯时间串))中CH无法解析纯时间串
+			// update 2026-9-15 time/毫秒time
+			// 原formatDateTime(toDateTime(纯时间串))中CH无法解析纯时间串
 			// (报Cannot parse datetime),且CH无TIME类型,formatDateTime产出的仍是同一字符串
 			// 属无意义包装,直接返回裸串(字符串比较是CH时间值的唯一可行形态)
 			if (type == 4 || type == 5) {
@@ -3722,8 +3865,8 @@ public class SqlUtil {
 					return "TO_TIMESTAMP(" + dateStr + ",'YYYY-MM-DD HH24:MI:SS.FF3')";
 				}
 			}
-			// time
-			// update 2026-9-15 原'YYYY-MM-DD HH24:MI:SS'格式与纯时间串输入不匹配(误复制自
+			// update 2026-9-15 time
+			// 原'YYYY-MM-DD HH24:MI:SS'格式与纯时间串输入不匹配(误复制自
 			// type2分支),改为与type5一致的纯时间格式
 			if (type == 4) {
 				return "TIME(TO_TIMESTAMP(" + dateStr + ",'HH24:MI:SS'))";
@@ -3765,6 +3908,31 @@ public class SqlUtil {
 			// 毫秒time(hana的TIME无小数秒,substring(0,9)保留引号+HH:mm:ss再补尾引号)
 			if (type == 5) {
 				return "CAST(" + dateStr.substring(0, 9) + "' AS TIME)";
+			}
+		}
+		// update 2026-10-12 补H2(2.x无TO_DATE函数,真库实测报Function not found;
+		// CAST族形态可用,与hana同构)
+		if (dbType == DBType.H2) {
+			if (type == 1) {
+				return "CAST(" + dateStr + " AS DATE)";
+			}
+			if (type == 2 || type == 3) {
+				return "CAST(" + dateStr + " AS TIMESTAMP)";
+			}
+			if (type == 4 || type == 5) {
+				return "CAST(" + dateStr + " AS TIME)";
+			}
+		}
+		// update 2026-10-12 补SQLITE(date/datetime/time修饰函数,真库实测可用)
+		if (dbType == DBType.SQLITE) {
+			if (type == 1) {
+				return "date(" + dateStr + ")";
+			}
+			if (type == 2 || type == 3) {
+				return "datetime(" + dateStr + ")";
+			}
+			if (type == 4 || type == 5) {
+				return "time(" + dateStr + ")";
 			}
 		}
 		return dateStr;

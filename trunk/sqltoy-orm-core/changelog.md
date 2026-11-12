@@ -1,4 +1,10 @@
-﻿# v5.6.97.jre8 2026-11-11
+﻿# v5.6.98.jre8 2026-11-12
+1、core全量同步6.0(6.0.9基线):src/main 211个文件镜像(139修改+71新增+1重命名),此后5.6.jre8的core即为6.0的jre8编译目标,6.0的全部修复与新特性(lambda条件体系/JsonProvider SPI可插拔JSON/新函数转换器族/新方言highgo与GBase8s/嵌套jar实体扫描/jar物理URL资源加载/Ant路径匹配统一)整体进入,由移植的6.0测试矩阵(2196例)直接背书
+2、jre8适配(登记于docs/sync-6.0-to-5.6.jre8.md):records支持剥离(JDK16 API)、jackson3剔除(JDK17生态,JsonProvider保留fastjson2/jackson2双实现)、ES栈保留httpclient4+elasticsearch-rest-client(rest5-client为JDK17字节码)、rest翻译/JWT认证的通用http提交移植为httpclient5(与hc4经FQN共存)、10处JDK9+语法修正(文本块/repeat/isBlank/canAccess/appendReplacement-StringBuilder/var/toList/Map.of/readAllBytes/FileWriter-Charset)
+3、pom依赖全部升到jdk1.8场景最新正式版:h2 2.2.224(2.1.214后最后jre8版)、ehcache 3.10.8、clickhouse-jdbc 0.10.0、sqlserver 12.8.1.jre8、ojdbc8 19.24.0.0、junit 5.11.4;httpclient5/jackson2/mongo/fastjson2/slf4j保持6.0版本(字节码验证均为class 52)
+4、测试体系:6.0测试矩阵整体移植(2196例,全绿);已知环境差异按守卫跳过——链式CTE参数绑定(H2≤2.2.224引擎限制,非框架缺陷)、fat jar集成测试(需JDK17生态boot-loader);spring/starter/solon三模块对新core API编译验证通过
+
+# v5.6.97.jre8 2026-11-11
 1、参照6.0分支(6.0.9/6.0.10)回移缺陷修复,不改变5.6用户使用行为,不引入6.0新特性(lambda体系/JsonProvider/JWT认证/新函数转换器/新方言等均未纳入):
 2、事务与连接安全:executeSql/insertReturnPrimaryKey的autoCommit恢复移入finally、手动提交场景失败补回滚(与batchUpdateByJdbc范式对齐,异常路径连接不再带被改写的提交方式归还池);findByJdbcQuery setter阶段异常关闭已创建statement;Execute链接autoCommit默认值由false改为null(不强制提交语义)
 3、线程安全与缓存:SqlScriptLoader的initialized/SQLRESOURCESDIRTOLIST标志volatile化、initialize/destroy方法synchronized;分页优化总数缓存键sqlId升级为sqlId@dialect(多数据源各方言count不串用);codeSqlCache超限改putBounded回收约1/4继续写入(原写满后永久停缓存);方法匹配缓存加10万上限;缓存键类名改Class对象身份(BeanUtil/MapperUtils,devtools/OSGi类重载场景旧缓存不自愈+类卸载回收,cascadeModels/dtoEntityMapperCache改ClassValue承载)

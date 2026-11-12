@@ -36,7 +36,7 @@ public class Save extends BaseLink {
 	private String[] forceUpdateProps;
 
 	/**
-	 * 是否深度修改(update 2022-3-23 支持更新全部字段)
+	 * update 2022-3-23 是否深度修改(支持更新全部字段)
 	 */
 	private boolean deeply = false;
 

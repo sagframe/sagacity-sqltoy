@@ -49,10 +49,9 @@ public class DB2DDLGenerator implements DialectDDLGenerator {
 				tableSql.append(" DEFAULT ");
 				if (DDLUtils.isNotChar(colMeta.getDataType())) {
 					tableSql.append(colMeta.getDefaultValue());
-				} else if (DDLUtils.isDate(colMeta.getDataType())
-						&& DDLUtils.isDateFunction(
-								// DB2 JDBC返回CURRENT TIMESTAMP(空格形态),归一为下划线后再判
-								colMeta.getDefaultValue().toUpperCase(Locale.ROOT).replace(" ", "_"))) {
+				} else if (DDLUtils.isDate(colMeta.getDataType()) && DDLUtils.isDateFunction(
+						// DB2 JDBC返回CURRENT TIMESTAMP(空格形态),归一为下划线后再判
+						colMeta.getDefaultValue().toUpperCase(Locale.ROOT).replace(" ", "_"))) {
 					// DB2时间函数形态: CURRENT TIMESTAMP(带空格)
 					tableSql.append(colMeta.getDefaultValue().toUpperCase(Locale.ROOT).replace("CURRENT_TIMESTAMP",
 							"CURRENT TIMESTAMP"));

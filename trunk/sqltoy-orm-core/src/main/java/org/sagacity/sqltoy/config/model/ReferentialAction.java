@@ -3,8 +3,8 @@ package org.sagacity.sqltoy.config.model;
 /**
  * @project sagacity-sqltoy
  * @description 外键参照动作常量,取值与JDBC DatabaseMetaData中importedKey*规则值一致,
- *              用于@Foreign注解的deleteRestict/updateRestict属性,分别对应
- *              ON DELETE/ON UPDATE后面的参照动作
+ *              用于@Foreign注解的deleteRestict/updateRestict属性,分别对应 ON DELETE/ON
+ *              UPDATE后面的参照动作
  * @author zhongxuchen
  * @version v1.0,Date:2026-09-19
  * @modify Date:2026-09-19,修改说明

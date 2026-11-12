@@ -27,6 +27,7 @@ import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.plugins.id.macro.AbstractMacro;
 import org.sagacity.sqltoy.plugins.id.macro.MacroUtils;
+import org.sagacity.sqltoy.plugins.id.macro.impl.JoinFields;
 import org.sagacity.sqltoy.plugins.id.macro.impl.SecureSqlLoop;
 import org.sagacity.sqltoy.plugins.id.macro.impl.SqlLoop;
 import org.sagacity.sqltoy.utils.BeanUtil;
@@ -76,6 +77,9 @@ import org.slf4j.LoggerFactory;
  *         参数都为null时自动补全双括号(t.id,t.type) in ((null,null))}
  * @modify Date:2024-10-02 强化@if功能，增加@elseif 和 @else 的支持
  * @modify Date:2024-11-19 对in条件查询参数做去除重复处理
+ * @modify Date:2026-10-13 增加虚表宏@virtualTable()(兼容别名@dual/@dummyTable,忽略大小写),
+ *         select常量行伪表按方言展开(oracle系→from dual、db2→from sysibm.sysdummy1、
+ *         hana→from dummy、其余库剔除),免除手写/删除from dual的两难
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlConfigParseUtils {
@@ -117,6 +121,16 @@ public class SqlConfigParseUtils {
 	public final static Pattern BLANK_START_PATTERN = Pattern.compile(BLANK_START_REGEX);
 	public final static String VALUE_REGEX = "(?i)\\@value\\s*\\(\\s*(\\?|null)\\s*\\)";
 	public final static Pattern VALUE_PATTERN = Pattern.compile(VALUE_REGEX);
+	// update 2026-10-15 @joinFields 宏名定位:与@value同位置处理(命名参数已转成?之后),
+	// 括号内参数用 MacroUtils.splitMacroArgs 按配对符号切分,故此处只定位宏名与起始括号,
+	// 不用正则整体匹配——default 里可能含括号(如 sum(t.amount)),正则会提前截断
+	public final static Pattern JOIN_FIELDS_PATTERN = Pattern.compile("(?i)\\@joinFields\\s*\\(");
+	// update 2026-10-13 虚表宏:select常量行无from场景按方言展开伪表(oracle系→from dual、db2→from
+	// sysibm.sysdummy1、支持无from select的库→剔除宏),实现"select 常量行 union 真实查询"类sql跨库;
+	// 正式名@virtualTable(与各Dialect的VIRTUAL_TABLE常量同词),@dual/@dummyTable为兼容别名
+	// (Oracle方言直觉/官方dummy table术语直觉),三名共用同一展开逻辑且均忽略大小写
+	public final static String VIRTUAL_TABLE_REGEX = "(?i)\\@(virtualTable|dual|dummyTable)\\s*\\(\\s*\\)";
+	public final static Pattern VIRTUAL_TABLE_PATTERN = Pattern.compile(VIRTUAL_TABLE_REGEX);
 	public final static Pattern IF_PATTERN = Pattern.compile("(?i)\\@if\\s*\\(");
 	public final static Pattern START_IF_PATTERN = Pattern.compile("(?i)^\\s*\\@if\\s*\\(");
 	public final static Pattern ELSEIF_PATTERN = Pattern.compile("(?i)\\@elseif\\s*\\(");
@@ -139,7 +153,7 @@ public class SqlConfigParseUtils {
 	public final static String ARG_DBL_REGEX = "\\?{2}";
 	public final static Pattern ARG_NAME_PATTERN = Pattern.compile(ARG_REGEX);
 
-	// sql 拼接时判断前部分sql是否是where 结尾,update 2017-12-4 增加(?i)忽视大小写
+	// update 2017-12-4 sql 拼接时判断前部分sql是否是where 结尾,增加(?i)忽视大小写
 	public final static Pattern WHERE_END_PATTERN = Pattern.compile("(?i)\\Wwhere\\s*$");
 	// where 1=1 结尾模式
 	public final static Pattern WHERE_ONE_EQUAL_PATTERN = Pattern.compile("(?i)\\Wwhere\\s*1\\s*=\\s*1\\s*$");
@@ -344,7 +358,6 @@ public class SqlConfigParseUtils {
 			boolean backslashEscape = isBackslashEscapeDialect(resolveDbType(dialect));
 			// 字面量内的?替换为占位符(参数位的?保留),规避字面量?干扰#[]/in(?)/null替换等阶段的参数对位
 			sql = escapeQuestionMarkInLiterals(sql, backslashEscape);
-			// update 2022-7-18
 			int paramCnt = countArgMarks(sql);
 			// 只有单个? 参数、传递的参数长度大于1、且是 in (?),则将参数转成长度为1的二维数组new Object[]{Object[]} 模式
 			if (paramCnt == 1 && paramsValue.length > 1 && StringUtil.matches(sql, IN_PATTERN)) {
@@ -361,8 +374,12 @@ public class SqlConfigParseUtils {
 		processBlank(sqlToyResult);
 		// 检查 like 对应参数部分，如果参数中不存在%符合则自动两边增加%(同时转义_和%等特殊字符)
 		processLike(sqlToyResult, dialect);
-		// add update 2024-12-12 将@value(?) 参数值中不含?的提前完成处理
+		// update 2024-12-12 将@value(?) 参数值中不含?的提前完成处理
 		processValue(sqlToyResult, dialect, true);
+		// update 2026-10-15 @joinFields
+		// 与@value同位置处理:必须在processSplit/processIn/replaceNull之前,
+		// 否则它占用的那个?会被这些环节误当作in参数或null参数处理,导致参数错位
+		processJoinFields(sqlToyResult, dialect);
 		processSplit(sqlToyResult);
 		// in 处理策略2012-7-10 进行了修改，提供参数preparedStatement.setObject()机制，并同时兼容
 		// 用具体数据替换 in (?)中问号的处理机制
@@ -378,7 +395,7 @@ public class SqlConfigParseUtils {
 		} else {
 			// 将代表json中的?? 符号换回
 			sqlToyResult.setSql(sqlToyResult.getSql().replace(DBL_QUESTMARK, ARG_DBL_NAME));
-			// 恢复字面量内的?占位符,字面量内容保真(update 2026-9-8 replaceAll改replace,
+			// update 2026-9-8 恢复字面量内的?占位符,字面量内容保真(replaceAll改replace,
 			// 占位符为纯字面量,免每次编译Pattern)
 			sqlToyResult.setSql(sqlToyResult.getSql().replace(LITERAL_QSMARK_PLACEHOLDER, ARG_NAME));
 		}
@@ -610,7 +627,7 @@ public class SqlConfigParseUtils {
 
 	/**
 	 * 对^锚定模式做起始匹配:与find()等价(^只可能命中位置0),但避免对大字符串做全串扫描
-	 *
+	 * 
 	 * @param text
 	 * @param startPattern 以^开头的模式
 	 * @return
@@ -624,7 +641,7 @@ public class SqlConfigParseUtils {
 
 	/**
 	 * 仅对字符串末尾窗口做$锚定正则匹配(WHERE_END/WHERE_1=1/UPDATE_SET等), 避免多条件动态sql每轮对整段前缀重复扫描
-	 *
+	 * 
 	 * @param sql
 	 * @param endPattern 以$结尾的模式
 	 * @param lastChar   模式最后一个单词的末字符(如where→e、1=1→1、set→t),不匹配直接返回
@@ -658,9 +675,9 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
-	 * 统计sql中"?"占位符个数(ARG_NAME_PATTERN即"\?"):逐字符计数与正则计数结果完全等价,
+	 * 统计sql中"?"占位符个数(ARG_NAME_PATTERN即"\\?"):逐字符计数与正则计数结果完全等价,
 	 * 避免多条件动态sql对前缀反复执行正则扫描
-	 *
+	 * 
 	 * @param sql
 	 * @return
 	 */
@@ -679,7 +696,7 @@ public class SqlConfigParseUtils {
 
 	/**
 	 * 统计sql指定区间[0,endIndex)内的"?"个数
-	 *
+	 * 
 	 * @param sql
 	 * @param endIndex
 	 * @return
@@ -804,6 +821,97 @@ public class SqlConfigParseUtils {
 		}
 		sqlToyResult.setSql(queryStr);
 		sqlToyResult.setParamsValue(paramValuesList.toArray());
+	}
+
+	/**
+	 * update 2026-10-17 清理括号组内悬挂的 and/or 连接符:#[...] 片段剔除后,括号组内可能残留 悬挂的 and/or(如 and
+	 * ( or t.b=:b ) 或 and ( t.a=:a or ))。规则:
+	 * <li>左括号( 之后为 trim 空白后的 and/or 时剔除该连接符;右括号 ) 之前同理</li>
+	 * <li>and|or 之后的 \\s+ 保证 ( order by ... ) 这类以 or 开头的合法关键字不会被误清 (order 中 r 后是
+	 * d,无词边界,or 无法命中)</li>
+	 * <li>每轮只做删减、长度单调递减,循环必然收敛;未配对括号不处理</li>
+	 * 
+	 * @param sql
+	 * @return 清理后的 sql
+	 */
+	private static String cleanDanglingConnectorInParens(String sql) {
+		if (StringUtil.isBlank(sql)) {
+			return sql;
+		}
+		String result = sql;
+		while (true) {
+			// update 2026-11-11 先探测再替换:绝大多数sql不含悬挂连接符。
+			// 用逐字符扫描替代正则探测,避免多条件动态sql每轮对整串执行大小写不敏感的正则搜索
+			if (!hasDanglingConnector(result)) {
+				break;
+			}
+			String cleaned = DANGLING_CONNECTOR_RIGHT.matcher(DANGLING_CONNECTOR_LEFT.matcher(result).replaceAll("("))
+					.replaceAll(")");
+			if (cleaned.equals(result)) {
+				break;
+			}
+			result = cleaned;
+		}
+		return result;
+	}
+
+	/**
+	 * 探测括号组内悬挂的and/or连接符(如"( and"、"or )"),语义等价于DANGLING_CONNECTOR_EXISTS正则
+	 * 
+	 * @param sql
+	 * @return
+	 */
+	private static boolean hasDanglingConnector(String sql) {
+		int len = sql.length();
+		for (int i = 0; i < len; i++) {
+			char c = sql.charAt(i);
+			if (c == '(') {
+				int begin = i + 1;
+				while (begin < len && isSqlSpace(sql.charAt(begin))) {
+					begin++;
+				}
+				if (matchWordAt(sql, begin, "and") || matchWordAt(sql, begin, "or")) {
+					return true;
+				}
+			} else if (c == ')') {
+				int end = i - 1;
+				while (end >= 0 && isSqlSpace(sql.charAt(end))) {
+					end--;
+				}
+				if (matchWordEndingAt(sql, end, "and") || matchWordEndingAt(sql, end, "or")) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	private static boolean matchWordAt(String sql, int index, String word) {
+		int end = index + word.length();
+		if (end > sql.length() || !sql.regionMatches(true, index, word, 0, word.length())) {
+			return false;
+		}
+		// 对应正则中的\b:单词后必须是边界
+		return end >= sql.length() || !isWordChar(sql.charAt(end));
+	}
+
+	private static boolean matchWordEndingAt(String sql, int endIndex, String word) {
+		int start = endIndex - word.length() + 1;
+		if (start < 0 || !sql.regionMatches(true, start, word, 0, word.length())) {
+			return false;
+		}
+		return start == 0 || !isWordChar(sql.charAt(start - 1));
+	}
+
+	// 与Java正则\s保持一致的空白判断
+	private static boolean isSqlSpace(char c) {
+		return c == ' ' || c == '\t' || c == '\n' || c == '\u000B' || c == '\f' || c == '\r';
+	}
+
+	// update 2026-11-11 与Java正则\b口径一致:Java的\b按Character.isLetterOrDigit(Unicode)判定词字符
+	// (与\w的ASCII口径不同),故CJK/重音字母均视为词内字符,等价性由SqlConfigParseUtilsEquivalenceTest锁定
+	private static boolean isWordChar(char c) {
+		return Character.isLetterOrDigit(c) || c == '_';
 	}
 
 	/**
@@ -1033,8 +1141,9 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
-	 * @update 2021-04-29 @value放在最后处理，同时兼容replaceNull 造成@value(?) 变成@value(null)的情况
-	 *         处理直接显示参数值:#[@value(:paramNamed) sql]
+	 * update 2021-04-29 @value放在最后处理，同时兼容replaceNull 造成@value(?) 变成@value(null)的情况
+	 * 处理直接显示参数值:#[@value(:paramNamed) sql]
+	 * 
 	 * @param sqlToyResult
 	 * @param dialect
 	 * @param hasNotArgRun
@@ -1095,11 +1204,109 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
-	 * @update 2020-09-22 增加sql中的循环功能 处理sql中@loop() 循环,动态组织sql进行替换，具体格式
-	 *         <li>loop(:loopAry,loopContent)</li>
-	 *         <li>loop(:loopArgs,loopContent,linkSign)</li>
-	 *         <li>范例:#[or @loop(:beginDates,'(startTime between :beginDates[i] and
-	 *         endDates[i])',or)]</li>
+	 * update 2026-10-15 处理 @joinFields(?,default)
+	 * / @joinFields(null,default):把运行期传入的字段名 列表拼成 SQL 标识符串,用于页面配置化的报表与接口服务(由配置决定
+	 * select、group by、order by 的列)。
+	 * <li>与 @value 处于同一处理位置、同一套记账方式:命名参数已转成 ?,故按宏之前出现的 ? 个数定位参数值, 以已消费宏数
+	 * atJoinFieldsCnt 作偏移,消费后从参数集合中剔除,使剩余的 ? 与参数值保持一一对应。 sql
+	 * 里写 @joinFields(:fields,default) 经命名参数转换后即为 @joinFields(?,default),
+	 * 与直接书写位置参数形态完全等价</li>
+	 * <li>default 可能含括号(如 sum(t.amount)),故不用正则整体匹配宏,而是用 getSymMarkIndex 定位配对右括号;
+	 * 替换区间收集完毕后自后向前一次性拼接,避免边扫边改导致下标失效</li>
+	 * <li>字段名的白名单校验与按方言加引用符见 JoinFields;default 取自 sql 文本(可信)原样输出</li>
+	 * 
+	 * @param sqlToyResult
+	 * @param dialect
+	 */
+	private static void processJoinFields(SqlToyResult sqlToyResult, String dialect) {
+		String queryStr = sqlToyResult.getSql();
+		if (StringUtil.isBlank(queryStr)) {
+			return;
+		}
+		Matcher m = JOIN_FIELDS_PATTERN.matcher(queryStr);
+		// 绝大多数sql不含该宏,提前退出
+		if (!m.find()) {
+			return;
+		}
+		int dbType = resolveDbType(dialect);
+		Object[] paramsValue = sqlToyResult.getParamsValue();
+		List paramValueList = (paramsValue == null) ? new ArrayList() : CollectionUtil.arrayToList(paramsValue);
+		// 已消费的宏数量,作为位置索引的偏移(与 processValue 的 atValueCnt 同一套记账)
+		int atJoinFieldsCnt = 0;
+		int index = 0;
+		int paramCnt = 0;
+		int parenEnd = 0;
+		Object paramValue = null;
+		String firstArg;
+		String defaultExpr;
+		String joined;
+		// 替换区间与替换内容,循环结束后自后向前一次性拼接
+		List<int[]> spans = new ArrayList<int[]>();
+		List<String> replacements = new ArrayList<String>();
+		m.reset();
+		while (m.find()) {
+			index = m.start();
+			// 定位与宏名后那个左括号配对的右括号:default 可能含括号,正则整体匹配会提前截断
+			parenEnd = StringUtil.getSymMarkIndex("(", ")", queryStr, index);
+			if (parenEnd < 0) {
+				throw new IllegalArgumentException("@joinFields missing the matched ')',the sql:" + queryStr);
+			}
+			String[] args = MacroUtils
+					.splitMacroArgs(queryStr.substring(queryStr.indexOf("(", m.end() - 1) + 1, parenEnd));
+			if (args == null || args.length == 0 || StringUtil.isBlank(args[0])) {
+				throw new IllegalArgumentException("@joinFields requires a field-list parameter,the sql:" + queryStr);
+			}
+			firstArg = MacroUtils.unwrapMacroArg(args[0]);
+			defaultExpr = (args.length > 1) ? MacroUtils.unwrapMacroArg(args[1]) : "";
+			// 是否消费了一个位置参数(null 字面量与字面量字段列表都不消费)
+			boolean consumeParam = ARG_NAME.equals(firstArg);
+			if (consumeParam) {
+				// 位置参数形态:按宏之前出现的 ? 个数定位,减去已消费的宏数
+				paramCnt = countArgMarks(queryStr, index);
+				if (paramCnt - atJoinFieldsCnt >= paramValueList.size()) {
+					throw new IllegalArgumentException(
+							"@joinFields can not find the parameter at index:" + (paramCnt - atJoinFieldsCnt)
+									+ ",please check the sql and the parameter count,the sql:" + queryStr);
+				}
+				paramValue = paramValueList.get(paramCnt - atJoinFieldsCnt);
+			} else if ("null".equalsIgnoreCase(firstArg)) {
+				// 参数为null时已被replaceNull替换成null字面量,不再有对应的?需要剔除
+				paramValue = null;
+			} else {
+				// 字面量字段列表形态:@joinFields({a,b,c})
+				paramValue = firstArg;
+			}
+			joined = JoinFields.join(paramValue, defaultExpr, dbType);
+			// 输出里若含?会破坏剩余参数与占位符的对齐,直接拒绝而不是静默错位
+			if (joined.indexOf('?') >= 0) {
+				throw new IllegalArgumentException("@joinFields result can not contain '?',it would break the"
+						+ " parameter alignment,the default:[" + defaultExpr + "],the sql:" + queryStr);
+			}
+			spans.add(new int[] { index, parenEnd + 1 });
+			replacements.add(joined);
+			if (consumeParam) {
+				paramValueList.remove(paramCnt - atJoinFieldsCnt);
+				atJoinFieldsCnt++;
+			}
+		}
+		// 自后向前拼接,前面的下标不受影响;不经正则替换,避免替换串中的 $ 与 \ 被当作分组引用处理
+		StringBuilder result = new StringBuilder(queryStr);
+		for (int i = spans.size() - 1; i >= 0; i--) {
+			result.replace(spans.get(i)[0], spans.get(i)[1], replacements.get(i));
+		}
+		sqlToyResult.setSql(result.toString());
+		if (atJoinFieldsCnt > 0) {
+			sqlToyResult.setParamsValue(paramValueList.toArray());
+		}
+	}
+
+	/**
+	 * update 2020-09-22 增加sql中的循环功能 处理sql中@loop() 循环,动态组织sql进行替换，具体格式
+	 * <li>loop(:loopAry,loopContent)</li>
+	 * <li>loop(:loopArgs,loopContent,linkSign)</li>
+	 * <li>范例:#[or @loop(:beginDates,'(startTime between :beginDates[i] and
+	 * endDates[i])',or)]</li>
+	 * 
 	 * @param queryStr
 	 * @param paramsNamed
 	 * @param paramsValue
@@ -1140,10 +1347,10 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
-	 * 判断当前数据库是否将反斜杠视为转义字符(mysql系), 决定'...'字面量内\'是否终结字面量以及like的ESCAPE子句形态;
-	 * 用户可通过SqlToyContext.backslashEscaping 强制定义:true=ESCAPE '\\'; false=ESCAPE '\'
-	 * update 2026-9-10 解析次序:全局开关 > 真实连接档案(DBProfile,经DataSourceUtils统一获取) >
-	 * 传入dbType;
+	 * update 2026-9-10 判断当前数据库是否将反斜杠视为转义字符(mysql系),
+	 * 决定'...'字面量内\'是否终结字面量以及like的ESCAPE子句形态; 用户可通过SqlToyContext.backslashEscaping
+	 * 强制定义:true=ESCAPE '\\'; false=ESCAPE '\' 解析次序:全局开关 >
+	 * 真实连接档案(DBProfile,经DataSourceUtils统一获取) > 传入dbType;
 	 * 真实连接dbType比配置方言更可信,kingbase即使mysql兼容sql_mode依旧单斜杠(原actuallyDBType==KINGBASE
 	 * 单点判断被档案判定涵盖),同时覆盖真实连接为mysql系而传入dbType缺失(UNDEFINE)的场景
 	 * 
@@ -1342,10 +1549,11 @@ public class SqlConfigParseUtils {
 		StringBuilder sqlBuilder = null;
 		int lastEnd = 0;
 		String escapeClause = isBackslashEscape ? " ESCAPE '\\\\'" : " ESCAPE '\\'";
+		// update 2026-9-10
 		// clickhouse/impala/tdengine/starrocks/doris的LIKE默认转义符就是\,且不支持ESCAPE子句,
-		// 追加任何ESCAPE都会语法错误(update 2026-9-6 实测starrocks 4.1.4 where子句like后接ESCAPE报
+		// 追加任何ESCAPE都会语法错误(实测starrocks 4.1.4 where子句like后接ESCAPE报
 		// "Unexpected input 'ESCAPE'",其like默认即按\转义,与clickhouse行为一致;
-		// update 2026-9-10 实测doris 2.1.0同样报ParseException,与starrocks同源引擎一并排除)
+		// 实测doris 2.1.0同样报ParseException,与starrocks同源引擎一并排除)
 		boolean supportEscapeClause = dbType != DBType.CLICKHOUSE && dbType != DBType.IMPALA
 				&& dbType != DBType.TDENGINE && dbType != DBType.STARROCKS && dbType != DBType.DORIS;
 		while (m.find()) {
@@ -1389,10 +1597,11 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
-	 * @update 2020-4-14 修复参数为null时,忽视了匹配的in(?) 处理sql 语句中的in 条件，功能有2类:
-	 *         <li>1、将字符串类型且条件值为逗号分隔的，将对应的sql 中的 in(?) 替换成in(具体的值)</li>
-	 *         <li>2、如果对应in (?)位置上的参数数据时Object[] 数组类型，则将in (?)替换成 in (?,?),具体问号个数由
-	 *         数组长度决定</li>
+	 * update 2020-4-14 修复参数为null时,忽视了匹配的in(?) 处理sql 语句中的in 条件，功能有2类:
+	 * <li>1、将字符串类型且条件值为逗号分隔的，将对应的sql 中的 in(?) 替换成in(具体的值)</li>
+	 * <li>2、如果对应in (?)位置上的参数数据时Object[] 数组类型，则将in (?)替换成 in (?,?),具体问号个数由
+	 * 数组长度决定</li>
+	 * 
 	 * @param sqlToyResult
 	 */
 	private static void processIn(SqlToyResult sqlToyResult) {
@@ -1528,8 +1737,8 @@ public class SqlConfigParseUtils {
 				Object inValueObject = paramsValue[parameterMarkCnt - 1];
 				// 数组或集合数据类型
 				if (inValueObject.getClass().isArray() || inValueObject instanceof Collection) {
-					// update 2012-12-5 增加了对Collection数据类型的处理
-					// update 2024-11-19 增加去除重复功能
+					// update 2024-11-19 增加了对Collection数据类型的处理
+					// 增加去除重复功能
 					if (inValueObject instanceof HashSet) {
 						inParamArray = ((HashSet) inValueObject).toArray();
 					} else if (inValueObject instanceof Collection) {
@@ -1688,98 +1897,9 @@ public class SqlConfigParseUtils {
 	}
 
 	/**
-	 * update 2026-10-17 清理括号组内悬挂的 and/or 连接符:#[...] 片段剔除后,括号组内可能残留 悬挂的 and/or(如 and
-	 * ( or t.b=:b ) 或 and ( t.a=:a or ))。规则:
-	 * <li>左括号( 之后为 trim 空白后的 and/or 时剔除该连接符;右括号 ) 之前同理</li>
-	 * <li>and|or 之后的 \\s+ 保证 ( order by ... ) 这类以 or 开头的合法关键字不会被误清 (order 中 r 后是
-	 * d,无词边界,or 无法命中)</li>
-	 * <li>每轮只做删减、长度单调递减,循环必然收敛;未配对括号不处理</li>
-	 *
-	 * @param sql
-	 * @return 清理后的 sql
-	 */
-	private static String cleanDanglingConnectorInParens(String sql) {
-		if (StringUtil.isBlank(sql)) {
-			return sql;
-		}
-		String result = sql;
-		while (true) {
-			// update 2026-11-11 先探测再替换:绝大多数sql不含悬挂连接符。
-			// 用逐字符扫描替代正则探测,避免多条件动态sql每轮对整串执行大小写不敏感的正则搜索
-			if (!hasDanglingConnector(result)) {
-				break;
-			}
-			String cleaned = DANGLING_CONNECTOR_RIGHT.matcher(DANGLING_CONNECTOR_LEFT.matcher(result).replaceAll("("))
-					.replaceAll(")");
-			if (cleaned.equals(result)) {
-				break;
-			}
-			result = cleaned;
-		}
-		return result;
-	}
-
-	/**
-	 * 探测括号组内悬挂的and/or连接符(如"( and"、"or )"),语义等价于两个预编译模式的replaceAll探测
-	 *
-	 * @param sql
-	 * @return
-	 */
-	private static boolean hasDanglingConnector(String sql) {
-		int len = sql.length();
-		for (int i = 0; i < len; i++) {
-			char c = sql.charAt(i);
-			if (c == '(') {
-				int begin = i + 1;
-				while (begin < len && isSqlSpace(sql.charAt(begin))) {
-					begin++;
-				}
-				if (matchWordAt(sql, begin, "and") || matchWordAt(sql, begin, "or")) {
-					return true;
-				}
-			} else if (c == ')') {
-				int end = i - 1;
-				while (end >= 0 && isSqlSpace(sql.charAt(end))) {
-					end--;
-				}
-				if (matchWordEndingAt(sql, end, "and") || matchWordEndingAt(sql, end, "or")) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	private static boolean matchWordAt(String sql, int index, String word) {
-		int end = index + word.length();
-		if (end > sql.length() || !sql.regionMatches(true, index, word, 0, word.length())) {
-			return false;
-		}
-		// 对应正则中的\b:单词后必须是边界
-		return end >= sql.length() || !isWordChar(sql.charAt(end));
-	}
-
-	private static boolean matchWordEndingAt(String sql, int endIndex, String word) {
-		int start = endIndex - word.length() + 1;
-		if (start < 0 || !sql.regionMatches(true, start, word, 0, word.length())) {
-			return false;
-		}
-		return start == 0 || !isWordChar(sql.charAt(start - 1));
-	}
-
-	// 与Java正则\s保持一致的空白判断
-	private static boolean isSqlSpace(char c) {
-		return c == ' ' || c == '\t' || c == '\n' || c == '\u000B' || c == '\f' || c == '\r';
-	}
-
-	private static boolean isWordChar(char c) {
-		return Character.isLetterOrDigit(c) || c == '_';
-	}
-
-	/**
 	 * 处理因字符串截取后where后面出现and 或 or 的情况,通过此功能where 后面就无需写1=1,sqltoy自动补充或去除1=1(where
 	 * 后面有and 或 or则会自动去除1=1)
-	 *
+	 * 
 	 * @param preSql
 	 * @param markContentSql
 	 * @param isEndWithAndOr
@@ -1834,8 +1954,7 @@ public class SqlConfigParseUtils {
 				}
 			}
 		}
-		// update 2017-12-4
-		// where 1=1 结尾
+		// update 2017-12-4 where 1=1 结尾
 		index = matchIndexAtEnd(preSql, WHERE_ONE_EQUAL_PATTERN, '1');
 		if (index >= 0) {
 			// 剔除1=1 进行sql拼接
@@ -1945,9 +2064,17 @@ public class SqlConfigParseUtils {
 		// 是否忽视空记录
 		sqlToyConfig.setIgnoreEmpty(StringUtil.matches(querySql, SqlToyConstants.IGNORE_EMPTY_REGEX));
 		// 2025-2-3 增加SqlUtil.uniformFastMarks逻辑,通过/*@fast_start*/注释方式代替@fast便于sql调试
-		// 清理sql中的一些注释、以及特殊的符号
-		String originalSql = SqlUtil.clearMistyChars(SqlUtil.clearMark(SqlUtil.uniformFastMarks(querySql)), BLANK)
+		// 清理sql中的一些注释、以及特殊的符号;字面量转义约定须在clearMark/clearMistyChars前解析,
+		// 避免mysql系\'字面量内的注释标记/换行被误处理
+		boolean backslashEscape = isBackslashEscape(dialect);
+		String originalSql = SqlUtil
+				.clearMistyChars(SqlUtil.clearMark(SqlUtil.uniformFastMarks(querySql), backslashEscape), BLANK,
+						backslashEscape)
 				.concat(BLANK);
+		// update 2026-10-13 虚表宏@virtualTable()按方言展开为伪表或剔除(须在函数/保留字转换前,
+		// 展开后的from dual参与后续统一处理;解析期随SqlToyConfig固化,realDialectFirst惰性层
+		// 只做函数/保留字形态转换不还原宏,宏形态仅在解析方言下生效)
+		originalSql = expandVirtualTable(originalSql, dialect);
 		// 对sql中的函数进行特定数据库方言转换
 		originalSql = FunctionUtils.getDialectSql(originalSql, dialect);
 		// 对关键词根据数据库类型进行转换,比如mysql的 ``变成mssql时变为[]
@@ -1956,7 +2083,6 @@ public class SqlConfigParseUtils {
 		originalSql = SqlUtil.replaceEmbedSqlParams(originalSql);
 		// update 2026-9-10 字面量转义约定按方言解析一次,hasWith/hasUnion/参数提取共用
 		// (掩码须与方言一致,否则mysql系\'字面量掩码错位后with/union判定与参数提取互相矛盾)
-		boolean backslashEscape = isBackslashEscape(dialect);
 		// 判定是否有with查询模式
 		sqlToyConfig.setHasWith(hasWith(originalSql, backslashEscape));
 		// 判定是否有union语句(先验证有union 然后再精确判断union 是否有效,在括号内的局部union 不起作用)
@@ -1997,6 +2123,48 @@ public class SqlConfigParseUtils {
 		// 提取sql中的参数名称(按方言转义规则掩码,mysql系\'字面量后的真参数不被掩掉)
 		sqlToyConfig.setParamsName(getSqlParamsName(sqlToyConfig.getSql(dialect), true, backslashEscape));
 		return sqlToyConfig;
+	}
+
+	/**
+	 * update 2026-10-13 虚表宏@virtualTable()按方言展开(兼容别名@dual()/@dummyTable(),三名共用
+	 * 同一展开逻辑,均忽略大小写)
+	 * <p>
+	 * 场景:"select 常量行 union 真实查询"的sql(如字典缓存兜底行 select '0' id,'全局' name union select
+	 * id,name from t)在oracle/db2/hana必须挂伪表,而pg/mysql/sqlserver等支持无from的
+	 * select。统一写法:select '0' id,'全局' name @virtualTable() union select id,name from
+	 * t, 由本方法按解析方言展开,不再需要手写from dual(在pg/sqlserver上报语法错)或删掉dual
+	 * (在oracle上报ORA-00923)二选一。
+	 * <p>
+	 * 伪表映射对齐各Dialect实现自身生成merge语句所用伪表(OracleDialect/DB2Dialect/HanaDialect
+	 * 的VIRTUAL_TABLE常量):oracle系(oracle/oracle11/dm/oceanbase)→dual;db2→sysibm.sysdummy1;
+	 * hana→dummy。其余方言(mysql/mysql57/tidb/doris/starrocks、postgresql/postgresql14/gaussdb/
+	 * mogdb/opengauss/stardb/vastbase/oscar/kingbase/highgo、sqlserver、sqlite、h2、clickhouse、
+	 * impala、tdengine)的merge生成sql本身即无伪表——原生支持无from select,剔除宏输出空白;
+	 * mongo/es非sql方言、undefine未识别,同样剔除。展开发生在解析期随SqlToyConfig固化(同函数/
+	 * 保留字转换时机),realDialectFirst运行期惰性层不感知宏(仅做函数/保留字形态转换),跨方言多
+	 * 数据源场景以解析方言的展开结果执行;新增DBType若未纳入下方分支,default剔除并经由
+	 * VirtualTableMacroTest.allDbTypesCovered反射穷举断言暴露
+	 * 
+	 * @param sql
+	 * @param dialect
+	 * @return
+	 */
+	public static String expandVirtualTable(String sql, String dialect) {
+		if (StringUtil.isBlank(sql) || !sql.contains("@")) {
+			return sql;
+		}
+		Matcher matcher = VIRTUAL_TABLE_PATTERN.matcher(sql);
+		if (!matcher.find()) {
+			return sql;
+		}
+		// update 2026-10-13 虚表判定收敛到DataSourceUtils.getVirtualTable单一事实源,
+		// DBProfile.getVirtualTable为本方法的档案持有者快速通道(零重复映射)
+		String virtualTable = DataSourceUtils.getVirtualTable(DataSourceUtils.getDBType(dialect));
+		// 无虚表的方言返回空串,展开为空白(剔除宏);有虚表的展开为" from xxx "
+		if (StringUtil.isBlank(virtualTable)) {
+			return matcher.replaceAll(BLANK);
+		}
+		return matcher.replaceAll(" from " + virtualTable + " ");
 	}
 
 	/**

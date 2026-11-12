@@ -13,7 +13,7 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * @version v1.0,Date:2013-03-21
  */
 public class Instr extends IFunction {
-	private static Pattern regex = Pattern.compile("(?i)\\W(instr|charindex|position)\\(");
+	private static Pattern regex = Pattern.compile("(?i)\\W(instr|charindex|position|strpos|locate|posstr)\\(");
 
 	/*
 	 * (non-Javadoc)
@@ -73,13 +73,93 @@ public class Instr extends IFunction {
 				return "regexp_instr(" + realArgs[0] + "," + realArgs[1] + "," + realArgs[2] + "," + realArgs[3] + ")";
 			}
 		}
+		// update 2026-10-4 补 strpos 源函数:strpos(str,sub) 为 pg 系原生写法,参数序与 instr
+		// 一致(haystack在前),
+		// pg系/clickhouse原生支持直接透传;其余库无strpos(instr可原生透传而 strpos不能,须显式转换),
+		// 2参形态按instr同序映射:charindex与db2的locate须对调参数,hana的locate同序,其余instr系库直接换名;
+		// >2参为CH的start_pos/occurrence扩展,其余库无对应形态,原样保留交由目标库报错
+
+		// update 2026-10-11 补 locate 源函数(mysql与db2用户写法):needle-first
+		// 参数序(needle,haystack[,pos])。
+		// mysql系与db2原生同名同序透传;hana的locate虽原生但参数序相反(haystack在前),
+		// 同名异序无法辨源,按本框架mysql源惯例统一按mysql序转换(类注释已声明);
+		// posstr为DB2原生haystack-first语义,不能与locate同组,见下方strpos分支
+		if ("locate".equals(funLow)) {
+			if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57 || dialect == DBType.TIDB
+					|| dialect == DBType.DORIS || dialect == DBType.STARROCKS || dialect == DBType.DB2) {
+				return super.IGNORE;
+			}
+			if (realArgs.length > 3) {
+				return super.IGNORE;
+			}
+			// needle-first源:sub=realArgs[0], str=realArgs[1], pos=realArgs[2]
+			if (dialect == DBType.SQLSERVER) {
+				return "charindex(" + realArgs[0] + "," + realArgs[1] + ((realArgs.length > 2) ? "," + realArgs[2] : "")
+						+ ")";
+			}
+			if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DM
+					|| dialect == DBType.OCEANBASE) {
+				return "instr(" + realArgs[1] + "," + realArgs[0] + ((realArgs.length > 2) ? "," + realArgs[2] : "")
+						+ ")";
+			}
+			if (dialect == DBType.HANA) {
+				if (realArgs.length > 2) {
+					return "locate(" + realArgs[1] + "," + realArgs[0] + "," + realArgs[2] + ")";
+				}
+				return "locate(" + realArgs[1] + "," + realArgs[0] + ")";
+			}
+			if (dialect == DBType.SQLITE && realArgs.length == 2) {
+				return "instr(" + realArgs[1] + "," + realArgs[0] + ")";
+			}
+			if (dialect == DBType.CLICKHOUSE && realArgs.length == 2) {
+				return "position(" + realArgs[1] + "," + realArgs[0] + ")";
+			}
+			// pg系2参:position(needle in haystack);3参无对应形态响亮保留
+			if ((dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.GAUSSDB
+					|| dialect == DBType.OPENGAUSS || dialect == DBType.OSCAR || dialect == DBType.STARDB
+					|| dialect == DBType.MOGDB || dialect == DBType.VASTBASE || dialect == DBType.KINGBASE
+					|| dialect == DBType.HIGHGO) && realArgs.length == 2) {
+				return "position(" + realArgs[0] + " in " + realArgs[1] + ")";
+			}
+			return super.IGNORE;
+		}
+		if ("strpos".equals(funLow) || "posstr".equals(funLow)) {
+			// update 2026-10-11
+			// strpos与DB2的posstr均为haystack-first:strpos(str,sub)/posstr(source,search)。
+			// 总扫真库实测:CH无strpos函数,走下方position(haystack,needle)同序转换
+			if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.GAUSSDB
+					|| dialect == DBType.OPENGAUSS || dialect == DBType.OSCAR || dialect == DBType.STARDB
+					|| dialect == DBType.MOGDB || dialect == DBType.VASTBASE || dialect == DBType.KINGBASE
+					|| dialect == DBType.HIGHGO) {
+				// pg系原生strpos直接透传;DB2的posstr在PG无同名函数,按标准position改写
+				return "strpos".equals(funLow) ? super.IGNORE : "position(" + realArgs[1] + " in " + realArgs[0] + ")";
+			}
+			if (realArgs.length > 2) {
+				return super.IGNORE;
+			}
+			if (dialect == DBType.SQLSERVER) {
+				return "charindex(" + realArgs[1] + "," + realArgs[0] + ")";
+			}
+			if (dialect == DBType.DB2) {
+				// DB2原生posstr直接透传;strpos源转locate(needle,haystack)
+				return "posstr".equals(funLow) ? super.IGNORE : "locate(" + realArgs[1] + "," + realArgs[0] + ")";
+			}
+			if (dialect == DBType.HANA) {
+				return "locate(" + realArgs[0] + "," + realArgs[1] + ")";
+			}
+			if (dialect == DBType.CLICKHOUSE) {
+				// CH无instr/strpos,position(haystack,needle)为原生逗号形态
+				return "position(" + realArgs[0] + "," + realArgs[1] + ")";
+			}
+			return "instr(" + realArgs[0] + "," + realArgs[1] + ")";
+		}
 		StringBuilder result = new StringBuilder();
 		if (dialect == DBType.SQLSERVER) {
 			if ("charindex".equals(funLow)) {
 				return super.IGNORE;
 			}
-			// update 2026-9-5 charindex不支持occurrence参数(instr第4参),
-			// 静默丢弃会改变语义,保持原样交由目标库报错(响亮失败优于静默错误结果)
+			// update 2026-9-5 charindex不支持occurrence参数(instr第4参),静默丢弃会改变语义,
+			// 保持原样交由目标库报错(响亮失败优于静默错误结果)
 			if (realArgs.length > 3) {
 				return super.IGNORE;
 			}
@@ -94,8 +174,8 @@ public class Instr extends IFunction {
 			}
 			return result.append(")").toString();
 		}
-		// update 2026-9-9 Db2 LUW无INSTR函数(LOCATE/POSSTR承担),原分支对instr原样透传会报
-		// 函数不存在;LOCATE(search,source[,start])参数语义与mysql的locate一致,统一转locate
+		// update 2026-9-9 Db2 LUW无INSTR函数(LOCATE/POSSTR承担),原分支对instr原样透传会报函数不存在;
+		// LOCATE(search,source[,start])参数语义与mysql的locate一致,统一转locate
 		if (dialect == DBType.DB2) {
 			if ("position".equals(funLow)) {
 				// position(sub in str):realArgs=[sub,str]
@@ -118,8 +198,9 @@ public class Instr extends IFunction {
 		if (dialect == DBType.MYSQL || dialect == DBType.ORACLE || dialect == DBType.OCEANBASE || dialect == DBType.DM
 				|| dialect == DBType.TIDB || dialect == DBType.ORACLE11 || dialect == DBType.MYSQL57
 				|| dialect == DBType.H2 || dialect == DBType.DORIS || dialect == DBType.STARROCKS) {
-			// update 2026-9-15 补starrocks的position形态:starrocks真库实测不支持position(sub in str)
-			// 关键字语法(Unexpected input 'in'),starrocks原生instr(str,sub)参数序与instr一致,直接换名
+			// update 2026-9-15 补starrocks的position形态:starrocks真库实测不支持position(sub in
+			// str)关键字语法
+			// (Unexpected input 'in'),starrocks原生instr(str,sub)参数序与instr一致,直接换名
 			if ("position".equals(funLow) && dialect == DBType.STARROCKS) {
 				return "instr(" + realArgs[1] + "," + realArgs[0] + ")";
 			}
@@ -134,7 +215,7 @@ public class Instr extends IFunction {
 				}
 				return super.IGNORE;
 			}
-			// position mysql、h2也支持 update 2021-11-11
+			// update 2021-11-11 position mysql、h2也支持
 			if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57 || dialect == DBType.H2 || dialect == DBType.DORIS
 					|| dialect == DBType.STARROCKS) {
 				if ("position".equals(funLow)) {
@@ -153,7 +234,8 @@ public class Instr extends IFunction {
 		// update 2026-9-14 补KINGBASE(KingbaseES基于PG,函数语法归PG系)
 		if (dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.GAUSSDB
 				|| dialect == DBType.OPENGAUSS || dialect == DBType.OSCAR || dialect == DBType.STARDB
-				|| dialect == DBType.MOGDB || dialect == DBType.VASTBASE || dialect == DBType.KINGBASE) {
+				|| dialect == DBType.MOGDB || dialect == DBType.VASTBASE || dialect == DBType.KINGBASE
+				|| dialect == DBType.HIGHGO) {
 			if ("position".equals(funLow)) {
 				return super.IGNORE;
 			}
@@ -166,9 +248,9 @@ public class Instr extends IFunction {
 				}
 				return result.append(")").toString();
 			}
-			// update 2026-9-15 补三参instr(str,sub,pos):pg系position(strpos)无起始位参数,
-			// 原样透传报function instr does not exist(pg真库实测);以strpos(substr(str,pos),sub)
-			// 组合表达"从pos起搜索"(命中则加pos-1偏移,未命中为0)
+			// update 2026-9-15 补三参instr(str,sub,pos):pg系position(strpos)无起始位参数,原样透传报
+			// function instr does not exist(pg真库实测);以strpos(substr(str,pos),sub)
+			// 组合表达“从pos起搜索”(命中则加pos-1偏移,未命中为0)
 			if (realArgs.length == 3) {
 				return "(case when strpos(substr(" + realArgs[0] + "," + realArgs[2] + ")," + realArgs[1]
 						+ ")=0 then 0 else strpos(substr(" + realArgs[0] + "," + realArgs[2] + ")," + realArgs[1]
@@ -192,10 +274,10 @@ public class Instr extends IFunction {
 				return "position(" + realArgs[0] + "," + realArgs[1] + ")";
 			}
 		}
-		// update 2026-9-11 hana:无instr函数,LOCATE(<string>,<substring>[,<start>])参数序与
-		// instr(str,sub[,pos])一致(haystack在前,注意与db2/mysql的locate(needle,haystack)相反);
-		// 第4参occurrence无locate对应形态,原样保留交由目标库报错
-		// update 2026-9-15 hana真库实测并无标准SQL的POSITION(sub in str)形态(报invalid
+		// update 2026-9-15
+		// hana:无instr函数,LOCATE(<string>,<substring>[,<start>])参数序与instr(str,sub[,pos])一致
+		// (haystack在前,注意与db2/mysql的locate(needle,haystack)相反);第4参occurrence无locate对应形态,
+		// 原样保留交由目标库报错。hana真库实测并无标准SQL的POSITION(sub in str)形态(报invalid
 		// name of function or procedure: POSITION,与此前注释假设不符),统一转LOCATE(str,sub)
 		if (dialect == DBType.HANA) {
 			if ("position".equals(funLow)) {
@@ -214,9 +296,10 @@ public class Instr extends IFunction {
 			}
 			return wrapArgs("locate", realArgs);
 		}
-		// update 2026-9-15 补sqlite:sqlite无position形态(真库实测position('cd' in name)把
-		// in name解析为IN子查询报no such table),instr(str,sub)为sqlite原生仅两参;
-		// 三参instr(str,sub,pos)以"substr后移起点+instr+偏移"组合表达;charindex(sub,str)参数序对调
+		// update 2026-9-15 补sqlite:sqlite无position形态(真库实测position('cd' in name)把in
+		// name解析为IN子查询报
+		// no such table),instr(str,sub)为sqlite原生仅两参;三参instr(str,sub,pos)以
+		// “substr后移起点+instr+偏移”组合表达;charindex(sub,str)参数序对调
 		if (dialect == DBType.SQLITE) {
 			if ("position".equals(funLow)) {
 				return "instr(" + realArgs[1] + "," + realArgs[0] + ")";

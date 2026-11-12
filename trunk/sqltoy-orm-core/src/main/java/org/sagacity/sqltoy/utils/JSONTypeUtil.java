@@ -9,19 +9,18 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.model.JdbcTypes;
+import org.sagacity.sqltoy.plugins.json.JsonProviders;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONArray;
-import com.alibaba.fastjson2.JSONObject;
 
 /**
  * 提供一个通用的json类型处理工具
@@ -33,8 +32,9 @@ public class JSONTypeUtil {
 	 * 定义日志
 	 */
 	protected final static Logger logger = LoggerFactory.getLogger(JSONTypeUtil.class);
-	// update 2026-9-16 删除遗留死代码HAS_PG_OBJECT/HAS_VB_OBJECT静态探测块:2026-9-6重构后
-	// PGobject解析已统筹至DataSourceUtils.resolvePGobjectHolder(按URL scheme选同源驱动+dbType守卫),
+	// update 2026-9-16 删除遗留死代码HAS_PG_OBJECT/HAS_VB_OBJECT静态探测块:重构后
+	// PGobject解析已统筹至DataSourceUtils.resolvePGobjectHolder(按URL
+	// scheme选同源驱动+dbType守卫),
 	// 两个布尔量全文件无任何读取,类加载期的无条件Class.forName探测徒增非PG系项目的类加载开销
 
 	// JSON 相关类型名称缓存
@@ -71,9 +71,9 @@ public class JSONTypeUtil {
 				|| dbType == DBType.STARDB || dbType == DBType.OSCAR) {
 			pst.setNull(paramIndex, java.sql.Types.OTHER);
 		} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11) {
-			// update 2026-9-6 oracle原生JSON列的null绑定:实测二参setNull(OTHER)报ORA-17004
+			// update 2026-9-7 oracle原生JSON列的null绑定:实测二参setNull(OTHER)报ORA-17004
 			// (ojdbc拒绝OTHER形态),setNull(VARCHAR)/setNull(NULL)/setString(null)均可写入SQL NULL;
-			// update 2026-9-7 21c+服务端以JSON类型setObject绑定(与setJSONValue同因:保证
+			// 21c+服务端以JSON类型setObject绑定(与setJSONValue同因:保证
 			// nvl(?,col)包裹两端类型一致,保持null不覆盖语义)
 			if (bindOracleJson(dbType, pst, paramIndex, null, true)) {
 				return;
@@ -139,8 +139,8 @@ public class JSONTypeUtil {
 	}
 
 	/**
-	 * update 2026-9-6 判定是否为PG系内核方言(PGobject类型包装的适用范围),与SqlUtil.isPGFamily一致
-	 * update 2026-9-16 委托DBProfile.isPGFamily静态白名单(单一事实源,消除逐字拷贝)
+	 * update 2026-9-6
+	 * 判定是否为PG系内核方言(PGobject类型包装的适用范围),委托DBProfile.isPGFamily静态白名单(单一事实源,消除逐字拷贝)
 	 */
 	private static boolean isPGFamily(Integer dbType) {
 		return DBProfile.isPGFamily(dbType);
@@ -167,17 +167,17 @@ public class JSONTypeUtil {
 		}
 		// 3. 处理 JSONObject 类型
 		if (javaTypeNameLow.endsWith(".jsonobject") || javaTypeNameLow.equals(JSON_OBJECT)) {
-			return JSON.parseObject(jsonStr);
+			return JsonProviders.get().parseObjectNative(jsonStr);
 		}
 		// 4. 处理 JSONArray 类型
 		if (javaTypeNameLow.endsWith(".jsonarray") || javaTypeNameLow.equals(JSON_ARRAY)) {
-			return JSON.parseArray(jsonStr);
+			return JsonProviders.get().parseArrayNative(jsonStr);
 		}
 		// 5. 处理 Map 类型
 		if (javaTypeNameLow.equals(MAP_TYPE) || javaTypeNameLow.startsWith("java.util.hashmap")
 				|| javaTypeNameLow.startsWith("java.util.linkedhashmap")
 				|| javaTypeNameLow.startsWith("java.util.treemap")) {
-			JSONObject jsonObj = JSON.parseObject(jsonStr);
+			Map<String, Object> jsonObj = JsonProviders.get().parseObjectMap(jsonStr);
 			if (javaTypeNameLow.startsWith("java.util.linkedhashmap")) {
 				return new LinkedHashMap<>(jsonObj);
 			}
@@ -191,24 +191,24 @@ public class JSONTypeUtil {
 		if (javaTypeNameLow.equals(LIST_TYPE) || javaTypeNameLow.startsWith("java.util.arraylist")
 				|| javaTypeNameLow.startsWith("java.util.linkedlist")) {
 			if (genericType != null) {
-				return JSONArray.parseArray(jsonStr, genericType);
+				return JsonProviders.get().parseArray(jsonStr, genericType);
 			}
-			return JSONArray.parseArray(jsonStr);
+			return JsonProviders.get().parseArray(jsonStr);
 		}
 		// 7. 处理 Set 类型
 		if (javaTypeNameLow.equals(SET_TYPE) || javaTypeNameLow.startsWith("java.util.hashset")
 				|| javaTypeNameLow.startsWith("java.util.linkedhashset")
 				|| javaTypeNameLow.startsWith("java.util.treeset")) {
-			JSONArray jsonArray = JSONArray.parseArray(jsonStr);
+			List<Object> jsonArray = JsonProviders.get().parseArray(jsonStr);
 			if (jsonArray != null) {
 				if (genericType != null) {
 					if (javaTypeNameLow.startsWith("java.util.linkedhashset")) {
-						return new LinkedHashSet<>(jsonArray.toJavaList(genericType));
+						return new LinkedHashSet<>(JsonProviders.get().parseArray(jsonStr, genericType));
 					}
 					if (javaTypeNameLow.startsWith("java.util.treeset")) {
-						return new TreeSet<>(jsonArray.toJavaList(genericType));
+						return new TreeSet<>(JsonProviders.get().parseArray(jsonStr, genericType));
 					}
-					return new HashSet<>(jsonArray.toJavaList(genericType));
+					return new HashSet<>(JsonProviders.get().parseArray(jsonStr, genericType));
 				}
 				if (javaTypeNameLow.startsWith("java.util.linkedhashset")) {
 					return new LinkedHashSet<>(jsonArray);
@@ -223,9 +223,9 @@ public class JSONTypeUtil {
 		// 8. 处理 Collection 类型
 		if (javaTypeNameLow.equals(COLLECTION_TYPE)) {
 			if (genericType != null) {
-				return JSONArray.parseArray(jsonStr, genericType);
+				return JsonProviders.get().parseArray(jsonStr, genericType);
 			}
-			return JSONArray.parseArray(jsonStr);
+			return JsonProviders.get().parseArray(jsonStr);
 		}
 		// 9. 加载目标类
 		Class<?> classType;
@@ -241,7 +241,7 @@ public class JSONTypeUtil {
 		}
 		// 11. 处理自定义对象类型
 		if (!BeanUtil.isBaseDataType(classType)) {
-			return JSON.parseObject(jsonStr, classType);
+			return JsonProviders.get().parseObject(jsonStr, classType);
 		}
 		// 其他场景表示非json返回null交框架自行处理
 		return null;
@@ -252,7 +252,7 @@ public class JSONTypeUtil {
 	 */
 	private static Object parseJsonArray(String jsonStr, Class<?> arrayType) {
 		Class<?> componentType = arrayType.getComponentType();
-		JSONArray jsonArray = JSONArray.parseArray(jsonStr);
+		List<Object> jsonArray = JsonProviders.get().parseArray(jsonStr);
 		if (jsonArray == null || jsonArray.isEmpty()) {
 			return Array.newInstance(componentType, 0);
 		}
@@ -269,14 +269,15 @@ public class JSONTypeUtil {
 		if (componentType == boolean.class) {
 			boolean[] arr = new boolean[jsonArray.size()];
 			for (int i = 0; i < arr.length; i++) {
-				arr[i] = jsonArray.getBooleanValue(i);
+				Object flag = jsonArray.get(i);
+				arr[i] = (flag instanceof Boolean) ? (Boolean) flag : ((Number) flag).intValue() != 0;
 			}
 			return arr;
 		}
 		// 对象数组
 		Object array = Array.newInstance(componentType, jsonArray.size());
 		for (int i = 0; i < jsonArray.size(); i++) {
-			Array.set(array, i, jsonArray.getObject(i, componentType));
+			Array.set(array, i, JsonProviders.get().convert(jsonArray.get(i), componentType));
 		}
 		return array;
 	}
@@ -321,20 +322,20 @@ public class JSONTypeUtil {
 		// 反序列化,getString则被驱动toString为"{name=x}"非JSON形态致fastjson解析失败,实测),
 		// 重新序列化为标准JSON文本
 		if (jdbcValue instanceof java.util.Map || jdbcValue instanceof java.util.Collection) {
-			return JSON.toJSONString(jdbcValue);
+			return JsonProviders.get().toJSONString(jdbcValue);
 		}
 		// 其他类型尝试 toString
 		return jdbcValue.toString();
 	}
 
 	/**
-	 * 剥除JSON字符串标量的外层引号:文本以引号起始且结束(如h2 json列setString绑定
-	 * 产生的"\"[{...}]\""形态)时解析出标量内部文本,否则原样返回 (update 2026-9-9
-	 * 提升为public:ResultUtils的Map行路径h2 json列byte[]归一同款剥引号)
+	 * update 2026-9-9 剥除JSON字符串标量的外层引号:文本以引号起始且结束(如h2 json列setString绑定
+	 * 产生的"\"[{...}]\""形态)时解析出标量内部文本,否则原样返回。 提升为public:ResultUtils的Map行路径h2
+	 * json列byte[]归一同款剥引号)
 	 */
 	public static String unwrapJsonStringScalar(String str) {
 		if (str.startsWith("\"") && str.endsWith("\"")) {
-			return JSON.parseObject(str, String.class);
+			return JsonProviders.get().parseObject(str, String.class);
 		}
 		return str;
 	}
@@ -352,7 +353,7 @@ public class JSONTypeUtil {
 		if (value instanceof String) {
 			return (String) value;
 		}
-		return JSON.toJSONString(value);
+		return JsonProviders.get().toJSONString(value);
 	}
 
 	// oracle的JSON类型码(OracleTypes.JSON=2016,ojdbc 21c+提供;null表示驱动不可用)
@@ -373,7 +374,7 @@ public class JSONTypeUtil {
 	 * update/merge的nvl(?,col)包裹触发ORA-40478"输出值太大(最大值:0)",JSON类型绑定后nvl
 	 * 两端类型一致,"null不覆盖原值"语义得以保持);按服务端版本门控(21c起才有原生json类型),
 	 * 驱动无JSON常量或服务端<21c回退false交由常规setString/setNull(此时varchar绑定本就正确)
-	 * 
+	 *
 	 * @param dbType     数据库类型,参见DataSourceUtils.DBType
 	 * @param pst        预编译语句(用于获取连接解析服务端版本,DBProfile按URL缓存)
 	 * @param paramIndex 参数下标

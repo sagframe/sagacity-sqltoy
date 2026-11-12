@@ -54,6 +54,7 @@ public class GroupConcat extends IFunction {
 		return withinGroupPattern;
 	}
 
+	// (真库实测语法错),不设分派走末尾IGNORE原样输出由引擎响亮报错
 	@Override
 	public String wrap(int dbType, String functionName, boolean hasArgs, String... args) {
 		if (args == null || args.length == 0) {
@@ -230,7 +231,8 @@ public class GroupConcat extends IFunction {
 		// 写法与目标库同名时原样透传,反向别名统一转换:listagg写法→array_to_string(string_agg写法为pg原生透传)
 		if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 				|| dbType == DBType.OPENGAUSS || dbType == DBType.OSCAR || dbType == DBType.STARDB
-				|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE) {
+				|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE
+				|| dbType == DBType.HIGHGO) {
 			if ("string_agg".equals(funLow)) {
 				return super.IGNORE;
 			}
@@ -340,7 +342,8 @@ public class GroupConcat extends IFunction {
 	private static boolean isPgFamily(int dbType) {
 		return dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 				|| dbType == DBType.OPENGAUSS || dbType == DBType.OSCAR || dbType == DBType.STARDB
-				|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE;
+				|| dbType == DBType.MOGDB || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE
+				|| dbType == DBType.HIGHGO;
 	}
 
 	// update 2026-10-8 文本中的order by子句拆分:[前段,排序表达式],无order by返回null;

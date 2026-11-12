@@ -62,6 +62,7 @@ import org.sagacity.sqltoy.link.Unique;
 import org.sagacity.sqltoy.link.Update;
 import org.sagacity.sqltoy.model.CacheMatchFilter;
 import org.sagacity.sqltoy.model.ColumnMeta;
+import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.model.EntityQuery;
 import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.IgnoreCaseLinkedMap;
@@ -71,8 +72,8 @@ import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.MapKit;
 import org.sagacity.sqltoy.model.Page;
-import org.sagacity.sqltoy.model.ParallQuery;
 import org.sagacity.sqltoy.model.ParallelConfig;
+import org.sagacity.sqltoy.model.ParallelQuery;
 import org.sagacity.sqltoy.model.ParallelQueryResult;
 import org.sagacity.sqltoy.model.PropsMapperConfig;
 import org.sagacity.sqltoy.model.QueryExecutor;
@@ -573,7 +574,7 @@ public class SqlToyDaoSupport {
 			return null;
 		}
 		Class[] cascades = cascadeTypes;
-		// 当没有指定级联子类默认全部级联加载(update 2020-7-31 缺失了cascades.length == 0 判断)
+		// update 2020-7-31 当没有指定级联子类时默认全部级联加载(cascades.length == 0 判断)
 		if (cascades == null || cascades.length == 0) {
 			cascades = getEntityMeta(entity.getClass()).getCascadeTypes();
 		}
@@ -750,7 +751,7 @@ public class SqlToyDaoSupport {
 	 * @return 实际修改(插入、删除)的记录数量
 	 */
 	protected Long executeSql(final String sqlOrSqlId, final Serializable params) {
-		// update 2025-4-29 兼容executeSql(sql,Object...params) 只有一个参数时的场景
+		// update 2025-4-29 兼容executeSql(sql,Object...params)只有一个参数时的场景
 		if (params == null || BeanUtil.isBaseDataType(params.getClass())) {
 			return executeSql(sqlOrSqlId, null, new Object[] { params }, null, null);
 		} else if (params instanceof Collection) {
@@ -1584,7 +1585,9 @@ public class SqlToyDaoSupport {
 	protected void flush(DataSource dataSource) {
 		DataSourceUtils.processDataSource(sqlToyContext, getDataSource(dataSource), new DataSourceCallbackHandler() {
 			@Override
-			public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
+			public void doConnection(Connection conn, DBProfile profile) throws Exception {
+				Integer dbType = profile.getDbType();
+				String dialect = profile.getDialect();
 				if (!conn.isClosed()) {
 					conn.commit();
 				}
@@ -2311,11 +2314,11 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
-	 * 针对单表对象查询进行更新操作(update和delete 操作filters过滤是无效的，必须是精准的条件参数)
+	 * update 2021-12-23 针对单表对象查询进行更新操作(update和delete
+	 * 操作filters过滤是无效的，必须是精准的条件参数),支持update table set field=field+1等计算模式
 	 * 
 	 * @param entityClass  单表对应的实体类
 	 * @param entityUpdate 修改构造对象,通过set(property,value)设置修改字段,where/values设置条件
-	 * @update 2021-12-23 支持update table set field=field+1等计算模式
 	 * @return 实际修改的记录数量
 	 */
 	protected Long updateByQuery(Class entityClass, EntityUpdate entityUpdate) {
@@ -2625,14 +2628,14 @@ public class SqlToyDaoSupport {
 	 * @param paramValues       条件参数值数组,顺序与paramNames一一对应
 	 * @return 查询结果集合,顺序与parallelQueryList一致,第n个元素对应第n个查询的结果
 	 */
-	protected <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallelQueryList, String[] paramNames,
+	protected <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallelQueryList, String[] paramNames,
 			Object[] paramValues) {
-		return parallQuery(parallelQueryList, paramNames, paramValues, null);
+		return parallelQuery(parallelQueryList, paramNames, paramValues, null);
 	}
 
-	protected <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallelQueryList,
+	protected <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallelQueryList,
 			Map<String, Object> paramsMap, ParallelConfig parallelConfig) {
-		return parallQuery(parallelQueryList, null, new Object[] { new IgnoreKeyCaseMap(paramsMap) }, parallelConfig);
+		return parallelQuery(parallelQueryList, null, new Object[] { new IgnoreKeyCaseMap(paramsMap) }, parallelConfig);
 	}
 
 	/**
@@ -2672,7 +2675,7 @@ public class SqlToyDaoSupport {
 	 * @param parallelConfig    并行查询配置(最大线程数、最大等待时长等),为null时采用默认配置
 	 * @return 查询结果集合,顺序与parallelQueryList一致,第n个元素对应第n个查询的结果
 	 */
-	protected <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallelQueryList, String[] paramNames,
+	protected <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallelQueryList, String[] paramNames,
 			Object[] paramValues, ParallelConfig parallelConfig) {
 		if (parallelQueryList == null || parallelQueryList.isEmpty()) {
 			return null;
@@ -2695,7 +2698,7 @@ public class SqlToyDaoSupport {
 			List<Future<ParallelQueryResult>> futureResult = new ArrayList<Future<ParallelQueryResult>>();
 			SqlToyConfig sqlToyConfig;
 			Future<ParallelQueryResult> future;
-			for (ParallQuery query : parallelQueryList) {
+			for (ParallelQuery query : parallelQueryList) {
 				sqlToyConfig = sqlToyContext.getSqlToyConfig(
 						new QueryExecutor(query.getExtend().sql).resultType(query.getExtend().resultType),
 						SqlType.search, getDialect(query.getExtend().dataSource));

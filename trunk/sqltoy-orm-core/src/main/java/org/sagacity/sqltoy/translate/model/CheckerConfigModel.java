@@ -85,6 +85,52 @@ public class CheckerConfigModel implements Serializable {
 	 */
 	private String password;
 
+	/**
+	 * rest认证模式:basic(默认,兼容既有username/password)、jwt(token认证)
+	 */
+	private String authType;
+
+	/**
+	 * jwt模式:获取token的登录地址(表单提交username/password,响应json按token-key提取token)
+	 */
+	private String tokenUrl;
+
+	/**
+	 * jwt模式:响应json中token字段路径(支持data.token点路径),默认access_token
+	 */
+	private String tokenPath;
+
+	/**
+	 * jwt模式:Authorization请求头前缀,默认Bearer
+	 */
+	private String tokenPrefix;
+
+	/**
+	 * jwt模式:token有效期(秒),响应含expires_in时以响应为准
+	 */
+	private int tokenExpire = 1800;
+
+	/**
+	 * jwt自签名模式:HS256签名密钥,本地生成token(claims含sub/iat/exp)无需登录接口,
+	 * 服务端以同一密钥验签;与token-url、authorization三选一
+	 */
+	private String tokenSecureKey;
+
+	/**
+	 * jwt模式:携带token的http请求头名称,默认Authorization(如Sag-Auth-Token)
+	 */
+	private String tokenHeader;
+
+	/**
+	 * jwt自签名模式的签名算法:HS256(默认)\HS384\HS512(HMAC共享密钥)、RS256\RS384\RS512(RSA私钥)
+	 */
+	private String signAlgorithm;
+
+	/**
+	 * jwt模式:直接配置的静态token(与token-url、token-secure-key三选一,长效token场景)
+	 */
+	private String authorization;
+
 	public String getId() {
 		if (id != null) {
 			return id;
@@ -286,6 +332,141 @@ public class CheckerConfigModel implements Serializable {
 	 */
 	public CheckerConfigModel setPassword(String password) {
 		this.password = password;
+		return this;
+	}
+
+	/**
+	 * @return the authType
+	 */
+	public String getAuthType() {
+		return authType;
+	}
+
+	/**
+	 * @param authType the authType to set
+	 */
+	public CheckerConfigModel setAuthType(String authType) {
+		this.authType = authType;
+		return this;
+	}
+
+	/**
+	 * @return the tokenUrl
+	 */
+	public String getTokenUrl() {
+		return tokenUrl;
+	}
+
+	/**
+	 * @param tokenUrl the tokenUrl to set
+	 */
+	public CheckerConfigModel setTokenUrl(String tokenUrl) {
+		this.tokenUrl = tokenUrl;
+		return this;
+	}
+
+	/**
+	 * @return the tokenPath
+	 */
+	public String getTokenPath() {
+		return tokenPath;
+	}
+
+	/**
+	 * @param tokenPath the tokenPath to set
+	 */
+	public CheckerConfigModel setTokenPath(String tokenPath) {
+		this.tokenPath = tokenPath;
+		return this;
+	}
+
+	/**
+	 * @return the tokenPrefix
+	 */
+	public String getTokenPrefix() {
+		return tokenPrefix;
+	}
+
+	/**
+	 * @param tokenPrefix the tokenPrefix to set
+	 */
+	public CheckerConfigModel setTokenPrefix(String tokenPrefix) {
+		this.tokenPrefix = tokenPrefix;
+		return this;
+	}
+
+	/**
+	 * @return the tokenExpire
+	 */
+	public int getTokenExpire() {
+		return tokenExpire;
+	}
+
+	/**
+	 * @param tokenExpire the tokenExpire to set
+	 */
+	public CheckerConfigModel setTokenExpire(int tokenExpire) {
+		this.tokenExpire = tokenExpire;
+		return this;
+	}
+
+	/**
+	 * @return the tokenSecureKey
+	 */
+	public String getTokenSecureKey() {
+		return tokenSecureKey;
+	}
+
+	/**
+	 * @param tokenSecureKey the tokenSecureKey to set
+	 */
+	public CheckerConfigModel setTokenSecureKey(String tokenSecureKey) {
+		this.tokenSecureKey = tokenSecureKey;
+		return this;
+	}
+
+	/**
+	 * @return the tokenHeader
+	 */
+	public String getTokenHeader() {
+		return tokenHeader;
+	}
+
+	/**
+	 * @param tokenHeader the tokenHeader to set
+	 */
+	public CheckerConfigModel setTokenHeader(String tokenHeader) {
+		this.tokenHeader = tokenHeader;
+		return this;
+	}
+
+	/**
+	 * @return the signAlgorithm
+	 */
+	public String getSignAlgorithm() {
+		return signAlgorithm;
+	}
+
+	/**
+	 * @param signAlgorithm the signAlgorithm to set
+	 */
+	public CheckerConfigModel setSignAlgorithm(String signAlgorithm) {
+		this.signAlgorithm = signAlgorithm;
+		return this;
+	}
+
+	/**
+	 * @return the authorization
+	 */
+	public String getAuthorization() {
+		return authorization;
+	}
+
+	/**
+	 * @param authorization the authorization to set
+	 */
+	public CheckerConfigModel setAuthorization(String authorization) {
+		this.authorization = authorization;
 		return this;
 	}
 

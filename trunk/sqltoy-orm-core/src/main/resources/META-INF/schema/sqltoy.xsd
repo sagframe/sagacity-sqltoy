@@ -553,6 +553,11 @@
 				<xsd:documentation><![CDATA[在sql上指定数据源名称,供特殊场景下使用]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
+		<xsd:attribute name="dialect" type="xsd:string">
+			<xsd:annotation>
+				<xsd:documentation><![CDATA[声明本条sql按指定方言形态解析固化(如kingbase):加载时按该方言做函数/保留字转换;执行期当前数据库方言与声明一致时跳过函数替换,不一致时惰性转换适配;mql/eql不支持(强制mongo/elastic)]]></xsd:documentation>
+			</xsd:annotation>
+		</xsd:attribute>
 	</xsd:complexType>
 	<xsd:complexType name="sqlToyMqlType" mixed="true">
 		<xsd:annotation>

@@ -144,6 +144,7 @@ public class TableMeta implements Serializable {
 	public void setPartitionMeta(PartitionMeta partitionMeta) {
 		this.partitionMeta = partitionMeta;
 	}
+
 	public MppTableMeta getMppTableMeta() {
 		return mppTableMeta;
 	}

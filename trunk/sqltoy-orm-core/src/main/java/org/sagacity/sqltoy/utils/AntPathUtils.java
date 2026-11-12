@@ -17,7 +17,7 @@ public class AntPathUtils {
 
 	/**
 	 * 路径与分段后的Ant模式匹配
-	 *
+	 * 
 	 * @param path         以"/"分隔的路径(jar entry名称或相对路径)
 	 * @param patternParts 以"/"拆分后的模式段
 	 * @return
@@ -31,7 +31,7 @@ public class AntPathUtils {
 
 	/**
 	 * 路径与完整Ant模式匹配
-	 *
+	 * 
 	 * @param path
 	 * @param antPattern
 	 * @return

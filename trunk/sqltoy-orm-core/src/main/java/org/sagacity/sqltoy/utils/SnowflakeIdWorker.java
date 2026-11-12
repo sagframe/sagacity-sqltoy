@@ -92,8 +92,8 @@ public class SnowflakeIdWorker {
 	}
 
 	/**
-	 * update 2025-12-23 将产生id的策略跟具体表绑定 获得下一个ID (该方法是线程安全的)
-	 * 
+	 * update 2025-12-23 将产生id的策略跟具体表绑定,获得下一个ID(该方法是线程安全的)
+	 *
 	 * @param tableName
 	 * @return
 	 */

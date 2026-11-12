@@ -4,8 +4,11 @@ import java.io.File;
 import java.net.JarURLConnection;
 import java.net.URI;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -244,7 +247,10 @@ public class SqlResourceScanner {
 	 */
 	private static void scanClasspathWithPattern(List result, String rootPath, String[] patternParts,
 			Set<String> notRepeatDirs, ClassLoader classLoader) throws Exception {
-		Enumeration<URL> roots = getClasspathResourceUrls(rootPath, classLoader);
+		// update 2026-11-11 空根classpath*:不能只靠getResources(""):普通URLClassLoader下它通常只返回
+		// classes目录而不返回jar根,导致classpath*:**/*.sql.xml静默漏掉依赖jar中的sql资源
+		Enumeration<URL> roots = rootPath.isEmpty() ? getClasspathRootUrls(classLoader)
+				: getClasspathResourceUrls(rootPath, classLoader);
 		while (roots.hasMoreElements()) {
 			URL rootUrl = roots.nextElement();
 			String protocol = rootUrl.getProtocol();
@@ -278,7 +284,14 @@ public class SqlResourceScanner {
 		if (!normalizedRoot.isEmpty() && !normalizedRoot.endsWith("/")) {
 			normalizedRoot = normalizedRoot + "/";
 		}
-		try (JarFile jarFile = conn.getJarFile()) {
+		// update 2026-11-11 嵌套jar(Spring Boot)的JarFile由加载器缓存共享,主动关闭会让后续类/资源读取
+		// 报"zip file closed";普通jar关闭前禁用共享缓存,close安全释放句柄(Windows热部署不锁定jar)
+		boolean nestedJar = isNestedJarUrl(jarUrl);
+		if (!nestedJar) {
+			conn.setUseCaches(false);
+		}
+		JarFile jarFile = conn.getJarFile();
+		try {
 			Enumeration<JarEntry> entries = jarFile.entries();
 			while (entries.hasMoreElements()) {
 				JarEntry entry = entries.nextElement();
@@ -295,15 +308,30 @@ public class SqlResourceScanner {
 						: entryPath.substring(normalizedRoot.length());
 				// update 2026-11-11 统一使用AntPathUtils,与实体扫描共用同一套**语义
 				if (AntPathUtils.match(relativePath, patternParts)) {
-					if (entryPath.toLowerCase(Locale.ROOT).endsWith(SQLTOY_SQL_FILE_SUFFIX)
-							&& CollectionUtil.notContainsAdd(notRepeatDirs, entryPath)) {
+					if (entryPath.toLowerCase(Locale.ROOT).endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
 						// JAR资源优先加载
-						// update 2026-11-11 保留entry对应的物理jar URL
-						result.add(0, buildJarEntryUrl(jarUrl, entryPath));
+						// update 2026-11-11 按物理URL去重:不同jar的同名entry都是独立资源,不能按逻辑路径只留首个
+						URL entryUrl = buildJarEntryUrl(jarUrl, entryPath);
+						if (CollectionUtil.notContainsAdd(notRepeatDirs, entryUrl.toExternalForm())) {
+							result.add(0, entryUrl);
+						}
 					}
 				}
 			}
+		} finally {
+			if (!nestedJar) {
+				jarFile.close();
+			}
 		}
+	}
+
+	/**
+	 * @param url jar资源URL
+	 * @return 是否为嵌套jar(Spring Boot 3.0/3.1多个"!/"或3.2+的nested:协议);嵌套jar的JarFile由加载器缓存持有
+	 */
+	private static boolean isNestedJarUrl(URL url) {
+		String external = url.toExternalForm();
+		return external.contains("nested:") || external.indexOf("!/") != external.lastIndexOf("!/");
 	}
 
 	/**
@@ -352,7 +380,8 @@ public class SqlResourceScanner {
 			startClasspath = true;
 		}
 		if (CollectionUtil.notContainsAdd(notRepeatDirs, realRes)) {
-			Enumeration<URL> urls = startClasspath ? getClasspathResourceUrls(realRes, classLoader)
+			Enumeration<URL> urls = startClasspath
+					? (realRes.isEmpty() ? getClasspathRootUrls(classLoader) : getClasspathResourceUrls(realRes, classLoader))
 					: getResourceUrls(realRes, classLoader);
 			if (null != urls) {
 				URL url;
@@ -365,19 +394,38 @@ public class SqlResourceScanner {
 						if (!realRes.isEmpty() && realRes.startsWith("/")) {
 							realRes = realRes.substring(1);
 						}
-						// try-with-resources关闭JarFile,避免文件句柄泄漏(Windows下会锁定jar阻碍热部署)
-						try (JarFile jar = ((JarURLConnection) url.openConnection()).getJarFile()) {
+						// update 2026-11-11 与Ant分支统一:嵌套jar(Spring Boot)的JarFile由加载器缓存共享,主动关闭会让后续读取
+						// 报"zip file closed";普通jar关闭前禁用共享缓存,close安全释放句柄(Windows热部署不锁定jar)
+						JarURLConnection jarConn = (JarURLConnection) url.openConnection();
+						boolean nestedJar = isNestedJarUrl(url);
+						if (!nestedJar) {
+							jarConn.setUseCaches(false);
+						}
+						JarFile jar = jarConn.getJarFile();
+						try {
+							// update 2026-11-11 非空目录前缀必须带目录边界:startsWith("com/app/sql")会误扫
+							// com/app/sql2、com/app/sqlX.sql.xml等兄弟路径,对齐Ant分支的root+"/"语义
+							String jarPrefix = realRes;
+							if (!jarPrefix.isEmpty() && !jarPrefix.endsWith("/")) {
+								jarPrefix = jarPrefix + "/";
+							}
 							entries = jar.entries();
 							while (entries.hasMoreElements()) {
 								entry = entries.nextElement();
 								sqlFile = entry.getName();
-								if (sqlFile.startsWith(realRes)
+								if ((realRes.isEmpty() || sqlFile.startsWith(jarPrefix) || sqlFile.equals(realRes))
 										&& sqlFile.toLowerCase(Locale.ROOT).endsWith(SQLTOY_SQL_FILE_SUFFIX)
-										&& !entry.isDirectory()
-										&& CollectionUtil.notContainsAdd(notRepeatDirs, sqlFile)) {
-									// update 2026-11-11 保留entry对应的物理jar URL
-									result.add(0, buildJarEntryUrl(url, sqlFile));
+										&& !entry.isDirectory()) {
+									// update 2026-11-11 按物理URL去重:不同jar的同名entry都要保留
+									URL entryUrl = buildJarEntryUrl(url, sqlFile);
+									if (CollectionUtil.notContainsAdd(notRepeatDirs, entryUrl.toExternalForm())) {
+										result.add(0, entryUrl);
+									}
 								}
+							}
+						} finally {
+							if (!nestedJar) {
+								jar.close();
 							}
 						}
 					} else if (url.getProtocol().equals(RESOURCE)) {
@@ -466,11 +514,13 @@ public class SqlResourceScanner {
 		while (urls.hasMoreElements()) {
 			url = urls.nextElement();
 			if (url.getProtocol().equals(JAR)) {
-				if (normalizedRes.toLowerCase(Locale.ROOT).endsWith(SQLTOY_SQL_FILE_SUFFIX)
-						&& CollectionUtil.notContainsAdd(notRepeatResources, normalizedRes)) {
+				if (normalizedRes.toLowerCase(Locale.ROOT).endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
 					// jar中的sql优先加载,从而确保直接放于classes目录下面的sql可以实现对之前的覆盖,便于项目增量发版管理
-					// update 2026-11-11 保留物理jar资源URL,解析时按该URL开流,避免TCCL总是取到classes下的同名文件
-					result.add(0, buildJarEntryUrl(url, normalizedRes));
+					// update 2026-11-11 按物理URL去重:不同jar的同名entry都要保留,相同sqlId仍由breakWhenSqlRepeat决定报错或覆盖
+					URL entryUrl = buildJarEntryUrl(url, normalizedRes);
+					if (CollectionUtil.notContainsAdd(notRepeatResources, entryUrl.toExternalForm())) {
+						result.add(0, entryUrl);
+					}
 				}
 			} else if (url.getProtocol().equals(RESOURCE)) {
 				if (normalizedRes.toLowerCase(Locale.ROOT).endsWith(SQLTOY_SQL_FILE_SUFFIX)
@@ -578,6 +628,129 @@ public class SqlResourceScanner {
 	}
 
 	/**
+	 * 空根classpath*:的类路径根发现:getResources("")在普通URLClassLoader下通常只返回classes目录,
+	 * 不返回jar根;这里补充URLClassLoader层级中的jar/file根,避免空根Ant模式漏掉依赖jar中的sql资源
+	 */
+	private static Enumeration<URL> getClasspathRootUrls(ClassLoader classLoader) throws Exception {
+		LinkedHashSet<String> rootKeys = new LinkedHashSet<String>();
+		List<URL> roots = new ArrayList<URL>();
+		addRootUrl(roots, rootKeys, classLoader.getResources(""));
+		boolean hasUrlClassLoader = false;
+		boolean reachesSystemClassLoader = false;
+		ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
+		for (ClassLoader loader = classLoader; loader != null; loader = loader.getParent()) {
+			if (loader instanceof URLClassLoader) {
+				hasUrlClassLoader = true;
+				for (URL url : ((URLClassLoader) loader).getURLs()) {
+					URL root = toClasspathRootUrl(url);
+					if (root != null) {
+						addRootUrl(roots, rootKeys, root);
+					}
+				}
+			}
+			if (loader == systemClassLoader) {
+				reachesSystemClassLoader = true;
+			}
+		}
+		// update 2026-11-11 JDK9+应用类加载器不再是URLClassLoader(getResources("")也只返回目录):
+		// 加载器层级无法枚举URL根、或委派到系统应用类加载器时,补充java.class.path;
+		// 纯隔离加载器(未委派系统应用类加载器)不混入JVM全局classpath
+		if (!hasUrlClassLoader || reachesSystemClassLoader) {
+			addSystemClassPathRoots(roots, rootKeys);
+		}
+		return Collections.enumeration(roots);
+	}
+
+	/**
+	 * 补充JVM启动参数中的classpath根(java.class.path):JDK9+的应用类加载器不是URLClassLoader,
+	 * 仅靠getResources("")与URLClassLoader层级无法发现依赖jar
+	 * 
+	 * @param roots
+	 * @param rootKeys
+	 */
+	private static void addSystemClassPathRoots(List<URL> roots, Set<String> rootKeys) {
+		String classPath = System.getProperty("java.class.path");
+		if (classPath == null || classPath.isEmpty()) {
+			return;
+		}
+		for (String item : classPath.split(File.pathSeparator)) {
+			String entry = item.trim();
+			if (entry.isEmpty()) {
+				continue;
+			}
+			// -cp "lib/*" 形态:展开目录下的jar/zip
+			if (entry.endsWith("*")) {
+				File dir = new File(entry.substring(0, entry.length() - 1));
+				File[] children = dir.listFiles();
+				if (children == null) {
+					continue;
+				}
+				for (File child : children) {
+					String name = child.getName().toLowerCase(Locale.ROOT);
+					if (name.endsWith(".jar") || name.endsWith(".zip")) {
+						addRootUrl(roots, rootKeys, toFileRootUrl(child));
+					}
+				}
+				continue;
+			}
+			addRootUrl(roots, rootKeys, toFileRootUrl(new File(entry)));
+		}
+	}
+
+	/**
+	 * 文件路径转类路径根:目录保持file URL,jar/zip转为jar:file:...!/ 根
+	 * 
+	 * @param file
+	 * @return
+	 */
+	private static URL toFileRootUrl(File file) {
+		try {
+			if (file == null || !file.exists()) {
+				return null;
+			}
+			if (file.isDirectory()) {
+				return file.toURI().toURL();
+			}
+			return new URL("jar:" + file.toURI().toURL().toExternalForm() + "!/");
+		} catch (Exception e) {
+			logger.debug("skip classpath root: {}", file, e);
+			return null;
+		}
+	}
+
+	private static void addRootUrl(List<URL> roots, Set<String> rootKeys, Enumeration<URL> urls) throws Exception {
+		while (urls.hasMoreElements()) {
+			addRootUrl(roots, rootKeys, urls.nextElement());
+		}
+	}
+
+	private static void addRootUrl(List<URL> roots, Set<String> rootKeys, URL url) {
+		if (url != null && rootKeys.add(url.toExternalForm())) {
+			roots.add(url);
+		}
+	}
+
+	private static URL toClasspathRootUrl(URL url) throws Exception {
+		String protocol = url.getProtocol();
+		if ("file".equals(protocol)) {
+			File file = new File(url.toURI());
+			if (!file.exists()) {
+				return null;
+			}
+			if (file.isDirectory()) {
+				return url;
+			}
+			return new URL("jar:" + url.toExternalForm() + "!/");
+		}
+		if (JAR.equals(protocol)) {
+			String external = url.toExternalForm();
+			int markIndex = external.lastIndexOf("!/");
+			return new URL((markIndex > -1) ? external.substring(0, markIndex + 2) : external + "!/");
+		}
+		return url;
+	}
+
+	/**
 	 * 递归获取文件夹下面的以sql.xml结尾的sql文件
 	 * 
 	 * @param parentFile
@@ -613,7 +786,7 @@ public class SqlResourceScanner {
 	/**
 	 * 由jar资源URL与entry名称构造精确的物理资源URL(jar:file:/x.jar!/entry), 兼容Spring
 	 * Boot嵌套jar(jar:file:/app.jar!/BOOT-INF/classes!/entry)
-	 *
+	 * 
 	 * @param jarUrl    扫描时命中的jar资源URL(含entry或目录)
 	 * @param entryName jar内entry名称
 	 * @return
@@ -624,12 +797,29 @@ public class SqlResourceScanner {
 		// 以最后一个"!/"为界截取到jar根(嵌套jar为内层jar根)
 		int markIndex = url.lastIndexOf("!/");
 		String root = (markIndex > -1) ? url.substring(0, markIndex + 2) : url + "!/";
-		return new URL(root.concat(entryName));
+		// update 2026-11-11 entry名按URL路径规则转义:含#时会被当作fragment截断,导致读取到错误entry
+		return new URL(root.concat(encodeJarEntryName(entryName)));
+	}
+
+	/**
+	 * jar entry名转URL路径片段:按URI路径规则转义(空格/%/#/?/非ASCII),JarURLConnection读取时会解码还原为真实entry名
+	 * 
+	 * @param entryName
+	 * @return
+	 */
+	private static String encodeJarEntryName(String entryName) {
+		try {
+			// 多参URI构造器按"已解码路径"处理:转义非法字符且保留"/",并正确处理Unicode/代理对
+			return new URI(null, null, entryName, null).getRawPath();
+		} catch (Exception e) {
+			logger.debug("failed to encode jar entry name: {}", entryName, e);
+			return entryName;
+		}
 	}
 
 	/**
 	 * 替换全角字符,统一多路径分割符号为逗号
-	 *
+	 * 
 	 * @param resourcesDir
 	 * @return
 	 */

@@ -5,6 +5,9 @@ import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.plugins.secure.FieldsSecureProvider;
 import org.sagacity.sqltoy.plugins.secure.impl.FieldsRSASecureProvider;
 
+/**
+ * FieldsRSASecureProvider RSA字段加解密的单元测试
+ */
 public class FieldsRSASecureProviderTest {
 	private FieldsSecureProvider fieldsSecureProvider;
 

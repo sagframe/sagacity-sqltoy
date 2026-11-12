@@ -25,6 +25,7 @@ import org.sagacity.sqltoy.dialect.QueryExecutorBuilder;
 import org.sagacity.sqltoy.integration.AppContext;
 import org.sagacity.sqltoy.integration.ConnectionFactory;
 import org.sagacity.sqltoy.integration.impl.SimpleConnectionFactory;
+import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.OverTimeSql;
 import org.sagacity.sqltoy.model.QueryExecutor;
@@ -304,6 +305,9 @@ public class SqlToyContext {
 	 */
 	private String distributeIdGeneratorClass = "org.sagacity.sqltoy.integration.impl.SpringRedisIdGenerator";
 
+	// 自定义 JSON provider 实现类(可选);缺省按 classpath 探测:fastjson2 -> jackson3 -> jackson2
+	private String jsonProvider;
+
 	/**
 	 * 获取bean的上下文容器
 	 */
@@ -382,24 +386,30 @@ public class SqlToyContext {
 	private boolean executeSqlBlankToNull = true;
 
 	/**
-	 * sql 日志输出时LocalDateTime类型的输出格式
+	 * update 2026-9-23
+	 * realDialect优先:开启后sqlId方言变体查找优先按连接探测的真实方言(DBProfile.realDialect,典型如OB按mysql方言配置而真实库为oceanbase、代理库场景),真实方言变体不存在时回退原有配置方言查找链;真实方言与配置方言一致时行为不变
+	 */
+	private boolean realDialectFirst = false;
+
+	/**
+	 * update 2026-9-15 sql 日志输出时LocalDateTime类型的输出格式
 	 * <p>
-	 * update 2026-9-15 决策记录:默认固定格式(截到秒)为有意的向后兼容,initialize时覆写
-	 * SqlToyConstants.localDateTimeFormat(JVM级首个context生效)。固定格式下toSqlLogStr/
-	 * toSqlString/combineArray对nano>0的LocalDateTime输出恒为19字符(dateType=2,小数秒
-	 * 被格式化丢弃),方言的TO_TIMESTAMP FF3/US等小数秒分派不触发;需要日志SQL与@loop/NoSQL
-	 * 拼接值保留小数秒精度(等值条件精确匹配)的场景,应显式配置本属性为"auto"(按值精度
-	 * 自适应追加.123/.123456/.123456789)或含小数位占位符的格式(如yyyy-MM-dd HH:mm:ss.SSS)。
-	 * java.sql.Timestamp路径不受本配置影响(硬编码.SSS格式,恒走小数秒分派)
+	 * 决策记录:默认固定格式(截到秒)为有意的向后兼容,initialize时覆写SqlToyConstants.localDateTimeFormat
+	 * (JVM级首个context生效)。固定格式下toSqlLogStr/toSqlString/combineArray对nano>0的LocalDateTime输出恒为
+	 * 19字符(dateType=2,小数秒被格式化丢弃),方言的TO_TIMESTAMP FF3/US等小数秒分派不触发;需要日志SQL与
+	 * 
+	 * @loop/NoSQL拼接值保留小数秒精度(等值条件精确匹配)的场景,应显式配置本属性为"auto"(按值精度自适应 追加.123/.123456/.123456789)或含小数位占位符的格式(如yyyy-MM-dd
+	 *                                                            HH:mm:ss.SSS)。java.sql.Timestamp
+	 *                                                            路径不受本配置影响(硬编码.SSS格式,恒走小数秒分派)
 	 */
 	private String localDateTimeFormat = "yyyy-MM-dd HH:mm:ss";
 
 	/**
-	 * sql 日志输出时LocalTime类型的输出格式
+	 * update 2026-9-15 sql 日志输出时LocalTime类型的输出格式
 	 * <p>
-	 * update 2026-9-15 决策记录:同localDateTimeFormat,默认固定格式(截到秒)为有意向后兼容;
-	 * 固定格式下nano>0的LocalTime输出恒为8字符(dateType=4),方言的毫秒time分派
-	 * (TO_TIMESTAMP FF/CONVERT(time(3))/STR_TO_DATE %f等)不触发,需显式配置"auto"启用
+	 * 决策记录:同localDateTimeFormat,默认固定格式(截到秒)为有意向后兼容;固定格式下nano>0的LocalTime输出
+	 * 恒为8字符(dateType=4),方言的毫秒time分派(TO_TIMESTAMP FF/CONVERT(time(3))/STR_TO_DATE
+	 * %f等)不触发, 需显式配置"auto"启用
 	 */
 	private String localTimeFormat = "HH:mm:ss";
 
@@ -501,6 +511,10 @@ public class SqlToyContext {
 	}
 
 	public void initialize() throws Exception {
+		// JSON provider: attempt initialization at startup (explicit config wins over
+		// classpath detection; a missing JSON library only warns, it does not block
+		// startup)
+		org.sagacity.sqltoy.plugins.json.JsonProviders.initAtStartup(jsonProvider);
 		logger.debug("start init sqltoy ..............................");
 		// 加载sqltoy的各类参数,如db2是否要增加with
 		// ur等,详见org/sagacity/sqltoy/sqltoy-default.properties
@@ -558,7 +572,7 @@ public class SqlToyContext {
 		}
 		// 初始化脚本加载器
 		scriptLoader.initialize(this.debug, delayCheckSeconds, scriptCheckIntervalSeconds, breakWhenSqlRepeat);
-		// 初始化翻译器,update 2021-1-23 增加caffeine缓存支持
+		// update 2021-1-23 初始化翻译器,增加caffeine缓存支持
 		if (translateCacheManager == null && "caffeine".equalsIgnoreCase(this.cacheType)) {
 			translateManager.initialize(this, (TranslateCacheManager) Class.forName(translateCaffeineManagerClass)
 					.getDeclaredConstructor().newInstance(), delayCheckSeconds);
@@ -576,6 +590,8 @@ public class SqlToyContext {
 			// 设置默认fetchSize
 			SqlToyConstants.FETCH_SIZE = this.fetchSize;
 			SqlToyConstants.executeSqlBlankToNull = this.executeSqlBlankToNull;
+			// update 2026-9-23 realDialectFirst同步静态常量,便于后续环节随时获取
+			SqlToyConstants.realDialectFirst = this.realDialectFirst;
 			SqlToyConstants.DEFAULT_PAGE_SIZE = this.defaultPageSize;
 			SqlToyConstants.localDateTimeFormat = this.localDateTimeFormat;
 			SqlToyConstants.localTimeFormat = this.localTimeFormat;
@@ -776,6 +792,49 @@ public class SqlToyContext {
 	}
 
 	/**
+	 * update 2026-9-23 realDialectFirst开启时按连接档案的真实方言重解析sqlId变体:顶层查询的变体在连接外按配置方言解析完成
+	 * (线程档案未绑定),查询管线统一预处理入口在连接回调内profile在手,由此补齐重解析时机;真实方言与配置方言
+	 * 一致、非sqlId形式或真实方言变体不存在时返回原config(配置方言变体不降级为base)
+	 *
+	 * @param sqlKey       dao层原始传入的sqlId(或sql内容)
+	 * @param sqlToyConfig 连接外已解析的sql配置模型
+	 * @param profile      当前连接的数据库特征档案(含真实方言)
+	 * @return 真实方言变体存在时为变体config,否则为原config
+	 */
+	public SqlToyConfig resolveRealDialectVariant(String sqlKey, SqlToyConfig sqlToyConfig, DBProfile profile) {
+		if (!realDialectFirst || sqlToyConfig == null || profile == null || !SqlConfigParseUtils.isNamedQuery(sqlKey)) {
+			return sqlToyConfig;
+		}
+		String realDialect = profile.getRealDialect();
+		if (StringUtil.isBlank(realDialect) || realDialect.equalsIgnoreCase(profile.getDialect())) {
+			return sqlToyConfig;
+		}
+		SqlToyConfig variant = scriptLoader.getDialectVariant(sqlKey, realDialect.toLowerCase(Locale.ROOT));
+		if (variant == null) {
+			return sqlToyConfig;
+		}
+		// update 2026-9-23
+		// 标记经realDialect变体匹配选中:其函数/保留字替换方言跟随真实方言(未命中变体回退base的sql不打标记,保持配置方言行为)
+		variant.markRealDialectMatched();
+		return variant;
+	}
+
+	/**
+	 * @return the realDialectFirst
+	 */
+	public boolean isRealDialectFirst() {
+		return realDialectFirst;
+	}
+
+	/**
+	 * @param realDialectFirst the realDialectFirst to set
+	 */
+	public void setRealDialectFirst(boolean realDialectFirst) {
+		this.realDialectFirst = realDialectFirst;
+		scriptLoader.setRealDialectFirst(realDialectFirst);
+	}
+
+	/**
 	 * @param workerId the workerId to set
 	 */
 	public void setWorkerId(Integer workerId) {
@@ -959,6 +1018,8 @@ public class SqlToyContext {
 			this.dialect = Dialect.TIDB;
 		} else if (tmp.startsWith(Dialect.KINGBASE)) {
 			this.dialect = Dialect.KINGBASE;
+		} else if (tmp.startsWith(Dialect.HIGHGO)) {
+			this.dialect = Dialect.HIGHGO;
 		} else if (tmp.startsWith(Dialect.IMPALA) || tmp.contains("kudu")) {
 			this.dialect = Dialect.IMPALA;
 		} else if (tmp.startsWith(Dialect.TDENGINE)) {
@@ -1325,6 +1386,14 @@ public class SqlToyContext {
 
 	public String getMongoQueryClass() {
 		return mongoQueryClass;
+	}
+
+	public String getJsonProvider() {
+		return jsonProvider;
+	}
+
+	public void setJsonProvider(String jsonProvider) {
+		this.jsonProvider = jsonProvider;
 	}
 
 	public void setMongoQueryClass(String mongoQueryClass) {

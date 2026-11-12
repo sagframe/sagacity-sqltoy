@@ -44,14 +44,18 @@ public class DDLFactory {
 
 	private static String NEWLINE = "\r\n";
 
-	private static DialectDDLGenerator getGenerator(Integer dbType) {
+	static DialectDDLGenerator getGenerator(Integer dbType) {
 		if (dbType == null) {
 			return new DefaultDDLGenerator();
 		}
 		DialectDDLGenerator generator = null;
 		switch (dbType) {
 		case DBType.MYSQL:
-		case DBType.MYSQL57: {
+		case DBType.MYSQL57:
+			// update 2026-10-13
+			// 补TIDB(mysql协议,DDL语法与mysql同构;真库实测mysql-full.sql全兼容含TO_DAYS分区):原落default的DefaultDDLGenerator,
+			// 任何DDL生成调用直接抛"DDL generation is not implemented for this dialect"
+		case DBType.TIDB: {
 			generator = new MySqlDDLGenerator();
 			break;
 		}
@@ -73,9 +77,11 @@ public class DDLFactory {
 		case DBType.STARDB:
 		case DBType.OPENGAUSS:
 		case DBType.VASTBASE:
-			// update 2026-9-14 补KINGBASE(KingbaseES基于PG):原落入default的DefaultDDLGenerator,
-			// 任何DDL生成调用直接抛"DDL generation is not implemented for this dialect"
+			// update 2026-9-14
+			// 补KINGBASE(KingbaseES基于PG):原落入default的DefaultDDLGenerator,任何DDL生成调用直接抛"DDL
+			// generation is not implemented for this dialect"
 		case DBType.KINGBASE:
+		case DBType.HIGHGO:
 		case DBType.POSTGRESQL:
 		case DBType.POSTGRESQL14: {
 			generator = new PostgreSqlDDLGenerator();
@@ -83,7 +89,9 @@ public class DDLFactory {
 		}
 		case DBType.ORACLE:
 		case DBType.ORACLE11:
-		case DBType.DM: {
+		case DBType.DM:
+			// OceanBase 的 oceanbase 方言继承 OracleDialect,DDL 走 Oracle 生成器
+		case DBType.OCEANBASE: {
 			generator = new OracleDDLGenerator();
 			break;
 		}
@@ -186,8 +194,9 @@ public class DDLFactory {
 			for (EntityMeta entityMeta : allTableEntities) {
 				DataSourceUtils.processDataSource(sqlToyContext, dataSource, new DataSourceCallbackHandler() {
 					@Override
-					public void doConnection(Connection conn, Integer dbType, String dialect) throws Exception {
-						DBProfile profile = DataSourceUtils.getDBProfile(conn);
+					public void doConnection(Connection conn, DBProfile profile) throws Exception {
+						Integer dbType = profile.getDbType();
+						String dialect = profile.getDialect();
 						// 判断表是否已经存在
 						String tableName = getTable(conn, entityMeta, upperOrLower);
 						// 增加一次判断

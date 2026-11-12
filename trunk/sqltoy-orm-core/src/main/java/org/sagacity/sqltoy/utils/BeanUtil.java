@@ -3284,22 +3284,53 @@ public class BeanUtil {
 	 * @param properties 待查询的字段名称数组
 	 * @return 小写字段名与@Column.type值的对应Map，无注解或无匹配字段的属性不包含在内
 	 */
-	public static Map<String, Integer> getClassFieldMap(Class voClass, String[] properties) {
-		Map<String, Integer> fieldMap = new HashMap<>();
-		Field[] allFields = voClass.getDeclaredFields();
-		Set<String> fieldNameSet = new HashSet<>();
-		for (String str : properties) {
-			fieldNameSet.add(str.toLowerCase(Locale.ROOT));
-		}
-		String strLow;
-		for (Field field : allFields) {
-			strLow = field.getName().toLowerCase(Locale.ROOT);
-			if (fieldNameSet.contains(strLow)) {
-				field.setAccessible(true);
-				Column column = field.getAnnotation(Column.class);
+	/**
+	 * update 2026-11-11 类级字段注解缓存:getDeclaredFields与@Column解析只做一次(Class即缓存键,类数量有限),
+	 * 供mappingPlanCache之外直接调用getClassFieldMap的路径(SqlUtil/ResultUtils)复用;
+	 * 缓存值为类级只读数据,对外仍按请求属性过滤后返回,保持原有契约
+	 */
+	// update 2026-11-11 改ClassValue承载:静态Map<Class,...>会强引用已卸载的类,与cascadeModels/
+	// dtoEntityMapperCache此前迁移ClassValue的动因一致(热部署/多上下文场景类卸载即条目回收);
+	// 缓存值为类级只读数据,ClassValue天然按类生命周期归属
+	private static final ClassValue<Map<String, Integer>> classFieldTypeCache = new ClassValue<Map<String, Integer>>() {
+		@Override
+		protected Map<String, Integer> computeValue(Class<?> type) {
+			Map<String, Integer> built = new HashMap<>();
+			Column column;
+			for (Field field : type.getDeclaredFields()) {
+				column = field.getAnnotation(Column.class);
 				if (column != null) {
-					fieldMap.put(strLow, column.type());
+					// 读取注解无需setAccessible:避免为未请求的字段提前打开访问权限(命名模块下可能抛InaccessibleObjectException)
+					built.put(field.getName().toLowerCase(Locale.ROOT), column.type());
 				}
+			}
+			return built;
+		}
+	};
+
+	/**
+	 * 根据字段名称提取类字段上@Column注解中的jdbcType，便于识别json和jsonb等特殊类型
+	 *
+	 * @param voClass    目标类型
+	 * @param properties 待查询的字段名称数组
+	 * @return 小写字段名与@Column.type值的对应Map，无注解或无匹配字段的属性不包含在内
+	 */
+	public static Map<String, Integer> getClassFieldMap(Class voClass, String[] properties) {
+		Map<String, Integer> classFieldTypes = classFieldTypeCache.get(voClass);
+		Map<String, Integer> fieldMap = new HashMap<>();
+		if (classFieldTypes.isEmpty() || properties == null || properties.length == 0) {
+			return fieldMap;
+		}
+		String fieldName;
+		Integer sqlType;
+		for (String property : properties) {
+			if (property == null) {
+				continue;
+			}
+			fieldName = property.toLowerCase(Locale.ROOT);
+			sqlType = classFieldTypes.get(fieldName);
+			if (sqlType != null) {
+				fieldMap.put(fieldName, sqlType);
 			}
 		}
 		return fieldMap;
@@ -3319,5 +3350,85 @@ public class BeanUtil {
 			T proxyEntity = EntityResultSetProxy.createProxy(typeHandler, profile, conn, rs, entityClass, entityMeta);
 			callback.update(proxyEntity, index);
 		};
+	}
+
+	/**
+	 * 系统classloader,类加载链的兜底
+	 */
+	private static ClassLoader systemClassLoader;
+
+	static {
+		try {
+			systemClassLoader = ClassLoader.getSystemClassLoader();
+		} catch (SecurityException ignored) {
+			// 受限环境(如Google App Engine)无法获取系统classloader
+		}
+	}
+
+	/**
+	 * 按类名称加载Class,依次尝试优先classloader、线程上下文classloader、BeanUtil自身classloader与系统classloader;
+	 * lambda元信息解析(SerializedLambda的instantiatedMethodType)等"类必然存在"的场景使用
+	 *
+	 * @param className   类名称
+	 * @param classLoader 优先尝试的classloader,可为null
+	 * @return 对应的Class
+	 */
+	public static Class<?> loadClass(String className, ClassLoader classLoader) {
+		ClassLoader[] classLoaders = new ClassLoader[] { classLoader, Thread.currentThread().getContextClassLoader(),
+				BeanUtil.class.getClassLoader(), systemClassLoader };
+		for (ClassLoader loader : classLoaders) {
+			if (loader != null) {
+				try {
+					return Class.forName(className, true, loader);
+				} catch (ClassNotFoundException e) {
+					// ignore 尝试下一个classloader
+				}
+			}
+		}
+		throw new DataAccessException(
+				"failed to load class [" + className + "], only call loadClass when the class is guaranteed to exist!");
+	}
+
+	/**
+	 * getter/setter方法名转属性名,如getStaffName/isDeleted/setStaffName→staffName/deleted/staffName;
+	 * 单字母属性或第二字母非大写时首字母转小写,getURL这类连续大写保持URL形态。
+	 * 源头为MyBatis的org.apache.ibatis.reflection.PropertyNamer(Apache-2.0),MyBatis-Plus同形转载
+	 *
+	 * @param name getter/setter方法名
+	 * @return 属性名
+	 */
+	public static String methodToProperty(String name) {
+		if (name.startsWith("is")) {
+			name = name.substring(2);
+		} else if (name.startsWith("get") || name.startsWith("set")) {
+			name = name.substring(3);
+		} else {
+			throw new DataAccessException(
+					"Error parsing property name '" + name + "'.  Didn't start with 'is', 'get' or 'set'.");
+		}
+		if (name.length() == 1 || (name.length() > 1 && !Character.isUpperCase(name.charAt(1)))) {
+			name = name.substring(0, 1).toLowerCase(Locale.ROOT) + name.substring(1);
+		}
+		return name;
+	}
+
+	/**
+	 * 判断方法名是否为getter(getXxx无参语义层面由调用方校验参数个数)
+	 *
+	 * @param name 方法名
+	 * @return true表示getter
+	 */
+	public static boolean isGetter(String name) {
+		return (name.startsWith("get") && name.length() > 3) || (name.startsWith("is") && name.length() > 2);
+	}
+
+	/**
+	 * 判断方法名是否为setter
+	 *
+	 * @param name 方法名
+	 * @return true表示setter
+	 */
+	public static boolean isSetter(String name) {
+		return name.startsWith("set") && name.length() > 3;
 	}
 }

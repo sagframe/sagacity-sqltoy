@@ -180,9 +180,9 @@ public class EntityManager {
 		if (entitysMetaMap.containsKey(className)) {
 			return true;
 		}
-		// update 2026-9-14 非实体负缓存改由parseEntityMeta在"确定无@Entity注解"时写入:原形态在此处
-		// 无条件写入,而parseEntityMeta解析抛异常时(isWarn=false)同样返回null,导致启动早期bean未就绪
-		// 等瞬时故障被当成"非实体"永久缓存(直到重启都无法纠正)
+		// update 2026-9-14 非实体负缓存改由 parseEntityMeta 在“确定无@Entity注解”时写入:原形态在此处无条件写入,
+		// 而 parseEntityMeta 解析抛异常时(isWarn=false)同样返回null,导致启动早期bean未就绪
+		// 等瞬时故障被当成“非实体”永久缓存(直到重启都无法纠正)
 		EntityMeta entityMeta = parseEntityMeta(sqlToyContext, entityClass, false, false);
 		return entityMeta != null;
 	}
@@ -201,8 +201,7 @@ public class EntityManager {
 		Class entityClass = BeanUtil.getEntityClass(voClass);
 		String className = entityClass.getName();
 		EntityMeta entityMeta = entitysMetaMap.get(className);
-		// update 2017-11-27
-		// 增加在使用对象时动态解析的功能,因此可以不用配置packagesToScan和annotatedClasses
+		// update 2017-11-27 增加在使用对象时动态解析的功能,因此可以不用配置packagesToScan和annotatedClasses
 		if (entityMeta == null) {
 			entityMeta = parseEntityMeta(sqlToyContext, entityClass, true, false);
 			if (entityMeta == null) {
@@ -358,7 +357,7 @@ public class EntityManager {
 					allColNames.append(ReservedWordsUtil.convertWord(allColumnNames.get(i), null));
 				}
 				entityMeta.setAllColumnNames(allColNames.toString());
-				// 表全量查询语句 update 2019-12-9 将原先select * 改成 select 具体字段
+				// update 2019-12-9 表全量查询语句:将原先 select * 改成 select 具体字段
 				entityMeta.setLoadAllSql("select ".concat(entityMeta.getAllColumnNames()).concat(" from ")
 						.concat(entityMeta.getSchemaTable(null, null)));
 				entityMeta.setIdArgWhereSql(loadArgWhereSql.toString());
@@ -451,8 +450,8 @@ public class EntityManager {
 				entitysMetaMap.put(className, entityMeta);
 				tableEntityNameMap.put(entityMeta.getTableName().toLowerCase(java.util.Locale.ROOT), className);
 			} else {
-				// update 2026-9-14 能走到此处说明解析正常结束、只是类(含父类)没有@Entity注解,属确定性的
-				// "非实体",才落负缓存;解析过程抛异常的场景在catch中直接return null,不得落负缓存,
+				// update 2026-9-14 能走到此处说明解析正常结束、只是类(含父类)没有@Entity注解,属确定性的“非实体”,
+				// 才落负缓存;解析过程抛异常的场景在catch中直接return null,不得落负缓存,
 				// 否则瞬时故障(如启动早期主键生成器bean未就绪)会被永久判定为非实体
 				notEntityMap.put(className, "1");
 				if (isWarn) {
@@ -637,7 +636,7 @@ public class EntityManager {
 		}
 		// 与字段级@PartitionKey双向联动:
 		// 1)@Partition.columns反向标记对应字段的partitionKey(类注解自足,ClickHouse/StarRocks
-		//   等依赖字段级标记的DML逻辑无需额外配置);
+		// 等依赖字段级标记的DML逻辑无需额外配置);
 		// 2)@Partition.columns未配置时自动收集@PartitionKey标记的字段(字段注解自足)
 		java.util.List<String> partitionColumns = new java.util.ArrayList<>(
 				java.util.Arrays.asList(partition.columns()));
@@ -660,23 +659,36 @@ public class EntityManager {
 			}
 			for (String marked : markedFields) {
 				if (!partitionColumns.contains(marked)) {
-					logger.warn("实体类{}: 字段{}标记了@PartitionKey但不在@Partition的columns中,请检查配置一致性!",
-							entityClass.getName(), marked);
+					logger.warn("实体类{}: 字段{}标记了@PartitionKey但不在@Partition的columns中,请检查配置一致性!", entityClass.getName(),
+							marked);
 				}
 			}
 		}
 		PartitionDef[] defs = partition.partitions();
-		PartitionMeta partitionMeta = new PartitionMeta(partition.strategy(),
-				partitionColumns.toArray(new String[0]), partition.expression());
+		PartitionMeta partitionMeta = new PartitionMeta(partition.strategy(), partitionColumns.toArray(new String[0]),
+				partition.expression());
 		if (defs != null && defs.length > 0) {
 			String[] names = new String[defs.length];
 			String[] values = new String[defs.length];
+			// update 2026-10-13 DB2表分区为STARTING..ENDING双边界区间,补充上界与包含性解析
+			String[] endValues = new String[defs.length];
+			boolean[] endInclusives = new boolean[defs.length];
+			boolean hasEndValue = false;
 			for (int i = 0; i < defs.length; i++) {
 				names[i] = defs[i].name();
 				values[i] = defs[i].value();
+				endValues[i] = defs[i].endValue();
+				endInclusives[i] = defs[i].endInclusive();
+				if (StringUtil.isNotBlank(endValues[i])) {
+					hasEndValue = true;
+				}
 			}
 			partitionMeta.setPartitionNames(names);
 			partitionMeta.setPartitionValues(values);
+			if (hasEndValue) {
+				partitionMeta.setPartitionEndValues(endValues);
+				partitionMeta.setPartitionEndInclusives(endInclusives);
+			}
 		}
 		entityMeta.setPartitionMeta(partitionMeta);
 	}
@@ -838,8 +850,8 @@ public class EntityManager {
 			if (fieldType.equals(String.class)) {
 				fieldMeta.setType(java.sql.Types.VARCHAR);
 			} else if (fieldType.equals(LocalDateTime.class)) {
-				// update 2026-9-6 含时间类型归位TIMESTAMP:此前防御性映射DATE的唯一动机是旧rowversion
-				// 判据按type==TIMESTAMP剔除(sqlserver会把业务时间列误判为rowversion静默跳过);
+				// update 2026-9-6 含时间类型归位TIMESTAMP:此前防御性映射DATE的唯一动机是旧rowversion判据
+				// 按type==TIMESTAMP剔除(sqlserver会把业务时间列误判为rowversion静默跳过);
 				// 现rowversion判据已改为目标库元数据校准(ensureRowVersionMeta按TYPE_NAME=='timestamp'
 				// 精确识别),实体侧TIMESTAMP不再触发剔除,防御解除、类型语义归位
 				fieldMeta.setType(java.sql.Types.TIMESTAMP);
@@ -959,7 +971,7 @@ public class EntityManager {
 		} else {
 			String generator = IdGeneratorsMap.get(idGenerator.toLowerCase(Locale.ROOT));
 			generator = (generator != null) ? IdGeneratorPackage.concat(generator) : idGenerator;
-			// 针对历史id策略包路径提供兼容处理:update 2024-07-16
+			// update 2024-07-16 针对历史id策略包路径提供兼容处理
 			if (generator.startsWith(IdGeneratorOldPackage)
 					|| (generator.startsWith(IdGeneratorOldPackage_v1) && !generator.startsWith(IdGeneratorPackage))) {
 				generator = IdGeneratorPackage.concat(generator.substring(generator.lastIndexOf(".") + 1));
@@ -974,6 +986,58 @@ public class EntityManager {
 				throw new RuntimeException("Failed to instantiate the primary key generator:className=" + generator
 						+ ",error message:" + e.getMessage());
 			}
+		}
+	}
+
+	/**
+	 * @description AOT 构建期收集实体 @Id 上运行期可能经 Class.forName 实例化的主键生成器类名: 内置
+	 *              strategy/default 别名展开为实现类,带包名的 generator/strategy 归一旧包路径;
+	 * @bean(name) 由框架 bean 容器保障,不返回
+	 * @param entityClass 实体类
+	 * @return 主键生成器实现类全名集合
+	 */
+	public static Set<String> getIdGeneratorClassNames(Class<?> entityClass) {
+		Set<String> classNames = new LinkedHashSet<>();
+		if (entityClass == null) {
+			return classNames;
+		}
+		for (Field field : entityClass.getDeclaredFields()) {
+			Id id = field.getAnnotation(Id.class);
+			if (id != null) {
+				addIdGeneratorClassName(classNames, id.generator());
+				addIdGeneratorClassName(classNames, id.strategy());
+			}
+			// @BusinessId 与 @Id 使用同一 processIdGenerator 路径,自定义类同样需要 AOT 注册
+			BusinessId businessId = field.getAnnotation(BusinessId.class);
+			if (businessId != null) {
+				addIdGeneratorClassName(classNames, businessId.generator());
+			}
+		}
+		return classNames;
+	}
+
+	private static void addIdGeneratorClassName(Set<String> classNames, String idGenerator) {
+		if (StringUtil.isBlank(idGenerator)) {
+			return;
+		}
+		String generator = idGenerator.trim();
+		if (generator.toLowerCase(Locale.ROOT).startsWith("@bean(")) {
+			return;
+		}
+		String mapped = IdGeneratorsMap.get(generator.toLowerCase(Locale.ROOT));
+		if (mapped != null) {
+			classNames.add(IdGeneratorPackage.concat(mapped));
+			return;
+		}
+		if (!generator.contains(".")) {
+			// 非内置别名且不含包名:运行期同样无法 Class.forName,保持不注册
+			return;
+		}
+		if (generator.startsWith(IdGeneratorOldPackage)
+				|| (generator.startsWith(IdGeneratorOldPackage_v1) && !generator.startsWith(IdGeneratorPackage))) {
+			classNames.add(IdGeneratorPackage.concat(generator.substring(generator.lastIndexOf('.') + 1)));
+		} else {
+			classNames.add(generator);
 		}
 	}
 
@@ -1025,8 +1089,7 @@ public class EntityManager {
 				cascadeModel.setNotNullField(oneToOne.notNullField());
 			}
 		}
-		// update 2022-10-1
-		// 获取子表的信息(forCascade=true 避免循环解析，只解析一级)
+		// update 2022-10-1 获取子表的信息(forCascade=true 避免循环解析,只解析一级)
 		EntityMeta subTableMeta = parseEntityMeta(sqlToyContext, cascadeModel.getMappedType(), false, true);
 		// 子表类型不是@Entity实体(如普通VO)时parseEntityMeta静默返回null,给出明确配置错误而非裸NPE
 		if (subTableMeta == null) {

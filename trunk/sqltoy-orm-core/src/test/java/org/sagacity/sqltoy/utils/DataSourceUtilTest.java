@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.sagacity.sqltoy.utils;
 
 import java.sql.Connection;
@@ -12,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @author zhong
+ * @author zhongxuchen
  *
  */
 public class DataSourceUtilTest {
@@ -78,6 +75,6 @@ public class DataSourceUtilTest {
 	}
 
 	public static void main(String[] args) {
-		//DataSourceUtilTest.getPolarDBDialect();
+		// DataSourceUtilTest.getPolarDBDialect();
 	}
 }

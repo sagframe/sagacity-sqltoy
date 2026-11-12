@@ -10,9 +10,9 @@ import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sagacity-sqltoy
- * @description Doris/StarRocks建表语句基类(语法同源):
- *              ENGINE=OLAP {UNIQUE|PRIMARY|DUPLICATE|AGGREGATE} KEY(...)
- *              DISTRIBUTED BY HASH(...) [BUCKETS n] PROPERTIES("k"="v")
+ * @description Doris/StarRocks建表语句基类(语法同源): ENGINE=OLAP
+ *              {UNIQUE|PRIMARY|DUPLICATE|AGGREGATE} KEY(...) DISTRIBUTED BY
+ *              HASH(...) [BUCKETS n] PROPERTIES("k"="v")
  *              COMMENT引号风格由子类决定(Doris单引号,StarRocks双引号)
  * @author zhongxuchen
  * @version v1.0,Date:2026-09-19
@@ -52,9 +52,11 @@ public abstract class AbstractDorisStarRocksDDLGenerator implements DialectDDLGe
 		char quote = commentQuote();
 		MppTableMeta mpp = tableMeta.getMppTableMeta();
 		String keyModel = (mpp != null && StringUtil.isNotBlank(mpp.getKeyModel()))
-				? mpp.getKeyModel().toUpperCase(java.util.Locale.ROOT) : null;
+				? mpp.getKeyModel().toUpperCase(java.util.Locale.ROOT)
+				: null;
 		String[] keyColumns = (mpp != null && mpp.getOrderBy() != null && mpp.getOrderBy().length > 0)
-				? mpp.getOrderBy() : pkColumns(tableMeta);
+				? mpp.getOrderBy()
+				: pkColumns(tableMeta);
 		if (keyModel == null && keyColumns != null) {
 			keyModel = (dbType == DBType.DORIS) ? "UNIQUE" : "PRIMARY";
 		}
@@ -83,7 +85,8 @@ public abstract class AbstractDorisStarRocksDDLGenerator implements DialectDDLGe
 				tableSql.append(" DEFAULT ");
 				// 仅日期函数默认值(CURRENT_TIMESTAMP/NOW()等)不加引号:加引号会变成字符串字面量被拒为非法datetime默认值。
 				// 数值/字符串/日期字面量仍按方言引号包裹——StarRocks要求数值/日期列默认值为字符串字面量形式,
-				// 裸IntLiteral(如DEFAULT 0)会报"Unsupported expr IntLiteral for default value"(doris两者都接受,故统一加引号)
+				// 裸IntLiteral(如DEFAULT 0)会报"Unsupported expr IntLiteral for default
+				// value"(doris两者都接受,故统一加引号)
 				if (DDLUtils.isDate(colMeta.getDataType())
 						&& DDLUtils.isDateFunction(colMeta.getDefaultValue().toUpperCase(java.util.Locale.ROOT))) {
 					tableSql.append(colMeta.getDefaultValue());
@@ -117,10 +120,12 @@ public abstract class AbstractDorisStarRocksDDLGenerator implements DialectDDLGe
 
 		// DISTRIBUTED BY HASH(...) [BUCKETS n]
 		// update 2026-11-10 UNIQUE/AGGREGATE键模型要求hash分布(默认随机分布真库实测报错:Doris
-		// "should not contain random distribution desc"、StarRocks "not support default distribution"),
+		// "should not contain random distribution desc"、StarRocks "not support default
+		// distribution"),
 		// 未显式指定distribution时按键列hash;DUPLICATE与StarRocks的PRIMARY允许默认分布
 		String[] distributedBy = (mpp != null && mpp.getDistributedBy() != null && mpp.getDistributedBy().length > 0)
-				? mpp.getDistributedBy() : null;
+				? mpp.getDistributedBy()
+				: null;
 		if (distributedBy == null && keyModel != null && keyColumns != null && !"DUPLICATE".equals(keyModel)
 				&& !(dbType == DBType.STARROCKS && "PRIMARY".equals(keyModel))) {
 			distributedBy = keyColumns;
@@ -166,8 +171,8 @@ public abstract class AbstractDorisStarRocksDDLGenerator implements DialectDDLGe
 	}
 
 	/**
-	 * @description 把键列按 keyColumns 的顺序前置为 schema 前缀,其余列保持原始相对顺序;
-	 *              keyColumns 中在表内不存在的列(罕见误配)忽略,无键列时原样返回
+	 * @description 把键列按 keyColumns 的顺序前置为 schema 前缀,其余列保持原始相对顺序; keyColumns
+	 *              中在表内不存在的列(罕见误配)忽略,无键列时原样返回
 	 * @param columns    全部列(声明序)
 	 * @param keyColumns 有效键列
 	 * @return 重排后的列

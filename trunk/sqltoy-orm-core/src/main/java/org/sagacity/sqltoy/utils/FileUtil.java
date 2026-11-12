@@ -90,13 +90,11 @@ public class FileUtil {
 	}
 
 	/**
-	 * 将流保存为文件
+	 * update 2026-9-14 将流保存为文件
 	 * 
 	 * @param is
 	 * @param fileName
-	 * @return true表示写入成功;false表示失败(磁盘/权限/目录等异常,已记录日志) update 2026-9-14
-	 *         原返回void,写入失败仅记日志,调用方无从得知数据未落盘(磁盘满静默丢数据);
-	 *         改为返回boolean,与同类的delFile/copyFile返回语义一致,且不改变"不抛异常"的既有契约
+	 * @return true表示写入成功;false表示失败(磁盘/权限/目录等异常,已记录日志);原返回void时写入失败仅记日志,调用方无从得知数据未落盘(磁盘满静默丢数据),改为返回boolean与同类delFile/copyFile返回语义一致,且不改变"不抛异常"的既有契约
 	 */
 	public static boolean putInputStreamToFile(InputStream is, String fileName) {
 		FileOutputStream fos = null;
@@ -430,7 +428,8 @@ public class FileUtil {
 	 * @return
 	 */
 	public static boolean isRootPath(String path) {
-		if (path == null || path.trim().equals("")) {
+		// (jre8同步适配:String.isBlank为JDK11+,改trim判空)
+		if (path == null || path.trim().isEmpty()) {
 			return false;
 		}
 		String trimmed = path.trim();
@@ -933,7 +932,8 @@ public class FileUtil {
 	 * @param content
 	 */
 	public static void appendFileByWriter(Object fileName, String content) {
-		OutputStreamWriter writer = null;
+		// (jre8同步适配:显式UTF-8的追加写改用OutputStreamWriter,FileWriter无Charset构造)
+		java.io.Writer writer = null;
 		try {
 			// 打开一个写文件器，构造函数中的第二个参数true表示以追加形式写文件
 			File appendFile = null;
@@ -946,7 +946,9 @@ public class FileUtil {
 				appendFile.createNewFile();
 			}
 			// 显式UTF-8,避免平台默认字符集导致中文乱码
-			writer = new OutputStreamWriter(new FileOutputStream(appendFile, true), StandardCharsets.UTF_8);
+			// (jre8同步适配:FileWriter(File,Charset,boolean)为JDK11+,改OutputStreamWriter显式UTF-8)
+			writer = new java.io.OutputStreamWriter(new java.io.FileOutputStream(appendFile, true),
+					StandardCharsets.UTF_8);
 			writer.write(content);
 		} catch (IOException e) {
 			logger.error("appendFileByWriter method execution failed", e);
@@ -1043,7 +1045,8 @@ public class FileUtil {
 			return path;
 		}
 		try {
-			return URLDecoder.decode(path, StandardCharsets.UTF_8.name());
+			// update 2026-11-11 URL路径中的+是字面加号,不是表单编码空格;先保护+再解码%XX
+			return URLDecoder.decode(path.replace("+", "%2B"), StandardCharsets.UTF_8.name());
 		} catch (Exception e) {
 			return path;
 		}
@@ -1068,7 +1071,9 @@ public class FileUtil {
 		// 直接获取路径，不经过 URI，# 不会被截断！
 		String path = jarUrl.getPath();
 		// 先解码！顺序绝对不能错
-		path = URLDecoder.decode(path, StandardCharsets.UTF_8.name());
+		// update 2026-11-11 jar文件路径中的+是字面加号,URLDecoder默认把+当空格会导致a+b.jar→a b.jar;
+		// 先把+保护为%2B,只让%XX参与解码
+		path = URLDecoder.decode(path.replace("+", "%2B"), StandardCharsets.UTF_8.name());
 		// 去掉 file: 前缀
 		if (path.startsWith("file:")) {
 			path = path.substring(5);

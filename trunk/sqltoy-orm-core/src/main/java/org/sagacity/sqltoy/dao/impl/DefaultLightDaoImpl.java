@@ -37,8 +37,8 @@ import org.sagacity.sqltoy.model.EntityUpdate;
 import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.MapKit;
 import org.sagacity.sqltoy.model.Page;
-import org.sagacity.sqltoy.model.ParallQuery;
 import org.sagacity.sqltoy.model.ParallelConfig;
+import org.sagacity.sqltoy.model.ParallelQuery;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.model.StoreResult;
@@ -664,14 +664,14 @@ public class DefaultLightDaoImpl extends SqlToyDaoSupport implements LightDao {
 	}
 
 	@Override
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallelQueryList,
+	public <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallelQueryList,
 			Map<String, Object> paramsMap) {
-		return super.parallQuery(parallelQueryList, paramsMap, new ParallelConfig());
+		return super.parallelQuery(parallelQueryList, paramsMap, new ParallelConfig());
 	}
 
 	@Override
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallelQueryList, Map<String, Object> paramsMap,
+	public <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallelQueryList, Map<String, Object> paramsMap,
 			ParallelConfig parallelConfig) {
-		return super.parallQuery(parallelQueryList, paramsMap, parallelConfig);
+		return super.parallelQuery(parallelQueryList, paramsMap, parallelConfig);
 	}
 }

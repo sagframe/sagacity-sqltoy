@@ -8,8 +8,8 @@ import java.util.Set;
 
 import org.sagacity.sqltoy.model.CacheMatchFilter;
 import org.sagacity.sqltoy.model.Page;
-import org.sagacity.sqltoy.model.ParallQuery;
 import org.sagacity.sqltoy.model.ParallelConfig;
+import org.sagacity.sqltoy.model.ParallelQuery;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.translate.TranslateHandler;
 
@@ -320,6 +320,6 @@ public interface SqlToyCRUDService {
 	 * @param parallelConfig    例如:ParallelConfig.create().maxThreads(20)
 	 * @return 并行查询结果集合，顺序与parallelQueryList一一对应
 	 */
-	public <T> List<QueryResult<T>> parallQuery(List<ParallQuery> parallelQueryList, Map<String, Object> paramsMap,
+	public <T> List<QueryResult<T>> parallelQuery(List<ParallelQuery> parallelQueryList, Map<String, Object> paramsMap,
 			ParallelConfig parallelConfig);
 }

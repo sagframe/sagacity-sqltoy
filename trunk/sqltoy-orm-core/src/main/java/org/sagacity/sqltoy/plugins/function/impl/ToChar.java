@@ -70,7 +70,7 @@ public class ToChar extends IFunction {
 			// HH24/hh24 双形态优先替换(原仅替换小写 hh24,大写 HH24 先被 HH→%H 命中残留字面"24",
 			// mysql 实测 'HH24:mi:ss' 得 '1024:30'),并补大写 MI/SS 形态;
 			// 口径:裸 HH 按框架约定为24小时制(与 DateFormat 及 Oracle/PG 分支一致),小写 hh 才是12小时制;
-			// HH24/hh24 仍恒为24小时;小写mm为oracle月份(归一化入口已将java的HH:mm转为hh24:mi)
+			// HH24/hh24 仍恒为24小时
 			format = format.replace("HH24", "%H").replace("hh24", "%H").replace("HH", "%H").replace("hh", "%h")
 					.replace("mm", "%m").replace("MI", "%i").replace("mi", "%i").replace("SS", "%s")
 					.replace("ss", "%s");
@@ -87,6 +87,7 @@ public class ToChar extends IFunction {
 		case DBType.VASTBASE:
 			// update 2026-9-14 补 KINGBASE(KingbaseES 基于 PG,TO_CHAR 归 PG 系格式模型)
 		case DBType.KINGBASE:
+		case DBType.HIGHGO:
 		case DBType.OCEANBASE:
 		case DBType.DM:
 			// HANA 的 TO_CHAR 为 oracle 兼容格式模型(日期 yyyy/MM/dd/hh24/mi/ss 与数值9/0双场景)
@@ -141,8 +142,7 @@ public class ToChar extends IFunction {
 			// 分支同构(%i分钟/%s秒);补大写 oracle 形态 YYYY/YY/DD/MI/SS(同 mysql 分支,原残留字面量)
 			format = args[1].replace("yyyy", "%Y").replace("YYYY", "%Y").replace("yy", "%y").replace("YY", "%y")
 					.replace("MM", "%m").replace("dd", "%d").replace("DD", "%d");
-			// update 2026-10-19 口径:裸 HH 为24小时制(%H),小写 hh 才映射12小时(%h);
-			// 小写mm为oracle月份(归一化入口已将java的HH:mm转为hh24:mi)
+			// update 2026-10-19 口径:裸 HH 为24小时制(%H),小写 hh 才映射12小时(%h)
 			format = format.replace("HH24", "%H").replace("hh24", "%H").replace("hh", "%h").replace("HH", "%H")
 					.replace("mm", "%m").replace("mi", "%i").replace("MI", "%i").replace("ss", "%s")
 					.replace("SS", "%s");
@@ -244,7 +244,7 @@ public class ToChar extends IFunction {
 	/**
 	 * update 2026-10-9 数值/日期模型判别:含9或0且无任何日期模型标记(DATE_MODEL_PATTERN)才是数值模型;
 	 * 日期格式含字面数字(如'yyyy-MM-dd 00:00:00')不再误判
-	 *
+	 * 
 	 * @param format 格式模型串
 	 * @return
 	 */

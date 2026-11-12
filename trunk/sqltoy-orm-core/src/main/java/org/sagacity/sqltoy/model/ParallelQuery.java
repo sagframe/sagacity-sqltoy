@@ -14,7 +14,7 @@ import org.sagacity.sqltoy.model.inner.ParallelQueryExtend;
  * @version v1.0,Date:2020-08-25
  * @modify Date:2020-08-25 修改说明
  */
-public class ParallQuery implements Serializable {
+public class ParallelQuery implements Serializable {
 
 	private static final long serialVersionUID = 1316664483969945064L;
 
@@ -27,8 +27,8 @@ public class ParallQuery implements Serializable {
 		return extend;
 	}
 
-	public static ParallQuery create() {
-		return new ParallQuery();
+	public static ParallelQuery create() {
+		return new ParallelQuery();
 	}
 
 	/**
@@ -37,7 +37,7 @@ public class ParallQuery implements Serializable {
 	 * @param sql
 	 * @return
 	 */
-	public ParallQuery sql(String sql) {
+	public ParallelQuery sql(String sql) {
 		extend.sql = sql;
 		return this;
 	}
@@ -48,7 +48,7 @@ public class ParallQuery implements Serializable {
 	 * @param page
 	 * @return
 	 */
-	public ParallQuery page(Page page) {
+	public ParallelQuery page(Page page) {
 		extend.page = page;
 		return this;
 	}
@@ -59,7 +59,7 @@ public class ParallQuery implements Serializable {
 	 * @param topSize
 	 * @return
 	 */
-	public ParallQuery topSize(double topSize) {
+	public ParallelQuery topSize(double topSize) {
 		extend.topSize = topSize;
 		return this;
 	}
@@ -70,7 +70,7 @@ public class ParallQuery implements Serializable {
 	 * @param randomSize
 	 * @return
 	 */
-	public ParallQuery randomSize(double randomSize) {
+	public ParallelQuery randomSize(double randomSize) {
 		extend.randomSize = randomSize;
 		return this;
 	}
@@ -81,20 +81,20 @@ public class ParallQuery implements Serializable {
 	 * @param names
 	 * @return
 	 */
-	public ParallQuery names(String... names) {
+	public ParallelQuery names(String... names) {
 		extend.names = names;
 		extend.selfCondition = true;
 		return this;
 	}
 
-	public ParallQuery values(Object... values) {
+	public ParallelQuery values(Object... values) {
 		extend.values = values;
 		extend.selfCondition = true;
 		return this;
 	}
 
 	// map传参
-	public ParallQuery paramsMap(Map<String, Object> paramsMap) {
+	public ParallelQuery paramsMap(Map<String, Object> paramsMap) {
 		extend.values = new Object[] { paramsMap };
 		extend.selfCondition = true;
 		return this;
@@ -106,17 +106,17 @@ public class ParallQuery implements Serializable {
 	 * @param resultType
 	 * @return
 	 */
-	public ParallQuery resultType(Class resultType) {
+	public ParallelQuery resultType(Class resultType) {
 		extend.resultType = resultType;
 		return this;
 	}
 
-	public ParallQuery dataSource(DataSource dataSource) {
+	public ParallelQuery dataSource(DataSource dataSource) {
 		extend.dataSource = dataSource;
 		return this;
 	}
 
-	public ParallQuery showSql(Boolean showSql) {
+	public ParallelQuery showSql(Boolean showSql) {
 		extend.showSql = showSql;
 		return this;
 	}
@@ -127,7 +127,7 @@ public class ParallQuery implements Serializable {
 	 * @param contextData
 	 * @return
 	 */
-	public ParallQuery contextData(Object contextData) {
+	public ParallelQuery contextData(Object contextData) {
 		extend.contextData = contextData;
 		return this;
 	}

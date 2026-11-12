@@ -52,7 +52,7 @@ public class TranslateManager {
 	private String charset = "UTF-8";
 
 	/**
-	 * 翻译配置解析后的模型(update 2021-11-15 HashMap转为IgnoreKeyCaseMap)
+	 * update 2021-11-15 翻译配置解析后的模型(HashMap转为IgnoreKeyCaseMap)
 	 */
 	private IgnoreKeyCaseMap<String, TranslateConfigModel> translateMap = new IgnoreKeyCaseMap<String, TranslateConfigModel>();
 

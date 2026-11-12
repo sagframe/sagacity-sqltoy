@@ -1,6 +1,3 @@
-/**
- *
- */
 package org.sagacity.sqltoy.demo.vo;
 
 import java.io.Serializable;
@@ -9,13 +6,10 @@ import java.io.Serializable;
  * @project sagacity-service
  * @description 统一的树型对象模型，适用于菜单、机构等树形结构的展示,暂不使用
  * @author chenrenfei $<a href="mailto:zhongxuchen@hotmail.com">联系作者</a>$
- * @version $id:TreeModel.java,Revision:v1.0,Date:2008-12-9 下午01:34:33 $
+ * @version $id:TreeModel.java,Revision:v1.0,Date:2008-12-09 下午01:34:33 $
  */
 public class TreeModel implements Serializable {
 
-	/**
-	 *
-	 */
 	private static final long serialVersionUID = -4755478861179496822L;
 
 	/**

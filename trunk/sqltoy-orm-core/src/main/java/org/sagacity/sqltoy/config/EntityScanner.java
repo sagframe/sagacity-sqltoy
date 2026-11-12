@@ -42,6 +42,25 @@ public class EntityScanner {
 	 */
 	public static List<Class<?>> scanEntityClasses(String packagePattern, boolean recursive, String charset)
 			throws Exception {
+		return scanClasses(packagePattern, recursive, charset, true);
+	}
+
+	/**
+	 * 扫描指定包路径下的全部可实例化类(供 AOT 注册 resultType DTO/VO 等非实体类)
+	 * 
+	 * @param packagePattern
+	 * @param recursive
+	 * @param charset
+	 * @return
+	 * @throws Exception
+	 */
+	public static List<Class<?>> scanClasses(String packagePattern, boolean recursive, String charset)
+			throws Exception {
+		return scanClasses(packagePattern, recursive, charset, false);
+	}
+
+	private static List<Class<?>> scanClasses(String packagePattern, boolean recursive, String charset,
+			boolean entityOnly) throws Exception {
 		List<Class<?>> result = new ArrayList<>();
 		if (packagePattern == null || packagePattern.isEmpty()) {
 			return result;
@@ -83,11 +102,12 @@ public class EntityScanner {
 						}
 						File dir = new File(filePath);
 						if (dir.exists() && dir.isDirectory()) {
-							scanDirectory(dir, basePackage, relativePattern, result, classLoader);
+							scanDirectory(dir, basePackage, relativePattern, result, classLoader, entityOnly,
+									recursive);
 						}
 					}
 				} else if ("jar".equals(protocol)) {
-					scanJar(url, packagePattern, result, charset, classLoader);
+					scanJar(url, packagePattern, result, charset, classLoader, entityOnly, recursive);
 				}
 			}
 		} catch (Exception e) {
@@ -108,20 +128,21 @@ public class EntityScanner {
 	 * @param classLoader
 	 */
 	private static void scanDirectory(File dir, String basePackage, String relativePattern, List<Class<?>> result,
-			ClassLoader classLoader) {
+			ClassLoader classLoader, boolean entityOnly, boolean recursive) {
 		Path root = dir.toPath();
 		// update 2026-11-11 目录与jar共用同一Ant匹配器:**匹配0层目录,
-		// 原PathMatcher glob下"com.foo.**.entity"会漏掉"com.foo.entity.X"、"com.foo.**"会漏基包直属类
-		String[] patternParts = buildClassPatternParts(relativePattern);
+		// 原PathMatcher
+		// glob下"com.foo.**.entity"会漏掉"com.foo.entity.X"、"com.foo.**"会漏基包直属类
+		String[] patternParts = buildClassPatternParts(relativePattern, recursive);
 		// 基础包名前缀（用于拼接完整类名）
 		String packagePrefix = basePackage.isEmpty() ? "" : basePackage + ".";
-		try (Stream<Path> paths = Files.walk(root)) {
+		try (Stream<Path> paths = Files.walk(root, recursive ? Integer.MAX_VALUE : 1)) {
 			// Files.walk的Stream持有目录句柄,必须关闭避免泄漏
 			paths.filter(Files::isRegularFile).forEach(path -> {
 				// 将Windows反斜杠路径转换为正斜杠，确保与模式兼容
 				String relativePath = root.relativize(path).toString().replace('\\', '/');
 				if (AntPathUtils.match(relativePath, patternParts)) {
-					checkAndAdd(packagePrefix + pathToClass(root, path), result, classLoader);
+					checkAndAdd(packagePrefix + pathToClass(root, path), result, classLoader, entityOnly);
 				}
 			});
 		} catch (Exception e) {
@@ -130,13 +151,13 @@ public class EntityScanner {
 	}
 
 	/**
-	 * 构建Ant匹配用的模式段:包路径按"."拆分后追加class文件匹配段,
-	 * 追加"**"(匹配0~n层目录,含基包直属类),保证目录与jar两侧语义一致
-	 *
+	 * 构建Ant匹配用的模式段:包路径按"."拆分后追加class文件匹配段, 递归时追加"**"(匹配0~n层目录),保证目录与jar两侧语义一致
+	 * 
 	 * @param packagePattern 包模式(目录扫描传相对包模式,jar扫描传完整包模式)
+	 * @param recursive
 	 * @return
 	 */
-	private static String[] buildClassPatternParts(String packagePattern) {
+	private static String[] buildClassPatternParts(String packagePattern, boolean recursive) {
 		List<String> parts = new ArrayList<String>();
 		if (packagePattern != null && !packagePattern.isEmpty()) {
 			for (String part : packagePattern.split("\\.")) {
@@ -145,14 +166,16 @@ public class EntityScanner {
 				}
 			}
 		}
-		parts.add("**");
+		if (recursive) {
+			parts.add("**");
+		}
 		parts.add("*.class");
 		return parts.toArray(new String[0]);
 	}
 
 	/**
 	 * 扫描jar包，打包部署场景、引用jar场景
-	 *
+	 * 
 	 * @param jarUrl
 	 * @param pattern
 	 * @param result
@@ -161,10 +184,10 @@ public class EntityScanner {
 	 * @throws Exception
 	 */
 	private static void scanJar(URL jarUrl, String pattern, List<Class<?>> result, String charset,
-			ClassLoader classLoader) throws Exception {
-		String[] patternParts = buildClassPatternParts(pattern);
+			ClassLoader classLoader, boolean entityOnly, boolean recursive) throws Exception {
+		String[] patternParts = buildClassPatternParts(pattern, recursive);
 		String url = jarUrl.toExternalForm();
-		// 多个"!"(Spring Boot可执行jar)或nested:协议为嵌套jar,其余为普通jar
+		// 多个"!"(Spring Boot 3.0/3.1)或nested:协议(3.2+)为嵌套jar,其余为普通jar
 		boolean nestedJar = url.contains("nested:") || url.indexOf("!/") != url.lastIndexOf("!/");
 		// update 2026-11-11 嵌套jar必须经JarURLConnection.getJarFile()取内层jar:
 		// 原实现用FileUtil.getJarPath在第一个"!"处截断,会把BOOT-INF/classes或内层jar错当成外层app.jar,
@@ -181,7 +204,7 @@ public class EntityScanner {
 				name = entry.getName();
 				if (name.endsWith(".class") && AntPathUtils.match(name, patternParts)) {
 					className = name.replace("/", ".").replace(".class", "");
-					checkAndAdd(className, result, classLoader);
+					checkAndAdd(className, result, classLoader, entityOnly);
 				}
 			}
 		} finally {
@@ -207,6 +230,7 @@ public class EntityScanner {
 			if (part.contains("*") || part.contains("?")) {
 				break;
 			}
+			// (jre8同步适配:CharSequence.isEmpty为JDK15+,改length判空)
 			if (base.length() > 0) {
 				base.append(".");
 			}
@@ -240,16 +264,27 @@ public class EntityScanner {
 		return false;
 	}
 
-	private static void checkAndAdd(String className, List<Class<?>> result, ClassLoader classLoader) {
+	private static void checkAndAdd(String className, List<Class<?>> result, ClassLoader classLoader,
+			boolean entityOnly) {
 		try {
 			// 不做JVM级类名去重:EntityManager.parseEntityMeta以类名幂等去重,
 			// 静态缓存会导致二次初始化(Spring上下文刷新/热部署/多上下文)扫描结果为空、实体元数据静默丢失,
 			// 且类名先于Class.forName登记会让加载失败的类被永久跳过
 			Class<?> clazz = Class.forName(className, false, classLoader);
-			if (isSqlToyEntity(clazz)) {
-				result.add(clazz);
-				logger.debug("Found entity: {}", className);
+			if (entityOnly) {
+				if (isSqlToyEntity(clazz)) {
+					result.add(clazz);
+					logger.debug("Found entity: {}", className);
+				}
+				return;
 			}
+			// AOT 反射类扫描:跳过接口/注解/匿名/局部/合成类,保留 DTO、VO、record、enum 等可实例化类型
+			if (clazz.isInterface() || clazz.isAnnotation() || clazz.isSynthetic() || clazz.isAnonymousClass()
+					|| clazz.isLocalClass() || clazz.getName().endsWith("package-info")) {
+				return;
+			}
+			result.add(clazz);
+			logger.debug("Found class: {}", className);
 		} catch (Throwable e) {
 			logger.debug("Skip class: {}", className, e);
 		}

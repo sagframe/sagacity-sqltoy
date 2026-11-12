@@ -18,6 +18,10 @@ import org.sagacity.sqltoy.dialect.DialectFactory;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
 import org.sagacity.sqltoy.plugins.datasource.DataSourceSelector;
+import org.sagacity.sqltoy.plugins.json.JsonArray;
+import org.sagacity.sqltoy.plugins.json.JsonObject;
+import org.sagacity.sqltoy.plugins.json.JsonProviders;
+import org.sagacity.sqltoy.plugins.nosql.HttpAuthConfig;
 import org.sagacity.sqltoy.plugins.nosql.HttpClientUtils;
 import org.sagacity.sqltoy.translate.model.CacheCheckResult;
 import org.sagacity.sqltoy.translate.model.CheckerConfigModel;
@@ -28,10 +32,6 @@ import org.sagacity.sqltoy.utils.DateUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONArray;
-import com.alibaba.fastjson2.JSONObject;
 
 /**
  * @project sagacity-sqltoy
@@ -134,21 +134,28 @@ public class TranslateFactory {
 			Timestamp preCheckTime) throws Exception {
 		String[] paramNames = { "lastUpdateTime" };
 		String[] paramValues = { DateUtil.formatDate(preCheckTime, "yyyy-MM-dd HH:mm:ss.SSS") };
-		String jsonStr = HttpClientUtils.doPost(sqlToyContext, checkerConfig.getUrl(), checkerConfig.getUsername(),
-				checkerConfig.getPassword(), paramNames, paramValues);
+		String jsonStr = HttpClientUtils.doPost(sqlToyContext, checkerConfig.getUrl(),
+				new HttpAuthConfig().authType(checkerConfig.getAuthType()).username(checkerConfig.getUsername())
+						.password(checkerConfig.getPassword()).tokenUrl(checkerConfig.getTokenUrl())
+						.tokenPath(checkerConfig.getTokenPath()).tokenPrefix(checkerConfig.getTokenPrefix())
+						.tokenHeader(checkerConfig.getTokenHeader()).tokenExpire(checkerConfig.getTokenExpire())
+						.tokenSecureKey(checkerConfig.getTokenSecureKey())
+						.signAlgorithm(checkerConfig.getSignAlgorithm())
+						.authorization(checkerConfig.getAuthorization()),
+				paramNames, paramValues);
 		if (jsonStr == null) {
 			return null;
 		}
 		List result = null;
 		boolean fatal = false;
 		try {
-			result = JSON.parseArray(jsonStr, CacheCheckResult.class);
+			result = JsonProviders.get().parseArray(jsonStr, CacheCheckResult.class);
 		} catch (Exception e) {
 			fatal = true;
 		}
 		if (fatal) {
 			try {
-				result = JSON.parseArray(jsonStr, Object[].class);
+				result = JsonProviders.get().parseArray(jsonStr, Object[].class);
 				fatal = false;
 			} catch (Exception e) {
 				fatal = true;
@@ -350,24 +357,30 @@ public class TranslateFactory {
 		if (StringUtil.isNotBlank(cacheType)) {
 			paramValues = new String[] { cacheType.trim(), cacheType.trim() };
 		}
-		String jsonStr = HttpClientUtils.doPost(sqlToyContext, cacheModel.getUrl(), cacheModel.getUsername(),
-				cacheModel.getPassword(), paramNames, paramValues);
+		String jsonStr = HttpClientUtils.doPost(sqlToyContext, cacheModel.getUrl(),
+				new HttpAuthConfig().authType(cacheModel.getAuthType()).username(cacheModel.getUsername())
+						.password(cacheModel.getPassword()).tokenUrl(cacheModel.getTokenUrl())
+						.tokenPath(cacheModel.getTokenPath()).tokenPrefix(cacheModel.getTokenPrefix())
+						.tokenHeader(cacheModel.getTokenHeader()).tokenExpire(cacheModel.getTokenExpire())
+						.tokenSecureKey(cacheModel.getTokenSecureKey()).signAlgorithm(cacheModel.getSignAlgorithm())
+						.authorization(cacheModel.getAuthorization()),
+				paramNames, paramValues);
 		if (jsonStr == null) {
 			return null;
 		}
 		if (cacheModel.getProperties() == null || cacheModel.getProperties().length == 0) {
-			return JSON.parseArray(jsonStr, Object[].class);
+			return JsonProviders.get().parseArray(jsonStr, Object[].class);
 		}
-		JSONArray jsonSet = JSON.parseArray(jsonStr);
+		JsonArray jsonSet = JsonProviders.get().array(jsonStr);
 		if (jsonSet.isEmpty()) {
 			return null;
 		}
 		List<Object[]> result = new ArrayList<Object[]>();
 		int size = cacheModel.getProperties().length;
-		JSONObject jsonObj;
+		JsonObject jsonObj;
 		Object[] row;
 		for (Object obj : jsonSet) {
-			jsonObj = (JSONObject) obj;
+			jsonObj = JsonObject.of(obj);
 			row = new Object[size];
 			for (int i = 0; i < size; i++) {
 				row[i] = jsonObj.get(cacheModel.getProperties()[i]);

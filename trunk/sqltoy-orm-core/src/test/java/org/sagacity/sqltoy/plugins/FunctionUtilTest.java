@@ -6,6 +6,9 @@ import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.plugins.function.FunctionUtils;
 import org.sagacity.sqltoy.utils.FileUtil;
 
+/**
+ * FunctionUtils 数据库函数转换的单元测试
+ */
 public class FunctionUtilTest {
 	private final static String funPackage = "org.sagacity.sqltoy.plugins.function.impl.";
 
@@ -18,9 +21,9 @@ public class FunctionUtilTest {
 												 * funPackage.concat("Length"), funPackage.concat("ToChar"),
 												 * funPackage.concat("If"),
 												 */
-			//funPackage.concat("DateFormat"), 
+			// funPackage.concat("DateFormat"),
 			funPackage.concat("Instr")
-			//, funPackage.concat("Concat")
+			// , funPackage.concat("Concat")
 			// funPackage.concat("GroupConcat")
 	};
 

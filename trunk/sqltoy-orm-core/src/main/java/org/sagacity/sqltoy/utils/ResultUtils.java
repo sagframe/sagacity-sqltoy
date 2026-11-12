@@ -154,9 +154,8 @@ public class ResultUtils {
 			String colLabelUpperOrLower = sqlToyContext.getColumnLabelUpperOrLower();
 			// 元数据提取到循环外,避免每列重复调用getMetaData()
 			java.sql.ResultSetMetaData resultSetMetaData = rs.getMetaData();
-			// update 2026-9-12 优化步骤2:列元数据(标签/类型名/读取策略/扩展类型标记)单点
-			// 分类收敛为ResultColumnMeta[],整体向后传递,替代labelNames/labelTypes/
-			// columnTypeNames/columnKinds多条并行数组的同步下标维护
+			// update 2026-9-12 列元数据(标签/类型名/读取策略/扩展类型标记)单点分类收敛为ResultColumnMeta[],
+			// 整体向后传递,替代labelNames/labelTypes/columnTypeNames/columnKinds多条并行数组的同步下标维护
 			ResultColumnMeta[] cols = resolveColumns(resultSetMetaData, startColIndex, columnCnt - startColIndex,
 					colLabelUpperOrLower, hasToStrCols, strTypeCols, dbType);
 			String[] labelNames = new String[cols.length];
@@ -179,7 +178,7 @@ public class ResultUtils {
 				result.setRows(getResultSet(dbType, queryExecutorExtend, sqlToyConfig, sqlToyContext, conn, rs,
 						updateRowHandler, realDecryptHandler, columnCnt, labelIndexMap, labelNames, startColIndex,
 						columnTypeNames, cols));
-			} // update 2019-09-11 此处增加数组溢出异常是因为经常有开发设置缓存cache-indexs时写错误，为了增加错误提示信息的友好性增加此处理
+			} // update 2019-09-11 此处捕获数组溢出异常:开发配置缓存cache-indexs时经常写错,增加此处理以提升错误提示的友好性
 			catch (Exception oie) {
 				logger.error("sql={} exception occurred while extracting the result:{}!", sqlToyConfig.getId(),
 						oie.getMessage());
@@ -225,8 +224,7 @@ public class ResultUtils {
 			realDecryptHandler = new DecryptHandler(sqlToyContext.getFieldsSecureProvider(), decryptColumns);
 		}
 		// 取得字段列数
-		// update 2026-9-8 元数据对象提取到列循环外(驱动getMetaData返回缓存对象仍有一次
-		// 调用开销,循环内每列重复调用属无谓消耗)
+		// update 2026-9-8 元数据对象提取到列循环外(驱动getMetaData返回缓存对象仍有一次调用开销,循环内每列重复调用属无谓消耗)
 		java.sql.ResultSetMetaData resultSetMD = rs.getMetaData();
 		int columnSize = resultSetMD.getColumnCount();
 		// 类型转成string的列
@@ -234,9 +232,9 @@ public class ResultUtils {
 		boolean hasToStrCols = !strTypeCols.isEmpty();
 		// 字段名称统一转大写或小写,默认为default,即不做任何处理
 		String colLabelUpperOrLower = sqlToyContext.getColumnLabelUpperOrLower();
-		// update 2026-9-12 优化步骤2:列元数据单点分类收敛为ResultColumnMeta[](resolveColumns
-		// 查询级一次构建,行循环零新增分配),labelNames/labelTypes/columnTypeNames为派生数组
-		// (供streamResultHandler与VO映射等既有数组形态消费)
+		// update 2026-9-12
+		// 列元数据单点分类收敛为ResultColumnMeta[](resolveColumns查询级一次构建,行循环零新增分配),
+		// labelNames/labelTypes/columnTypeNames为派生数组(供streamResultHandler与VO映射等既有数组形态消费)
 		ResultColumnMeta[] cols = resolveColumns(resultSetMD, 0, columnSize, colLabelUpperOrLower, hasToStrCols,
 				strTypeCols, dbType);
 		String[] labelNames = new String[columnSize];
@@ -311,11 +309,11 @@ public class ResultUtils {
 				}
 				realProps = convertRealProps(wrapMapFields(labelNames, fieldsMap, resultType), columnFieldMap);
 				realMethods = BeanUtil.matchSetMethods(resultType, realProps);
-				// update 2026-9-8 构建列jdbcTypes标记(字段注解JSON/JSONB标注优先,查询列类型名
-				// 兜底),供reflectRowToBean按JSON等扩展类型做jdbc值到POJO的转换(原固定OTHER导致
-				// json列到对象字段的反序列化不触发)
-				// update 2026-9-12 步骤2:双源标记同步收敛到ResultColumnMeta(注解标注覆盖extType,
-				// 类型名派生值已在resolveColumns预置,jdbcType反向映射与原检测链一致)
+				// update 2026-9-12
+				// 构建列jdbcTypes标记(字段注解JSON/JSONB标注优先,查询列类型名兜底),供reflectRowToBean
+				// 按JSON等扩展类型做jdbc值到POJO的转换(原固定OTHER导致json列到对象字段的反序列化不触发);
+				// 双源标记同步收敛到ResultColumnMeta(注解标注覆盖extType,类型名派生值已在resolveColumns预置,
+				// jdbcType反向映射与原检测链一致)
 				Map<String, Integer> fieldJdbcTypeMap = BeanUtil.getClassFieldMap(resultType, realProps);
 				columnJdbcTypes = new int[columnSize];
 				for (int i = 0; i < columnSize; i++) {
@@ -1321,22 +1319,25 @@ public class ResultUtils {
 		// oracle 的时间戳非标准java类型
 		boolean convertOracleTimestamp = SqlToyConstants.convertOracleTimestamp();
 		FieldTranslateCacheHolder fieldTranslateHandler;
-		// 列读取策略/类型名/标签小写均已查询级预构建于cols(ResultColumnMeta),本循环内
+		// update 2026-9-12 列读取策略/类型名/标签小写均已查询级预构建于cols(ResultColumnMeta),本循环内
 		// 零字符串判定、零toLowerCase分配:TEXT_READ列直接文本化读取,EXT_BYTE列取值后
-		// 按列类型归一,常规列getObject后经normalizeExtTypeValue的快速通道零开销直通
-		// (update 2026-9-12 步骤2:原lowLabelNames[]的每行toLowerCase重复分配随cols预计算消除)
+		// 按列类型归一,常规列getObject后经normalizeExtTypeValue的快速通道零开销直通;
+		// 原lowLabelNames[]的每行toLowerCase重复分配随cols预计算消除
 		for (int i = 0; i < size; i++) {
 			ResultColumnMeta col = cols[i];
 			if (col != null) {
 				label = col.getLowLabel();
 			}
 			// TEXT_READ:oracle的JSON/VECTOR列getObject直接抛错(ORA-17004/18722)、
-			// db2(db2gse)的ST_Geometry读回驱动内部混淆对象,均改走getString文本化
+			// db2gse的ST_Geometry读回驱动混淆对象,均改走getString文本化;
 			// 列下标须叠加startColIndex:cols[i]对应rs第startColIndex+i+1列
 			// (oracle11g分页包装的page_row_id列经startColIndex跳过,直接i+1会整体错位)
-			fieldValue = (col != null && col.getReadStrategy() == ResultColumnMeta.ReadStrategy.TEXT_READ)
-					? rs.getString(startColIndex + i + 1)
-					: rs.getObject(startColIndex + i + 1);
+			ResultColumnMeta.ReadStrategy colStrategy = (col == null) ? null : col.getReadStrategy();
+			if (colStrategy == ResultColumnMeta.ReadStrategy.TEXT_READ) {
+				fieldValue = rs.getString(startColIndex + i + 1);
+			} else {
+				fieldValue = rs.getObject(startColIndex + i + 1);
+			}
 			if (null != fieldValue) {
 				if (fieldValue instanceof java.sql.Clob) {
 					fieldValue = SqlUtil.clobToString((java.sql.Clob) fieldValue);
@@ -1353,10 +1354,9 @@ public class ResultUtils {
 					if (convertOracleTimestamp && fieldValue.getClass().getTypeName().equals("oracle.sql.TIMESTAMP")) {
 						fieldValue = BeanUtil.oracleTimeStampConvert(fieldValue);
 					}
-					// update 2026-9-6 扩展类型(json/vector/geometry)归一化:Map/数组行不经
-					// BeanUtil.convertType;常规类型(String/数值/日期时间/布尔)在归一化入口
-					// 快速短路,仅EXT_BYTE列(byte[]形态的json/vector/geometry)与驱动专属
-					// 对象(STRUCT/PGobject等非常规类型)进入识别链
+					// update 2026-9-6 扩展类型(json/vector/geometry)归一化:Map/数组行不经BeanUtil.convertType;
+					// 常规类型(String/数值/日期时间/布尔)在归一化入口快速短路,仅EXT_BYTE列
+					// (byte[]形态的json/vector/geometry)与驱动专属对象(STRUCT/PGobject等非常规类型)进入识别链
 					fieldValue = normalizeExtTypeValue(fieldValue, dbType,
 							(col != null && col.getReadStrategy() == ResultColumnMeta.ReadStrategy.EXT_BYTE)
 									? col.getDataTypeName()
@@ -1390,9 +1390,10 @@ public class ResultUtils {
 	}
 
 	/**
-	 * 处理Result单行数据(旧签名,update 2026-9-12起废弃):并行数组
-	 * (labelNames/columnTypeNames/columnKinds)形态已被ResultColumnMeta[]取代,
-	 * 内部桥接转换后委托新签名;既有调用方(USF锁游标回读、getMoreLinkResultSet) 逐步迁移后移除。
+	 * update 2026-9-12
+	 * 处理Result单行数据(旧签名,已废弃):并行数组(labelNames/columnTypeNames/columnKinds)
+	 * 形态已被ResultColumnMeta[]取代,内部桥接转换后委托新签名;既有调用方(USF锁游标回读、
+	 * getMoreLinkResultSet)逐步迁移后移除。
 	 */
 	@Deprecated
 	public static List processResultRow(Integer dbType, TypeHandler typeHandler, DynamicCacheFetch dynamicCacheFetch,
@@ -1415,10 +1416,9 @@ public class ResultUtils {
 	}
 
 	/**
-	 * update 2026-9-12 优化步骤2:查询结果列元数据的单点分类工厂——标签(含大小写规整
-	 * 与小写预计算)/类型名(原始与对外呈现双形态)/读取策略(buildColumnKinds收编)/
-	 * 扩展类型标记一次构建,替代processResultSet/consumeResult各自维护的
-	 * labelNames/labelTypes/columnTypeNames/columnKinds多条并行数组。
+	 * update 2026-9-12 查询结果列元数据的单点分类工厂——标签(含大小写规整与小写预计算)/类型名(原始与对外呈现
+	 * 双形态)/读取策略(buildColumnKinds收编)/扩展类型标记一次构建,替代processResultSet/
+	 * consumeResult各自维护的labelNames/labelTypes/columnTypeNames/columnKinds多条并行数组。
 	 * 元数据对同一结果集恒定,查询级构建一次,行循环零新增分配。
 	 *
 	 * @param resultSetMD          结果集元数据
@@ -1441,6 +1441,12 @@ public class ResultUtils {
 		int[] kinds = buildColumnKinds(dbType, typeNames);
 		for (int i = 0; i < columnSize; i++) {
 			String rawLabel = resultSetMD.getColumnLabel(i + 1 + startIndex);
+			// update 2026-11-12 防御驱动返回null列标签:MySQL Connector/J对无别名的空串列(select '')
+			// getColumnLabel返回null(真库实测,PG/Oracle/H2分别返回?column?/''/''),旧实现直接
+			// toLowerCase抛NPE;null按空标签归一,不参与任何按列名的缓存翻译/格式化匹配
+			if (rawLabel == null) {
+				rawLabel = "";
+			}
 			// lowLabel为原始标签小写(规整前,与原labelIndexMap/翻译定位的key口径一致)
 			String lowLabel = rawLabel.toLowerCase(Locale.ROOT);
 			String label = rawLabel;
@@ -1481,6 +1487,26 @@ public class ResultUtils {
 	// update 2026-9-9 提升为public:SqlUtil的VO直映射路径(reflectResultRowToVOClass)复用同一套策略
 	/** 常规列:getObject取值,常规类型经归一化入口快速通道直通 */
 	public static final int COLUMN_NORMAL = 0;
+
+	/**
+	 * JSON文本,但驱动按固定宽度缓冲回送,较短的文档尾部有空白填充(真库实测
+	 * 中英文对照::lvarchar一致,仅多尾部空格,同该驱动lvarchar读回padding怪癖),JSON 文档尾部空白无语义,统一去除尾部空白
+	 *
+	 * @param bytes 列字节(null返回null)
+	 * @return UTF-8解码并去尾部空白的文本
+	 */
+	public static String bytesToTrimmedText(byte[] bytes) {
+		if (bytes == null) {
+			return null;
+		}
+		String text = new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
+		int end = text.length();
+		while (end > 0 && text.charAt(end - 1) <= ' ') {
+			end--;
+		}
+		return (end == text.length()) ? text : text.substring(0, end);
+	}
+
 	/** 文本化读取列:oracle的JSON/VECTOR(getObject直接抛错)与db2(db2gse)的ST_Geometry(驱动混淆对象) */
 	public static final int COLUMN_TEXT_READ = 1;
 	/**
@@ -1489,13 +1515,19 @@ public class ResultUtils {
 	public static final int COLUMN_EXT_BYTE = 2;
 
 	/**
+	 * 类型名json):getObject报"A customized type map required"(驱动要求SQLData类型映射,
+	 * String映射报ClassCastException)、getString为IfxUDT.toString垃圾值,而getBytes返回的 即UTF-8
+	 * JSON文本(真库实测中英文与::lvarchar完全一致),按字节读取后UTF-8解码
+	 */
+
+	/**
 	 * update 2026-9-6 按dbType与列元数据类型名对结果集各列预分类(查询级一次,行循环零字符串判定):
 	 * <li>TEXT_READ(1):oracle的JSON/VECTOR列getObject无默认转换(实测ORA-17004/ORA-18722)、
 	 * db2(db2gse)的ST_Geometry读回驱动内部混淆对象,均改走getString文本化读取</li>
 	 * <li>EXT_BYTE(2):h2的JSON列(UTF-8文本byte[])、sqlserver的GEOMETRY/VECTOR(驱动内部格式
 	 * byte[])、mysql系的GEOMETRY(4字节SRID前缀+WKB)/VECTOR(float32小端直排),取值后按列类型解码</li>
 	 * <li>NORMAL(0):其余列(pg系的json/vector/geometry读回PGobject等驱动对象,由归一化按值形状识别)</li>
-	 * 
+	 *
 	 * @param dbType          数据库类型,参见DataSourceUtils.DBType
 	 * @param columnTypeNames 列元数据类型名(与labelNames同下标对齐),null返回null
 	 * @return 各列读取策略标记数组
@@ -1514,11 +1546,12 @@ public class ResultUtils {
 		boolean h2 = (dt == DBType.H2);
 		boolean mssql = (dt == DBType.SQLSERVER);
 		boolean mysqlLike = (dt == DBType.MYSQL || dt == DBType.MYSQL57 || dt == DBType.OCEANBASE || dt == DBType.TIDB);
-		// update 2026-9-11 hana的ST_GEOMETRY列getObject返回标准WKB byte[](无mysql的4字节SRID前缀,
-		// 与ST_AsBinary输出同构;getString直接抛"Cannot convert SQL type ST_GEOMETRY to Java
-		// type
-		// String",ngdbc 2.29.11/SPS08实测),归EXT_BYTE经toWKTString通用嗅探解码
+		// update 2026-9-11 hana的ST_GEOMETRY列getObject返回标准WKB
+		// byte[](无mysql的4字节SRID前缀,与ST_AsBinary
+		// 输出同构;getString直接抛「Cannot convert SQL type ST_GEOMETRY to Java type String」,
+		// ngdbc 2.29.11/SPS08实测),归EXT_BYTE经toWKTString通用嗅探解码
 		boolean hana = (dt == DBType.HANA);
+		// required"、getString为IfxUDT.toString垃圾值,getBytes返回的即UTF-8 JSON文本
 		if (!(oracle || db2gse || h2 || mssql || mysqlLike || hana)) {
 			return kinds;
 		}
@@ -1534,14 +1567,14 @@ public class ResultUtils {
 			if (oracle && ("JSON".equals(t) || "VECTOR".equals(t))) {
 				kinds[i] = COLUMN_TEXT_READ;
 			} else if (db2gse && t.contains("ST_GEOMETRY")) {
-				// update 2026-9-10 已知边界:db2gse的ST_Geometry列getString返回WKT文本,而12.1+
-				// 内置空间引擎的ST_GEOMETRY列getString返回驱动内部格式hex文本(无公开格式文档不做
-				// 客户端解码),内置列读回WKT请在查询侧显式ST_AsText(geom)
+				// update 2026-9-10 已知边界:db2gse的ST_Geometry列getString返回WKT文本,而12.1+内置空间引擎的
+				// ST_GEOMETRY列getString返回驱动内部格式hex文本(无公开格式文档不做客户端解码),
+				// 内置列读回WKT请在查询侧显式ST_AsText(geom)
 				kinds[i] = COLUMN_TEXT_READ;
 			} else if (h2 && "GEOMETRY".equals(t)) {
-				// update 2026-9-8 h2的geometry列getObject返回JTS Geometry对象(非String),
-				// getString返回WKT文本,按TEXT_READ归一化为String参与Map/VO映射
-				// (与oracle JSON/VECTOR同策略)
+				// update 2026-9-8 h2的geometry列getObject返回JTS
+				// Geometry对象(非String),getString返回WKT文本,
+				// 按TEXT_READ归一化为String参与Map/VO映射(与oracle JSON/VECTOR同策略)
 				kinds[i] = COLUMN_TEXT_READ;
 			} else if ((h2 && "JSON".equals(t))
 					|| ((mssql || mysqlLike) && (GeometryTypeUtil.isGeometryTypeName(t) || "VECTOR".equals(t)))
@@ -1655,9 +1688,9 @@ public class ResultUtils {
 	}
 
 	/**
-	 * update 2026-9-6 扩展类型(json/vector/geometry)读回值归一化,供Map/数组/流式行调用
-	 * (这些行形态不经BeanUtil.convertType),按值形状识别类型后统一处理,不区分具体数据库 (oracle
-	 * 21c原生JSON与geometry、pg 18.6+pgvector的json/jsonb/vector均已实库验证):
+	 * update 2026-9-6 扩展类型(json/vector/geometry)读回值归一化,供Map/数组/流式行调用(这些行形态不经
+	 * BeanUtil.convertType),按值形状识别类型后统一处理,不区分具体数据库(oracle 21c原生JSON 与geometry、pg
+	 * 18.6+pgvector的json/jsonb/vector均已实库验证):
 	 * <li>SDO兼容STRUCT(oracle,以及达梦SYSGEO.SDO_GEOMETRY等兼容实现,类型名以SDO_GEOMETRY结尾)
 	 * →geometry,解码为WKT文本(jts解析,失败保留原值)</li>
 	 * <li>达梦ST_GEOMETRY
@@ -1679,7 +1712,7 @@ public class ResultUtils {
 	 * Geometry.deserialize客户端解码为WKT)、mysql系(4字节小端SRID前缀+标准WKB,强制剥前缀解码)</li>
 	 * 均不匹配时原样返回;db2(db2gse)的ST_Geometry读回驱动内部混淆对象(非Struct无法客户端解码)
 	 * 由processResultRow按列元数据类型名改走getString转WKT文本
-	 * 
+	 *
 	 * @param value jdbc读回值
 	 * @return 归一化后的值,不匹配或转换失败时返回原值
 	 */
@@ -1732,12 +1765,13 @@ public class ResultUtils {
 			}
 			return value;
 		}
-		// update 2026-9-11 java.sql.Array归一为原生java数组(clickhouse向量承载列Array(Float32)
-		// 与PG系text[]/int[]等数组列,驱动包装对象toString为"Array@hash"垃圾值且泄漏驱动类型):
-		// getArray()得到标准java数组(text[]→String[]、Array(Float32)→Float[]等,保结构、去驱动
-		// 依赖),Map结果直接获得结构化数组(fastjson序列化为JSON数组、可编程访问);目标形态转换
-		// 收敛在BeanUtil.convertType按属性类型分派(String属性→'[a,b]'文本、List/Set/数组→
-		// 元素级转换);getArray()异常时原样返回,由convertType的instanceof Array分支兜底
+		// update 2026-9-11
+		// java.sql.Array归一为原生java数组(clickhouse向量承载列Array(Float32)与PG系text[]/int[]等
+		// 数组列,驱动包装对象toString为「Array@hash」垃圾值且泄漏驱动类型):getArray()得到标准java
+		// 数组(text[]→String[]、Array(Float32)→Float[]等,保结构、去驱动依赖),Map结果直接获得结构化
+		// 数组(fastjson序列化为JSON数组、可编程访问);目标形态转换收敛在BeanUtil.convertType按属性
+		// 类型分派(String属性→'[a,b]'文本、List/Set/数组→元素级转换);getArray()异常时原样返回,
+		// 由convertType的instanceof Array分支兜底
 		if (value instanceof java.sql.Array) {
 			try {
 				Object arr = ((java.sql.Array) value).getArray();
@@ -1754,8 +1788,8 @@ public class ResultUtils {
 			if (columnTypeName != null) {
 				String colType = columnTypeName.toUpperCase(Locale.ROOT).replace("\"", "");
 				// h2 json列:getObject返回UTF-8 JSON文本byte[]
-				// update 2026-9-9 对称剥除JSON字符串标量外层引号(h2的json列setString绑定会整体包一层
-				// 引号,VO路径经JSONTypeUtil.extractJsonString已剥除,Map路径原样返回导致两路径形态不一致)
+				// update 2026-9-9 对称剥除JSON字符串标量外层引号(h2的json列setString绑定会整体包一层引号,VO路径经
+				// JSONTypeUtil.extractJsonString已剥除,Map路径原样返回导致两路径形态不一致)
 				if ("JSON".equals(colType)) {
 					return JSONTypeUtil.unwrapJsonStringScalar(
 							new String((byte[]) value, java.nio.charset.StandardCharsets.UTF_8));
@@ -1769,9 +1803,8 @@ public class ResultUtils {
 					} else if (dbType == DataSourceUtils.DBType.MYSQL || dbType == DataSourceUtils.DBType.MYSQL57) {
 						text = mysqlVectorBytesToText((byte[]) value);
 					} else if (dbType == DataSourceUtils.DBType.OCEANBASE || dbType == DataSourceUtils.DBType.TIDB) {
-						// update 2026-9-9 OB/TiDB与mysql同列EXT_BYTE预分类,但读回形态未实库验证:
-						// 文本形态优先(ob的vector为字符串隐式转换承载),否则按mysql内部格式试解码,
-						// 均不匹配原样返回
+						// update 2026-9-9 OB/TiDB与mysql同列EXT_BYTE预分类,但读回形态未实库验证:文本形态优先
+						// (ob的vector为字符串隐式转换承载),否则按mysql内部格式试解码,均不匹配原样返回
 						byte[] vecBytes = (byte[]) value;
 						if (vecBytes.length > 0 && vecBytes[0] == '[') {
 							return new String(vecBytes, java.nio.charset.StandardCharsets.UTF_8);
@@ -1890,7 +1923,7 @@ public class ResultUtils {
 	 * @param sqlToyConfig  sql配置信息
 	 * @param queryExecutor 查询执行器(含参数和扩展计算配置)
 	 * @param conn          数据库连接对象
-	 * @param dbType        数据库类型，参见DataSourceUtils.DBType
+	 * @param profile       数据库类型，参见DataSourceUtils.DBType
 	 * @param dialect       数据库方言
 	 * @return 旋转参照类别数据(已行转列)，无pivot配置或未定义category-sql返回null
 	 * @throws Exception
@@ -1931,7 +1964,7 @@ public class ResultUtils {
 					SqlToyResult pivotSqlToyResult = SqlConfigParseUtils.processSql(
 							pivotSqlConfig.getSql(profile.getDialect()), extend.getParamsName(),
 							extend.getParamsValue(sqlToyContext, pivotSqlConfig), profile.getDialect());
-					// 增加sql执行拦截器 update 2022-9-10
+					// update 2022-9-10 增加sql执行拦截器
 					pivotSqlToyResult = DialectUtils.doInterceptors(sqlToyContext, pivotSqlConfig, OperateType.search,
 							pivotSqlToyResult, null, profile);
 					List pivotCategory = SqlUtil.findByJdbcQuery(sqlToyContext.getTypeHandler(),
@@ -2085,8 +2118,7 @@ public class ResultUtils {
 		// 类型为null就默认返回二维List
 		if (resultType.equals(List.class) || resultType.equals(ArrayList.class) || resultType.equals(Collection.class)
 				|| BeanUtil.isBaseDataType(resultType)) {
-			// update 2022-4-22
-			// 如果查询单列数据，且返回结果类型为原始类型，则切取单列数据
+			// update 2022-4-22 如果查询单列数据，且返回结果类型为原始类型，则切取单列数据
 			if (BeanUtil.isBaseDataType(resultType) && labelNames != null && labelNames.length == 1) {
 				return getFirstColumn(queryResultRows, resultType);
 			}
@@ -2160,11 +2192,18 @@ public class ResultUtils {
 		List result = null;
 		// 非层次结构
 		if (!hasCascade) {
+			// update 2026-10-15 hiberarchy=true但结果类型上无@OneToMany集合属性时给出告警:此前会静默返回平铺结果
+			// (父行重复),手写实体容易漏配注解导致显式请求被无声忽略
+			if (hiberarchy) {
+				logger.warn(
+						"hiberarchy packaging was requested, but no @OneToMany cascade collection was found on resultType [{}]; returning flat results. Mark the collection field with @OneToMany(fields=..., mappedFields=...) to enable hierarchy packaging.",
+						resultType.getName());
+			}
 			// 封装成VO对象形式
 			result = BeanUtil.reflectListToBean(sqlToyContext.getTypeHandler(), queryResultRows,
 					convertRealProps(wrapMapFields(labelNames, fieldsMap, resultType), columnFieldMap), columnTypes,
 					resultType);
-			// update 2021-11-16 支持VO或POJO 属性上@Translate注解,进行缓存翻译
+			// update 2021-11-16 支持VO或POJO属性上@Translate注解,进行缓存翻译
 			wrapResultTranslate(sqlToyContext, result, resultType);
 		} else {
 			// 内部完成了wrapResultTranslate行为

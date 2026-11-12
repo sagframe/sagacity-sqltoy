@@ -62,6 +62,40 @@ public class ReservedWordsUtil {
 	}
 
 	/**
+	 * @description update 2026-11-10 移除保留字(与put的累加合并语义对称),用于运行期动态调整保留字集合
+	 *              以及单元测试间恢复全局状态
+	 *
+	 *              <p>
+	 *              起因:convertWord会按方言给保留字加引号(PG/Oracle/DB2/H2等加双引号),测试残留的词会让后续用例 生成
+	 *              "STAFF_NAME" 这类带引号标识符,而PG实际列名为小写staff_name,导致"列不存在"的错误
+	 *
+	 * @param words 逗号分隔的保留字
+	 */
+	public static synchronized void remove(String words) {
+		if (StringUtil.isBlank(words)) {
+			return;
+		}
+		Set<String> remain = new HashSet<String>(reservedWords);
+		for (String str : words.split("\\,")) {
+			String word = str.trim().toLowerCase(Locale.ROOT);
+			if (!"".equals(word)) {
+				remain.remove(word);
+			}
+		}
+		StringBuilder fullRegex = new StringBuilder();
+		for (String word : remain) {
+			if (fullRegex.length() > 0) {
+				fullRegex.append('|');
+			}
+			fullRegex.append(word);
+		}
+		// 与put/clear相同的发布顺序:先集合后正则
+		reservedWords = remain;
+		singlePattern = (fullRegex.length() == 0) ? null
+				: Pattern.compile("(?i)(\\W||\\s)(`|'|\"|\\[)(" + fullRegex + ")(`|'|\"|\\])(\\s||\\W)");
+	}
+
+	/**
 	 * @param sql
 	 * @param dbType
 	 * @return 处理框架基于对象操作生成的简单sql, 对默认[]符号进行数据库转换
@@ -70,33 +104,31 @@ public class ReservedWordsUtil {
 		if (reservedWords.isEmpty()) {
 			return sql;
 		}
-		// update 2026-9-15 null防护前置:原null判断位于末尾sqlserver/sqlite分支,而前面的
-		// dbType==DBType.XXX比较已触发Integer拆箱,null入参在到达判断前即NPE
-		// (convertWord/convertSql均为null在条件首位短路,本方法对齐该契约:null原样返回)
+		// update 2026-9-15
+		// null防护前置:原null判断位于末尾sqlserver/sqlite分支,而前面的dbType==DBType.XXX比较已触发Integer拆箱,
+		// null入参在到达判断前即NPE(convertWord/convertSql均为null在条件首位短路,本方法对齐该契约:null原样返回)
 		if (dbType == null || dbType == DBType.SQLSERVER || dbType == DBType.SQLITE) {
 			return sql;
 		}
-		// update 2026-9-14 方括号为字面量:改用String.replace,免去每次调用隐式编译正则(每sql 2~4次正则编译)
-		// update 2026-9-15 合并:clickhouse/impala标识符引用为反引号(ch文档明确),远端已补;
-		// 本地把OCEANBASE从双引号族移入反引号族(mysql模式双引号是字符串字面量)
+		// update 2026-9-15 方括号为字面量:改用String.replace,免去每次调用隐式编译正则(每sql 2~4次正则编译);
+		// 合并:clickhouse/impala标识符引用为反引号(ch文档明确),远端已补;本地把OCEANBASE从双引号族移入反引号族(mysql模式双引号是字符串字面量)
 		if (dbType == DBType.MYSQL || dbType == DBType.TIDB || dbType == DBType.MYSQL57 || dbType == DBType.TDENGINE
 				|| dbType == DBType.DORIS || dbType == DBType.STARROCKS || dbType == DBType.CLICKHOUSE
 				|| dbType == DBType.IMPALA || dbType == DBType.OCEANBASE) {
 			return sql.replace("[", "`").replace("]", "`");
 		}
-		// update 2026-9-14 补KINGBASE(KingbaseES基于PG,标识符用双引号):原形态落入末尾else被剔除括号,
-		// 保留字字段(如[desc])会变成裸标识符导致语法错误
+		// update 2026-9-14
+		// 补KINGBASE(KingbaseES基于PG,标识符用双引号):原形态落入末尾else被剔除括号,保留字字段(如[desc])会变成裸标识符导致语法错误
 		if (dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14
 				|| dbType == DBType.DB2 || dbType == DBType.DM || dbType == DBType.GAUSSDB || dbType == DBType.MOGDB
 				|| dbType == DBType.STARDB || dbType == DBType.OSCAR || dbType == DBType.OPENGAUSS
-				|| dbType == DBType.VASTBASE || dbType == DBType.ORACLE11
-				|| dbType == DBType.HANA || dbType == DBType.KINGBASE) {
+				|| dbType == DBType.VASTBASE || dbType == DBType.ORACLE11 || dbType == DBType.HANA
+				|| dbType == DBType.KINGBASE || dbType == DBType.HIGHGO) {
 			return sql.replace("[", "\"").replace("]", "\"");
 		}
 		if (dbType == DBType.H2) {
 			return sql.replace("[", "\"").replace("]", "\"");
 		}
-		// 剔除保留字符号
 		return sql.replace("[", "").replace("]", "");
 	}
 
@@ -133,8 +165,8 @@ public class ReservedWordsUtil {
 		if (dbType == DBType.ORACLE || dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14
 				|| dbType == DBType.KINGBASE || dbType == DBType.DB2 || dbType == DBType.GAUSSDB
 				|| dbType == DBType.MOGDB || dbType == DBType.OPENGAUSS || dbType == DBType.VASTBASE
-				|| dbType == DBType.STARDB || dbType == DBType.OSCAR || dbType == DBType.DM
-				|| dbType == DBType.ORACLE11 || dbType == DBType.HANA) {
+				|| dbType == DBType.STARDB || dbType == DBType.OSCAR || dbType == DBType.DM || dbType == DBType.ORACLE11
+				|| dbType == DBType.HANA || dbType == DBType.HIGHGO) {
 			return "\"".concat(column).concat("\"");
 		}
 		return column;
@@ -162,18 +194,17 @@ public class ReservedWordsUtil {
 		String keyWord;
 		matcher = pattern.matcher(sql);
 		while (matcher.find()) {
-			// update 2026-9-14 改按关键字组(第3组)位置定位:原实现用matcher.start()+1、match.substring(1)
-			// 与subSize的定长边界算术,隐含"首尾边界各消费1个字符"的假定,边界为空匹配时(sql以[col]收尾,
-			// 或[col]紧邻单词字符)会把引用符号与相邻字符错位并丢空白,输出被改坏的sql
-			// 关键字组前后各恰好一个单字符引用符号(第2、4组),故替换区间取组前后各一个字符,
-			// 边界是否命中不再影响定位
+			// update 2026-9-14
+			// 改按关键字组(第3组)位置定位:原实现用matcher.start()+1、match.substring(1)与subSize的定长边界算术,
+			// 隐含"首尾边界各消费1个字符"的假定,边界为空匹配时(sql以[col]收尾,或[col]紧邻单词字符)会把引用符号与相邻字符错位并丢空白,输出被改坏的sql;
+			// 关键字组前后各恰好一个单字符引用符号(第2、4组),故替换区间取组前后各一个字符,边界是否命中不再影响定位
 			keyWord = matcher.group(3);
 			sqlBuff.append(sql, start, matcher.start(3) - 1);
 			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.ORACLE
 					|| dbType == DBType.DB2 || dbType == DBType.KINGBASE || dbType == DBType.GAUSSDB
 					|| dbType == DBType.MOGDB || dbType == DBType.OPENGAUSS || dbType == DBType.VASTBASE
-					|| dbType == DBType.DM || dbType == DBType.ORACLE11
-					|| dbType == DBType.STARDB || dbType == DBType.OSCAR || dbType == DBType.HANA) {
+					|| dbType == DBType.DM || dbType == DBType.ORACLE11 || dbType == DBType.STARDB
+					|| dbType == DBType.OSCAR || dbType == DBType.HANA || dbType == DBType.HIGHGO) {
 				sqlBuff.append("\"").append(keyWord).append("\"");
 			} else if (dbType == DBType.SQLSERVER || dbType == DBType.SQLITE) {
 				sqlBuff.append("[").append(keyWord).append("]");

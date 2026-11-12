@@ -52,7 +52,7 @@ public class PostgreSqlDialectUtils {
 	 * @param totalCount
 	 * @param randomCount
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param dialect
 	 * @param fetchSize
 	 * @param maxRows
@@ -95,7 +95,7 @@ public class PostgreSqlDialectUtils {
 	 * @param sqlToyContext
 	 * @param entity
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param tableName
 	 * @return
 	 * @throws Exception
@@ -136,7 +136,7 @@ public class PostgreSqlDialectUtils {
 	 * @param batchSize
 	 * @param reflectPropsHandler
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param autoCommit
 	 * @param tableName
 	 * @return
@@ -164,7 +164,7 @@ public class PostgreSqlDialectUtils {
 	 * @param reflectPropsHandler
 	 * @param forceUpdateFields
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param dialect
 	 * @param autoCommit
 	 * @param tableName
@@ -277,7 +277,7 @@ public class PostgreSqlDialectUtils {
 	 * @param schema
 	 * @param tableName
 	 * @param conn
-	 * @param dbType
+	 * @param profile
 	 * @param dialect
 	 * @return
 	 * @throws Exception
@@ -286,22 +286,15 @@ public class PostgreSqlDialectUtils {
 			DBProfile profile) throws Exception {
 		// v10 支持 AND c.relispartition = false
 		// <v10 用 AND c.oid NOT IN (SELECT inhrelid FROM pg_inherits)
-		StringBuilder sqlBuilder = new StringBuilder();
-		sqlBuilder.append("SELECT ");
-		sqlBuilder.append("  c.relname AS TABLE_NAME,");
-		sqlBuilder.append("  CASE c.relkind ");
-		sqlBuilder.append("    WHEN 'r' THEN 'TABLE' ");
-		sqlBuilder.append("    WHEN 'p' THEN 'TABLE' ");
-		sqlBuilder.append("    WHEN 'v' THEN 'VIEW' ");
-		sqlBuilder.append("  END AS TABLE_TYPE, ");
-		sqlBuilder.append("  d.description AS COMMENTS ");
-		sqlBuilder.append(" FROM pg_class c ");
-		sqlBuilder.append("  LEFT JOIN pg_description d ON d.objoid = c.oid AND d.objsubid = 0 ");
-		sqlBuilder.append("  JOIN pg_namespace n ON n.oid = c.relnamespace ");
-		sqlBuilder.append(" WHERE ");
-		sqlBuilder.append("  c.relkind IN ('r', 'v', 'p') ");
-		sqlBuilder.append("  AND c.oid NOT IN (SELECT inhrelid FROM pg_inherits) ");
-		String sql = sqlBuilder.toString();
+		// (jre8同步适配:6.0为文本块,改为等价字符串拼接)
+		String sql = "SELECT" + "\n" + "      c.relname AS TABLE_NAME," + "\n" + "      CASE c.relkind" + "\n"
+				+ "        WHEN 'r' THEN 'TABLE'" + "\n" + "        WHEN 'p' THEN 'TABLE'" + "\n"
+				+ "        WHEN 'v' THEN 'VIEW'" + "\n" + "      END AS TABLE_TYPE," + "\n"
+				+ "      d.description AS COMMENTS" + "\n" + "FROM pg_class c" + "\n"
+				+ "  LEFT JOIN pg_description d ON d.objoid = c.oid AND d.objsubid = 0" + "\n"
+				+ "  JOIN pg_namespace n ON n.oid = c.relnamespace" + "\n" + "WHERE" + "\n"
+				+ "  c.relkind IN ('r', 'v', 'p')" + "\n"
+				+ "  AND c.oid NOT IN (SELECT inhrelid FROM pg_inherits)" + "\n";
 		String realSchema = schema;
 		if (StringUtil.isBlank(realSchema)) {
 			realSchema = catalog;

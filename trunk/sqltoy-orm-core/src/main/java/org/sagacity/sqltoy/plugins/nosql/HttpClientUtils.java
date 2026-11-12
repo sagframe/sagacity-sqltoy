@@ -46,6 +46,11 @@ import com.alibaba.fastjson2.JSONObject;
  * @author zhongxuchen
  * @version v1.0,Date:2018-01-07
  * @modified 2025-3-17 适配性优化，为切换httpclient5做准备
+ * @modified 2026-11-12 jre8全量同步合并:ES提交路径保留httpclient4+elasticsearch-rest-client
+ *             (rest5-client为JDK17生态,jre8不可用);rest翻译/JWT认证的通用提交方法
+ *             移植自6.0的httpclient5实现(两代httpclient包名不同,通过FQN共存)
+ * @modified 2026-10-02 rest请求认证增加jwt token模式(配合HttpAuthConfig\JwtTokenManager),
+ *             401时强制失效token并重试一次,兼容既有basic认证
  */
 public class HttpClientUtils {
 	/**
@@ -53,6 +58,19 @@ public class HttpClientUtils {
 	 */
 	private final static RequestConfig requestConfig = RequestConfig.custom().setConnectionRequestTimeout(30000)
 			.setConnectTimeout(10000).setSocketTimeout(180000).build();
+
+	/**
+	 * rest通用请求的httpclient5配置(RequestConfig.setConnectTimeout已废弃,连接超时由connectionConfig配置)
+	 */
+	private final static org.apache.hc.client5.http.config.RequestConfig restRequestConfig = org.apache.hc.client5.http.config.RequestConfig
+			.custom().setConnectionRequestTimeout(org.apache.hc.core5.util.Timeout.ofMilliseconds(30000))
+			.setResponseTimeout(org.apache.hc.core5.util.Timeout.ofMilliseconds(180000)).build();
+
+	/**
+	 * rest通用请求的httpclient5连接配置(连接超时)
+	 */
+	private final static org.apache.hc.client5.http.config.ConnectionConfig restConnectionConfig = org.apache.hc.client5.http.config.ConnectionConfig
+			.custom().setConnectTimeout(org.apache.hc.core5.util.Timeout.ofMilliseconds(10000)).build();
 
 	/**
 	 * 定义全局日志
@@ -72,47 +90,93 @@ public class HttpClientUtils {
 
 	public static String doPost(SqlToyContext sqltoyContext, final String url, String username, String password,
 			String[] paramName, String[] paramValue) throws Exception {
-		HttpPost httpPost = new HttpPost(url);
+		return doPost(sqltoyContext, url, HttpAuthConfig.basic(username, password), paramName, paramValue);
+	}
+
+	/**
+	 * 执行post请求(支持basic与jwt两种认证模式,httpclient5实现)
+	 *
+	 * @param sqltoyContext
+	 * @param url           请求地址
+	 * @param authConfig    认证配置:basic模式走凭据提供器,jwt模式携带Authorization请求头
+	 * @param paramName     表单参数名称数组
+	 * @param paramValue    表单参数值数组
+	 * @return
+	 * @throws Exception
+	 */
+	public static String doPost(SqlToyContext sqltoyContext, final String url, HttpAuthConfig authConfig,
+			String[] paramName, String[] paramValue) throws Exception {
+		org.apache.hc.client5.http.classic.methods.HttpPost httpPost = new org.apache.hc.client5.http.classic.methods.HttpPost(
+				url);
 		// 设置connection是否自动关闭
 		httpPost.setHeader("Connection", "close");
-		CloseableHttpClient client = null;
+		// jwt token认证模式:解析token头值(静态token或登录缓存token)及携带token的请求头名称
+		final boolean jwtMode = (authConfig != null && authConfig.isJwt());
+		final String tokenHeader = jwtMode ? JwtTokenManager.resolveTokenHeader(authConfig) : null;
+		String authorization = jwtMode ? JwtTokenManager.resolveTokenValue(sqltoyContext, authConfig) : null;
+		org.apache.hc.client5.http.impl.classic.CloseableHttpClient client = null;
 		try {
-			if (StringUtil.isNotBlank(username) && StringUtil.isNotBlank(password)) {
-				// 凭据提供器
-				CredentialsProvider credsProvider = new BasicCredentialsProvider();
-				credsProvider.setCredentials(AuthScope.ANY,
+			if (!jwtMode && authConfig != null && StringUtil.isNotBlank(authConfig.getUsername())
+					&& StringUtil.isNotBlank(authConfig.getPassword())) {
+				// 凭据提供器(AuthScope在httpclient5.6中移除了ANY常量,null/-1即为任意host/port)
+				org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider credsProvider = new org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider();
+				credsProvider.setCredentials(new org.apache.hc.client5.http.auth.AuthScope(null, -1),
 						// 认证用户名和密码
-						new UsernamePasswordCredentials(username, password));
-				client = HttpClients.custom().setDefaultRequestConfig(requestConfig)
-						.setDefaultCredentialsProvider(credsProvider).build();
+						new org.apache.hc.client5.http.auth.UsernamePasswordCredentials(authConfig.getUsername(),
+								authConfig.getPassword().toCharArray()));
+				client = createRestHttpClient(restRequestConfig, restConnectionConfig, credsProvider);
 			} else {
-				client = HttpClients.custom().setDefaultRequestConfig(requestConfig).build();
+				client = createRestHttpClient(restRequestConfig, restConnectionConfig, null);
 			}
 			if (paramValue != null && paramValue.length > 0) {
-				List<NameValuePair> nvps = new ArrayList<NameValuePair>();
+				List<org.apache.hc.core5.http.NameValuePair> nvps = new ArrayList<org.apache.hc.core5.http.NameValuePair>();
 				// paramName与paramValue按位对应,长度不一致或name缺省时按较短者截取,避免数组越界
 				int paramSize = (paramName == null) ? 0 : Math.min(paramName.length, paramValue.length);
 				for (int i = 0; i < paramSize; i++) {
-					if (paramValue[i] != null) {
-						nvps.add(new BasicNameValuePair(paramName[i], paramValue[i]));
+					// BasicNameValuePair遇null/空白name抛IllegalArgumentException,name缺省时跳过该项
+					if (paramValue[i] != null && StringUtil.isNotBlank(paramName[i])) {
+						nvps.add(new org.apache.hc.core5.http.message.BasicNameValuePair(paramName[i], paramValue[i]));
 					}
 				}
 				// 表单提交保持UrlEncodedFormEntity默认的application/x-www-form-urlencoded,
 				// 不能覆盖成application/json,否则服务端无法按表单解析参数
-				HttpEntity httpEntity = new UrlEncodedFormEntity(nvps, CHARSET);
+				org.apache.hc.core5.http.HttpEntity httpEntity = new org.apache.hc.client5.http.entity.UrlEncodedFormEntity(
+						nvps, java.nio.charset.Charset.forName(CHARSET));
 				httpPost.setEntity(httpEntity);
 			}
-			return client.execute(httpPost, new ResponseHandler<String>() {
-				@Override
-				public String handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-					// 返回结果
-					HttpEntity reponseEntity = response.getEntity();
-					if (reponseEntity != null) {
-						return EntityUtils.toString(reponseEntity, CHARSET);
-					}
-					return null;
+			// jwt模式token被服务端拒绝(401)时强制失效重登并重试一次
+			final int[] responseCode = new int[1];
+			int maxAttempts = jwtMode ? 2 : 1;
+			for (int attempt = 0; attempt < maxAttempts; attempt++) {
+				if (attempt > 0) {
+					JwtTokenManager.invalidate(authConfig);
+					authorization = JwtTokenManager.resolveTokenValue(sqltoyContext, authConfig);
 				}
-			});
+				if (jwtMode) {
+					httpPost.setHeader(tokenHeader, authorization);
+				}
+				String body = client.execute(httpPost,
+						new org.apache.hc.core5.http.io.HttpClientResponseHandler<String>() {
+							@Override
+							public String handleResponse(org.apache.hc.core5.http.ClassicHttpResponse response)
+									throws org.apache.hc.core5.http.HttpException, IOException {
+								responseCode[0] = response.getCode();
+								// 返回结果
+								org.apache.hc.core5.http.HttpEntity reponseEntity = response.getEntity();
+								if (reponseEntity != null) {
+									return org.apache.hc.core5.http.io.entity.EntityUtils
+											.toString(reponseEntity, CHARSET);
+								}
+								return null;
+							}
+						});
+				// token过期被拒:失效缓存后重试(仅一次),再次401则交由调用方按返回内容处理
+				if (jwtMode && responseCode[0] == 401 && attempt < maxAttempts - 1) {
+					continue;
+				}
+				return body;
+			}
+			return null;
 		} catch (Exception e) {
 			throw e;
 		} finally {
@@ -120,9 +184,24 @@ public class HttpClientUtils {
 		}
 	}
 
+	// 连接管理器未设为shared,随client关闭时一并释放
+	private static org.apache.hc.client5.http.impl.classic.CloseableHttpClient createRestHttpClient(
+			org.apache.hc.client5.http.config.RequestConfig requestConfig,
+			org.apache.hc.client5.http.config.ConnectionConfig connectionConfig,
+			org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider credsProvider) {
+		org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager connectionManager = org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder
+				.create().setDefaultConnectionConfig(connectionConfig).build();
+		org.apache.hc.client5.http.impl.classic.HttpClientBuilder builder = org.apache.hc.client5.http.impl.classic.HttpClients
+				.custom().setConnectionManager(connectionManager).setDefaultRequestConfig(requestConfig);
+		if (credsProvider != null) {
+			builder.setDefaultCredentialsProvider(credsProvider);
+		}
+		return builder.build();
+	}
+
 	/**
 	 * 执行post请求
-	 * 
+	 *
 	 * @param sqltoyContext
 	 * @param nosqlConfig
 	 * @param esConfig
@@ -223,7 +302,7 @@ public class HttpClientUtils {
 
 	/**
 	 * 解析elastic查询结果,存在error时抛出携带错误信息的异常
-	 * 
+	 *
 	 * @param result elastic返回的json字符串
 	 * @return
 	 */
@@ -256,7 +335,7 @@ public class HttpClientUtils {
 
 	/**
 	 * 重新组织url
-	 * 
+	 *
 	 * @param esConfig
 	 * @param nosqlConfig
 	 * @return
