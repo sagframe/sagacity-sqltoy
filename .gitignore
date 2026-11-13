@@ -20,3 +20,4 @@ trunk/sqltoy-quickvo/dependency-reduced-pom.xml
 .idea/
 .fastRequest/
 
+.zcode/
