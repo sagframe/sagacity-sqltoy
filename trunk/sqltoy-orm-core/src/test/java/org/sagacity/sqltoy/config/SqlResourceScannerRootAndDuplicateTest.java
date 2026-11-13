@@ -1,15 +1,21 @@
 package org.sagacity.sqltoy.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.File;
 import java.io.OutputStream;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.net.URLConnection;
+import java.net.URLStreamHandler;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -274,6 +280,43 @@ public class SqlResourceScannerRootAndDuplicateTest {
 			}
 		}
 		return false;
+	}
+
+	@Test
+	public void coveredByNestedRootMatchesBothBootGenerations(@TempDir Path tempDir) throws Exception {
+		File jar = tempDir.resolve("app.jar").toFile();
+		Files.write(jar.toPath(), new byte[0]);
+		String fileUrl = jar.toURI().toURL().toExternalForm();
+		String abs = jar.getAbsolutePath().replace('\\', '/');
+		Method method = SqlResourceScanner.class.getDeclaredMethod("coveredByNestedRoot", List.class, File.class);
+		method.setAccessible(true);
+
+		// Boot 2.x/3.0经典多叹号形态:jar:file:/path/app.jar!/BOOT-INF/classes!/
+		assertTrue((Boolean) method.invoke(null, roots("jar:" + fileUrl + "!/BOOT-INF/classes!/"), jar),
+				"经典classes内层根应判定外层jar已被覆盖");
+		// Boot 3.2+嵌套形态(带前导斜杠):jar:nested:/path/app.jar/!BOOT-INF/classes/!/
+		assertTrue((Boolean) method.invoke(null, roots("jar:nested:/" + abs + "/!BOOT-INF/classes/!/"), jar),
+				"Boot3.2+带前导斜杠嵌套classes根应判定覆盖");
+		// Boot 3.2+嵌套形态(Windows盘符无前导斜杠):jar:nested:C:/path/app.jar/!BOOT-INF/classes/!/
+		assertTrue((Boolean) method.invoke(null, roots("jar:nested:" + abs + "/!BOOT-INF/classes/!/"), jar),
+				"Boot3.2+无前导斜杠嵌套classes根应判定覆盖");
+		// 仅暴露BOOT-INF/lib嵌套根:外层jar的BOOT-INF/classes资源未被承载,须保留外层根
+		assertFalse((Boolean) method.invoke(null, roots("jar:nested:/" + abs + "/!BOOT-INF/lib/dep.jar!/"), jar),
+				"仅lib嵌套根不能判定外层jar被覆盖");
+		// 普通非嵌套jar根不参与覆盖判定
+		assertFalse((Boolean) method.invoke(null, roots("jar:" + fileUrl + "!/"), jar),
+				"非嵌套根不参与覆盖判定");
+	}
+
+	private static List<URL> roots(String spec) throws Exception {
+		List<URL> list = new ArrayList<URL>();
+		list.add(new URL(null, spec, new URLStreamHandler() {
+			@Override
+			protected URLConnection openConnection(URL u) {
+				return null;
+			}
+		}));
+		return list;
 	}
 
 	private static ConcurrentHashMap<String, SqlToyConfig> parse(List resources) throws Exception {
