@@ -83,8 +83,7 @@ public class PageAndQueryExecutorEdgeTest {
 
 	@Test
 	public void elasticNormalResultParsed() {
-		// (jre8同步适配:ES栈保留fastjson2形态,JsonObject改JSONObject)
-		com.alibaba.fastjson2.JSONObject json = HttpClientUtils.parseElasticResult("{\"hits\":{\"total\":3}}");
+		JsonObject json = HttpClientUtils.parseElasticResult("{\"hits\":{\"total\":3}}");
 		assertEquals(3, json.getJSONObject("hits").getIntValue("total"));
 	}
 

@@ -30,7 +30,7 @@
 | BeanUtil 的 records 支持分支 | `Class.isRecord()/getRecordComponents()` 为 JDK16 API,jre8 无解 | 拷入后剥离 record 分支(保留其余全部: BeanMappingPlan/classFieldTypeMap/loadClass/methodToProperty/isGetter/isSetter) |
 | `config/model/PropertyType.java` | record 支持专用模型,BeanUtil 剥离后无引用 | 不拷入 |
 | `lambda/toolkit/FieldNature`(record 语法) | jre8 无 record 语法 | 改写为普通不可变类(保留组件方法名 entityClass()/fieldName() 以兼容 lambda 引用) |
-| ES栈的rest5-client | rest5-client(co.elastic.clients) 为 JDK17 字节码(class 61) | ElasticEndpoint/ElasticSearchPlugin/ElasticSearchUtils/ElasticSqlPlugin/link/Elastic 保留5.6版本(httpclient4+elasticsearch-rest-client);6.0的原生ES SQL游标分页(findNativeSqlPage)已于2026-11-13按hc4+fastjson2等价移植(HttpClientUtils重构出doPostBody/doPostEntity),Elastic/ElasticSqlPlugin与6.0逻辑对齐仅JSON类型不同 |
+| ES栈的rest5-client | rest5-client(co.elastic.clients) 为 JDK17 字节码(class 61) | 仅ElasticEndpoint(hc4 RestClient构建器)与HttpClientUtils(hc4执行路径,JSON已切JsonProvider+wrapPath多节点修复)保留hc4形态;ElasticSearchUtils/ElasticSearchPlugin/ElasticSqlPlugin/link/Elastic四文件与6.0逐字一致(2026-11-13 ES栈JSON切换为JsonProvider抽象,含原生SQL游标分页findNativeSqlPage) |
 | 测试中record用例 | record特性在jre8不存在 | 不拷入(BeanUtilEdgeTest/BeanUtilRecordColumnTypesTest/BeanUtilSmokeTest/VectorGeometryRecordEdgeTest/Student fixture) |
 | `plugins/json/JsonProviderMatrixTest.java` | jackson3 候选矩阵含 JDK17 专属用例+文本块 | 不拷入(5.6 的 JsonProvider fastjson2/jackson2 实现由既有测试背书;如需矩阵化再按 jackson3 剔除改造) |
 
@@ -44,7 +44,7 @@
 | `utils/DateUtil.java` | `Matcher.appendReplacement(StringBuilder,...)`(JDK9+) | 改 `StringBuffer` |
 | `dialect/utils/DialectUtils.java` | `Matcher.appendReplacement(StringBuilder,...)`(JDK9+) | 改 `StringBuffer` |
 | `config/EntityScanner.java` | `StringBuilder.isEmpty()`(JDK15) | `length() > 0` |
-| `plugins/nosql/HttpClientUtils.java` | rest5-client + hc5 | 保留 hc4 ES 提交 + hc5 rest通用提交(FQN共存);doPostBody/doPostEntity与6.0同构(游标分页请求体通道) |
+| `plugins/nosql/HttpClientUtils.java` | rest5-client + hc5 | 保留 hc4 ES 提交 + hc5 rest通用提交(FQN共存);ES方法的JSON已切JsonProviders(2026-11-13),doPostBody/doPostEntity与6.0同构,rest路径改wrapPath相对路径(修多地址url拼接),仅HTTP执行层为hc4 |
 | BeanUtil | switch 表达式/pattern instanceof/canAccess | if-else 链/传统 cast/isAccessible(全量同步后仅余 getClassFieldMap 的 ClassValue 化,语法适配点已随剥离消除) |
 | 测试文件(StringUtil/NumberUtil等) | `.repeat()`/`.toList()`/`var`/`List.of()`/`Map.of()`/`readAllBytes()`/文本块 | nCopies/collect/显式类型/HashMap/循环读取/字符串拼接 |
 

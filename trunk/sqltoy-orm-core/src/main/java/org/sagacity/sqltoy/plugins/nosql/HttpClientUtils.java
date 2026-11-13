@@ -31,14 +31,13 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
 import org.sagacity.sqltoy.exception.DataAccessException;
+import org.sagacity.sqltoy.plugins.json.JsonArray;
+import org.sagacity.sqltoy.plugins.json.JsonObject;
+import org.sagacity.sqltoy.plugins.json.JsonProviders;
 import org.sagacity.sqltoy.utils.IOUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONArray;
-import com.alibaba.fastjson2.JSONObject;
 
 /**
  * @project sagacity-sqltoy
@@ -49,6 +48,8 @@ import com.alibaba.fastjson2.JSONObject;
  * @modified 2026-11-12 jre8全量同步合并:ES提交路径保留httpclient4+elasticsearch-rest-client
  *             (rest5-client为JDK17生态,jre8不可用);rest翻译/JWT认证的通用提交方法
  *             移植自6.0的httpclient5实现(两代httpclient包名不同,通过FQN共存)
+ * @modified 2026-11-13 ES栈JSON切换为JsonProvider抽象(与6.0对齐,fastjson2/jackson2可选,
+ *             不再硬绑fastjson2);rest路径改相对路径wrapPath(修复多地址url拼接非法uri)
  * @modified 2026-10-02 rest请求认证增加jwt token模式(配合HttpAuthConfig\JwtTokenManager),
  *             401时强制失效token并重试一次,兼容既有basic认证
  */
@@ -209,7 +210,7 @@ public class HttpClientUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static JSONObject doPost(SqlToyContext sqltoyContext, NoSqlConfigModel nosqlConfig, ElasticEndpoint esConfig,
+	public static JsonObject doPost(SqlToyContext sqltoyContext, NoSqlConfigModel nosqlConfig, ElasticEndpoint esConfig,
 			Object postValue) throws Exception {
 		if (esConfig.getUrl() == null) {
 			throw new IllegalArgumentException(
@@ -223,12 +224,12 @@ public class HttpClientUtils {
 			if (esConfig.isNativeSql()) {
 				Map<String, String> map = new HashMap<String, String>();
 				map.put("query", postValue.toString());
-				httpEntity = new StringEntity(JSON.toJSONString(map), charset);
+				httpEntity = new StringEntity(JsonProviders.get().toJSONString(map), charset);
 			} else {
 				httpEntity = new StringEntity(postValue.toString(), charset);
 			}
 		} else {
-			httpEntity = new StringEntity(JSON.toJSONString(postValue), charset);
+			httpEntity = new StringEntity(JsonProviders.get().toJSONString(postValue), charset);
 		}
 		((StringEntity) httpEntity).setContentEncoding(charset);
 		((StringEntity) httpEntity).setContentType(CONTENT_TYPE);
@@ -246,14 +247,14 @@ public class HttpClientUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static JSONObject doPostBody(SqlToyContext sqltoyContext, NoSqlConfigModel nosqlConfig,
+	public static JsonObject doPostBody(SqlToyContext sqltoyContext, NoSqlConfigModel nosqlConfig,
 			ElasticEndpoint esConfig, Object bodyObject) throws Exception {
 		if (esConfig.getUrl() == null) {
 			throw new IllegalArgumentException(
 					"elastic server address is not configured, please check sqltoyContext elasticConfigs!");
 		}
 		String charset = (nosqlConfig.getCharset() == null) ? CHARSET : nosqlConfig.getCharset();
-		HttpEntity httpEntity = new StringEntity(JSON.toJSONString(bodyObject), charset);
+		HttpEntity httpEntity = new StringEntity(JsonProviders.get().toJSONString(bodyObject), charset);
 		((StringEntity) httpEntity).setContentEncoding(charset);
 		((StringEntity) httpEntity).setContentType(CONTENT_TYPE);
 		return doPostEntity(sqltoyContext, nosqlConfig, esConfig, httpEntity);
@@ -269,14 +270,16 @@ public class HttpClientUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	private static JSONObject doPostEntity(SqlToyContext sqltoyContext, NoSqlConfigModel nosqlConfig,
+	private static JsonObject doPostEntity(SqlToyContext sqltoyContext, NoSqlConfigModel nosqlConfig,
 			ElasticEndpoint esConfig, HttpEntity httpEntity) throws Exception {
 		String realUrl;
 		// 返回结果
 		String result = null;
 		// 使用elastic rest client(默认)
 		if (esConfig.getRestClient() != null) {
-			realUrl = wrapUrl(esConfig, nosqlConfig);
+			// 多节点客户端自带base地址,请求只需相对路径(修复多地址url直接拼接产生非法uri的问题,
+			// 与6.0的rest5-client路径同款修法)
+			realUrl = wrapPath(esConfig, nosqlConfig);
 			if (sqltoyContext.isDebug()) {
 				logger.debug("esRestClient execution:URL=[{}],Path={}", esConfig.getUrl(), realUrl);
 			}
@@ -343,23 +346,23 @@ public class HttpClientUtils {
 	 * @param result elastic返回的json字符串
 	 * @return
 	 */
-	public static JSONObject parseElasticResult(String result) {
+	public static JsonObject parseElasticResult(String result) {
 		// 将结果转换为JSON对象
-		JSONObject json = JSON.parseObject(result);
+		JsonObject json = JsonProviders.get().object(result);
 		// 存在错误:error结构随版本/异常类型变化,root_cause可能缺失,error本身可能是字符串,
 		// 防御式提取避免NPE掩盖真实错误信息
 		if (json.containsKey("error")) {
 			Object errorObj = json.get("error");
 			String errorMessage;
-			if (errorObj instanceof JSONObject) {
-				JSONObject errorJson = (JSONObject) errorObj;
-				JSONArray rootCause = errorJson.getJSONArray("root_cause");
+			if (errorObj instanceof java.util.Map) {
+				JsonObject errorJson = JsonObject.of(errorObj);
+				JsonArray rootCause = errorJson.getJSONArray("root_cause");
 				if (rootCause != null && !rootCause.isEmpty()) {
-					errorMessage = JSON.toJSONString(rootCause.get(0));
+					errorMessage = JsonProviders.get().toJSONString(rootCause.get(0));
 				} else if (errorJson.getString("reason") != null) {
 					errorMessage = errorJson.getString("reason");
 				} else {
-					errorMessage = JSON.toJSONString(errorJson);
+					errorMessage = JsonProviders.get().toJSONString(errorJson);
 				}
 			} else {
 				errorMessage = String.valueOf(errorObj);
@@ -406,6 +409,37 @@ public class HttpClientUtils {
 			}
 		}
 		return url;
+	}
+
+	/**
+	 * 组织相对查询路径(rest-client模式:客户端自带多节点base地址,请求只需路径,
+	 * 避免多地址url直接拼接产生非法uri)
+	 *
+	 * @param esConfig
+	 * @param nosqlConfig
+	 * @return
+	 */
+	private static String wrapPath(ElasticEndpoint esConfig, NoSqlConfigModel nosqlConfig) {
+		String path = "";
+		String sqlPath = esConfig.getSqlPath();
+		if (StringUtil.isBlank(sqlPath)) {
+			sqlPath = "_sql";
+		}
+		if (nosqlConfig.isSqlMode()) {
+			path = path.concat("/").concat(sqlPath);
+		} else {
+			if (StringUtil.isNotBlank(nosqlConfig.getIndex())) {
+				path = path.concat("/").concat(nosqlConfig.getIndex());
+			}
+			// es6.x 支持，7开始废弃
+			if (StringUtil.isNotBlank(nosqlConfig.getType())) {
+				path = path.concat("/").concat(nosqlConfig.getType());
+			}
+			if (!path.toLowerCase(Locale.ROOT).endsWith(SEARCH)) {
+				path = path.concat("/").concat(SEARCH);
+			}
+		}
+		return path;
 	}
 
 	private static RequestConfig getRequestConfig(NoSqlConfigModel nosqlConfig) {

@@ -12,11 +12,10 @@ import org.sagacity.sqltoy.model.Page;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.inner.DataSetResult;
 import org.sagacity.sqltoy.model.inner.QueryExecutorExtend;
+import org.sagacity.sqltoy.plugins.json.JsonObject;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.alibaba.fastjson2.JSONObject;
 
 /**
  * @project sagacity-sqltoy
@@ -101,7 +100,7 @@ public class ElasticSqlPlugin {
 			exhausted.finished = true;
 			return exhausted;
 		}
-		JSONObject body = new JSONObject();
+		JsonObject body = new JsonObject();
 		body.put("fetch_size", pageModel.getPageSize());
 		if (StringUtil.isNotBlank(cursor)) {
 			// 取下一页
@@ -117,7 +116,7 @@ public class ElasticSqlPlugin {
 		}
 		NoSqlConfigModel noSqlConfig = sqlToyConfig.getNoSqlConfigModel();
 		ElasticEndpoint esConfig = sqlToyContext.getElasticEndpoint(noSqlConfig.getEndpoint());
-		JSONObject json = HttpClientUtils.doPostBody(sqlToyContext, noSqlConfig, esConfig, body);
+		JsonObject json = HttpClientUtils.doPostBody(sqlToyContext, noSqlConfig, esConfig, body);
 		ElasticPage page = new ElasticPage();
 		page.setPageNo(pageModel.getPageNo());
 		page.setPageSize(pageModel.getPageSize());
