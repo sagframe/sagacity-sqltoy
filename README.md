@@ -67,7 +67,7 @@ List<StaffVO> staff = lightDao.find("staff_search",
 solon adapter        : sagacity-sqltoy-solon-plugin
 traditional Spring   : sagacity-sqltoy-spring
 plain sqltoy only    : sagacity-sqltoy
-jdk8 line (legacy)   : 5.6.96.jre8 (final; works with quickvo-maven-plugin)
+jdk8 line (legacy)   : 5.6.97.jre8 (core synced with 6.0.10; works with quickvo-maven-plugin)
 ```
 
 > For 5.6.x → 6.0.x changes (the `parallQuery→parallelQuery` rename, the changed `DBProfile` signature of the connection callback, package structure adjustments), see the [6.0 Upgrade Guide](https://sagframe.github.io/sqltoy-docs/#/introduction/upgrade_6.0).
