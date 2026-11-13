@@ -308,6 +308,31 @@ public class SqlResourceScannerRootAndDuplicateTest {
 				"非嵌套根不参与覆盖判定");
 	}
 
+	/**
+	 * 真实Boot 3.2/4.x的nested URL用File.toURI().getRawPath()拼接,路径含空格/中文时为%xx编码;
+	 * java.class.path给的是原始字符路径,覆盖判定必须同时匹配编码形态,否则外层jar会重复补根
+	 */
+	@Test
+	public void coveredByNestedRootMatchesUrlEncodedPath(@TempDir Path tempDir) throws Exception {
+		Method method = SqlResourceScanner.class.getDeclaredMethod("coveredByNestedRoot", List.class, File.class);
+		method.setAccessible(true);
+		// 空格路径(Windows常见:Program Files/My Documents)
+		File jar = tempDir.resolve("app with space").resolve("app.jar").toFile();
+		Files.createDirectories(jar.getParentFile().toPath());
+		Files.write(jar.toPath(), new byte[0]);
+		String nestedUrl = "jar:nested:" + jar.toURI().toURL().toExternalForm().substring("file:".length())
+				+ "/!BOOT-INF/classes/!/";
+		assertTrue(nestedUrl.contains("%20"), "用例前置:路径应被URL编码:" + nestedUrl);
+		assertTrue((Boolean) method.invoke(null, roots(nestedUrl), jar), "URL编码(空格)路径也必须判定覆盖:" + nestedUrl);
+		// 中文路径
+		File cjkJar = tempDir.resolve("应用 目录").resolve("app.jar").toFile();
+		Files.createDirectories(cjkJar.getParentFile().toPath());
+		Files.write(cjkJar.toPath(), new byte[0]);
+		String cjkUrl = "jar:nested:" + cjkJar.toURI().toURL().toExternalForm().substring("file:".length())
+				+ "/!BOOT-INF/classes/!/";
+		assertTrue((Boolean) method.invoke(null, roots(cjkUrl), cjkJar), "中文路径也必须判定覆盖:" + cjkUrl);
+	}
+
 	private static List<URL> roots(String spec) throws Exception {
 		List<URL> list = new ArrayList<URL>();
 		list.add(new URL(null, spec, new URLStreamHandler() {

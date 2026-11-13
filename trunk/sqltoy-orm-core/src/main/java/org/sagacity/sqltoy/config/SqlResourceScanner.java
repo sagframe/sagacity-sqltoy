@@ -719,10 +719,12 @@ public class SqlResourceScanner {
 		} catch (Exception e) {
 			return false;
 		}
-		// update 2026-11-13 按jar绝对路径+嵌套分隔符"/!"比对,不依赖nested:后是否带前导斜杠
-		// (Windows盘符下真实LaunchedClassLoader可能产生nested:/C:/或nested:C:/两种写法),
-		// 原nestedPath字符串拼接对前导斜杠敏感会漏配,致外层jar重复补根
-		String jarPath = jarFile.getAbsolutePath().replace('\\', '/');
+		// update 2026-11-13 嵌套根须按"URL编码路径"与"原始路径"双形态比对:真实LaunchedClassLoader
+		// (Boot 3.2/4.x实测)用File.toURI().getRawPath()拼接nested URL,部署路径含空格/中文时为%xx编码,
+		// 而java.class.path给出的是原始字符路径;只按原始路径比对会在含空格/中文的路径下漏配,
+		// 导致外层jar重复补根、同一sqlId以两种URL各命中一次(breakWhenSqlRepeat默认true时阻断启动)
+		String encodedPath = fileUrl.startsWith("file:") ? fileUrl.substring("file:".length()) : fileUrl;
+		String rawPath = jarFile.getAbsolutePath().replace('\\', '/');
 		for (URL root : roots) {
 			if (!isNestedJarUrl(root)) {
 				continue;
@@ -737,7 +739,8 @@ public class SqlResourceScanner {
 				continue;
 			}
 			// 经典形态jar:file:/path/app.jar!/BOOT-INF/classes!/ 或 嵌套形态jar:nested:[/]path/app.jar/!BOOT-INF/classes/!/
-			if (external.contains(fileUrl + "!/") || external.contains(jarPath + "/!")) {
+			if (external.contains(fileUrl + "!/") || external.contains("nested:" + encodedPath + "/!")
+					|| external.contains("nested:" + rawPath + "/!") || external.contains("nested:/" + rawPath + "/!")) {
 				return true;
 			}
 		}
