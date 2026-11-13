@@ -102,9 +102,9 @@ public class BeanUtil {
 
 	// 保存pojo的级联关系
 	// update 2026-11-10 改ClassValue:条目挂Class自身,类卸载即回收,静态Map不再强引用应用类
-	private static final ClassValue<List> cascadeModels = new ClassValue<List>() {
+	private static final ClassValue<List<TableCascadeModel>> cascadeModels = new ClassValue<List<TableCascadeModel>>() {
 		@Override
-		protected List computeValue(Class<?> entityClass) {
+		protected List<TableCascadeModel> computeValue(Class<?> entityClass) {
 			return parseCascadeModels(entityClass);
 		}
 	};
@@ -3114,7 +3114,7 @@ public class BeanUtil {
 		return cascadeModels.get(entityClass);
 	}
 
-	private static List parseCascadeModels(Class entityClass) {
+	private static List<TableCascadeModel> parseCascadeModels(Class entityClass) {
 		List<TableCascadeModel> result = new ArrayList<TableCascadeModel>();
 		Field[] cascadeFields = parseCascadeFields(entityClass);
 		for (Field field : cascadeFields) {

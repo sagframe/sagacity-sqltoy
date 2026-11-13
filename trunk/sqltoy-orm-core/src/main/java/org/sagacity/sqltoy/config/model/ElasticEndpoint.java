@@ -1,5 +1,6 @@
 package org.sagacity.sqltoy.config.model;
 
+import java.io.InputStream;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -412,14 +413,20 @@ public class ElasticEndpoint implements Serializable {
 
 				SSLContextBuilder sslBuilder = null;
 				try {
-					if (hasSsl) {
-						KeyStore truststore = KeyStore.getInstance(
-								StringUtil.isBlank(keyStoreType) ? KeyStore.getDefaultType() : keyStoreType);
-						truststore.load(FileUtil.getFileInputStream(keyStore),
-								(keyStorePass == null) ? null : keyStorePass.toCharArray());
-						sslBuilder = SSLContexts.custom().loadTrustMaterial(truststore,
-								keyStoreSelfSign ? new TrustSelfSignedStrategy() : null);
+				if (hasSsl) {
+					KeyStore truststore = KeyStore.getInstance(
+							StringUtil.isBlank(keyStoreType) ? KeyStore.getDefaultType() : keyStoreType);
+					// KeyStore.load(null)不抛错而是初始化为空keystore,静默导致SSL握手失败难以定位
+					try (InputStream keyStoreStream = FileUtil.getFileInputStream(keyStore)) {
+						if (keyStoreStream == null) {
+							throw new IllegalArgumentException(
+									"elastic keystore file not found:[" + keyStore + "]");
+						}
+						truststore.load(keyStoreStream, (keyStorePass == null) ? null : keyStorePass.toCharArray());
 					}
+					sslBuilder = SSLContexts.custom().loadTrustMaterial(truststore,
+							keyStoreSelfSign ? new TrustSelfSignedStrategy() : null);
+				}
 					final SSLContext sslContext = (sslBuilder == null) ? null : sslBuilder.build();
 					final boolean disableAuthCaching = !authCaching;
 					builder.setHttpClientConfigCallback(new RestClientBuilder.HttpClientConfigCallback() {

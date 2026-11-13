@@ -237,8 +237,7 @@ public class HttpClientUtils {
 	}
 
 	/**
-	 * 发送整体序列化的json请求体(不做sql模式包装,面向ES SQL的fetch_size+cursor游标分页等
-	 * 需要自定义请求体结构的场景)
+	 * 发送自定义请求体的post请求(请求体以json序列化),用于es原生sql的游标分页等场景
 	 *
 	 * @param sqltoyContext
 	 * @param nosqlConfig
@@ -277,8 +276,7 @@ public class HttpClientUtils {
 		String result = null;
 		// 使用elastic rest client(默认)
 		if (esConfig.getRestClient() != null) {
-			// 多节点客户端自带base地址,请求只需相对路径(修复多地址url直接拼接产生非法uri的问题,
-			// 与6.0的rest5-client路径同款修法)
+			// 多节点客户端自带base地址,请求只需相对路径(修复多地址url直接拼接产生非法uri的问题)
 			realUrl = wrapPath(esConfig, nosqlConfig);
 			if (sqltoyContext.isDebug()) {
 				logger.debug("esRestClient execution:URL=[{}],Path={}", esConfig.getUrl(), realUrl);
@@ -374,14 +372,16 @@ public class HttpClientUtils {
 	}
 
 	/**
-	 * 重新组织url
+	 * 重新组织url(直连模式:节点地址+查询路径)
 	 *
 	 * @param esConfig
 	 * @param nosqlConfig
 	 * @return
 	 */
 	private static String wrapUrl(ElasticEndpoint esConfig, NoSqlConfigModel nosqlConfig) {
-		String url = esConfig.getUrl();
+		// 多地址(逗号分隔)时取首个节点,与initRestClient一致先归一化全角分隔符
+		String url = esConfig.getUrl().replaceAll("\\；", ";").replaceAll("\\，", ",").replaceAll("\\;", ",")
+				.split("\\,")[0].trim();
 		String sqlPath = esConfig.getSqlPath();
 		if (StringUtil.isBlank(sqlPath)) {
 			sqlPath = "_sql";
@@ -412,8 +412,7 @@ public class HttpClientUtils {
 	}
 
 	/**
-	 * 组织相对查询路径(rest-client模式:客户端自带多节点base地址,请求只需路径,
-	 * 避免多地址url直接拼接产生非法uri)
+	 * 组织rest-client请求的相对路径(客户端构建时已携带全部节点base地址,请求只需路径)
 	 *
 	 * @param esConfig
 	 * @param nosqlConfig
