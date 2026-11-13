@@ -667,7 +667,7 @@ public class SqlConfigParseUtilsTest {
 				"已转义的首尾%不应视为通配符");
 	}
 
-	// ==================== update 2026-11-13 鑷?.0琛ラ綈閬楁紡鍚屾:like杞箟鏂硅█/澶歭ike鎷兼帴/宸叉湁ESCAPE瀛愬彞闃查噸澶?30渚? ====================
+	// ==================== update 2026-11-13 自6.0补齐遗漏同步:like转义方言/多like拼接/已有ESCAPE子句防重复(30例) ====================
 	@Test
 	public void testMultiSplitDelimiter() {
 		// 多个@split时,前一个的自定义分隔符不能泄漏给后续默认分隔符的@split(?)
