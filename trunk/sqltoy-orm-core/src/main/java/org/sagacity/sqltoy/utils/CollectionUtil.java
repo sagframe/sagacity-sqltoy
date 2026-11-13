@@ -21,6 +21,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.sagacity.sqltoy.callback.TreeIdAndPidGet;
 import org.sagacity.sqltoy.config.model.SummaryColMeta;
@@ -41,6 +42,10 @@ public class CollectionUtil {
 	 * 定义日志
 	 */
 	private final static Logger logger = LoggerFactory.getLogger(CollectionUtil.class);
+
+	// update 2026-11-12 putBounded回收单飞门闩:同一时刻仅一个线程执行超限回收,
+	// 避免并发写入线程各自回收1/4造成过度淘汰(全局共享,回收低频跨缓存互斥代价可忽略)
+	private static final AtomicBoolean BOUNDED_EVICTING = new AtomicBoolean(false);
 
 	public static final String ILLEGAL_NUM_REGEX = "%|‰|\\$|¥";
 
@@ -1641,10 +1646,14 @@ public class CollectionUtil {
 	}
 
 	/**
-	 * @description update 2026-11-10 有界缓存写入:容量达到上限时先按迭代顺序回收约1/4,再写入新键。
+	 * @description update 2026-11-10 有界缓存写入:容量达到上限时按迭代顺序回收至3/4目标水位,再写入新键。
 	 *              与"超限后不再缓存"相比,回收后缓存立即恢复生效,不会出现"缓存永久失效、每次全量重算"
 	 *              的性能悬崖(动态列/动态sql等高基数键场景);与"超限整体clear"相比,保留约3/4的既有条目
 	 *              (热键不必全部重建),回收成本按写入次数摊还为O(1)。读取路径仍是ConcurrentHashMap无锁get。
+	 *              update 2026-11-12 CAS单飞门闩:原实现每个写入线程各自回收1/4,并发突发时过度淘汰
+	 *              (N线程近乎清空缓存,命中率骤降需全量重建);现同一时刻仅一个线程执行回收,其余跳过直接写入。
+	 *              回收按水位循环(而非固定配额)以追上并发回填,容量为软上限(短暂超出量≤并发写入数,下轮收敛);
+	 *              门闩全局共享(回收低频,跨缓存互斥代价可忽略),读取路径不受影响。
 	 * @param cache   目标缓存
 	 * @param key     新键(为null时忽略)
 	 * @param value   新值(为null时忽略,ConcurrentHashMap不允许null值)
@@ -1654,13 +1663,19 @@ public class CollectionUtil {
 		if (cache == null || key == null || value == null) {
 			return;
 		}
-		if (maxSize > 0 && cache.size() >= maxSize) {
-			// 回收约1/4:比例过小会频繁触发回收,过大则退化为整体清空(热点键全部重建)
-			int target = Math.max(1, maxSize >>> 2);
-			Iterator<K> keys = cache.keySet().iterator();
-			for (int removed = 0; removed < target && keys.hasNext(); removed++) {
-				keys.next();
-				keys.remove();
+		if (maxSize > 0 && cache.size() >= maxSize && BOUNDED_EVICTING.compareAndSet(false, true)) {
+			try {
+				// update 2026-11-12 回收至3/4目标水位(而非固定删1/4):单飞门闩下同一时刻仅一个
+				// 回收线程,固定配额追不上并发写入速度会致缓存膨胀(实测8线程持续写入涨到650/上限100);
+				// 按水位循环回收可动态追上并发回填,单线程场景仍恰好回收1/4(行为不变)
+				int keepLimit = maxSize - Math.max(1, maxSize >>> 2);
+				Iterator<K> keys = cache.keySet().iterator();
+				while (cache.size() > keepLimit && keys.hasNext()) {
+					keys.next();
+					keys.remove();
+				}
+			} finally {
+				BOUNDED_EVICTING.set(false);
 			}
 		}
 		cache.putIfAbsent(key, value);

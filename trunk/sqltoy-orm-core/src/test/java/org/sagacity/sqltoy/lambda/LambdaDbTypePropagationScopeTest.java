@@ -90,10 +90,104 @@ public class LambdaDbTypePropagationScopeTest {
 		assertNull(propagatedDbType(member));
 	}
 
+	@Test
+	public void sameLevelDuplicateMemberRestoredToNull() throws Exception {
+		// update 2026-11-12 评审R4:同一实例同层同时出现在ctes与unions,身份去重后
+		// 渲染结束必须归零(不去重时previousDbTypes记录中间态,正向恢复残留dbType)
+		LambdaQuery<ScopeUser> shared = buildUnboundMember();
+		LambdaQuery<ScopeUser> outer = lightDao.lambdaQuery(ScopeUser.class).from(ScopeUser.class)
+				.select(JoinCol.of(ScopeUser::getId).as("id")).eq(ScopeUser::getId, 1).with("c", shared)
+				.unionAll(shared);
+		outer.assemble(context::getEntityMeta);
+		shared.assemble(context::getEntityMeta);
+		String sql = outer.getSql();
+		assertTrue(sql.contains("WITH") && sql.contains("UNION ALL"), sql);
+		assertNull(propagatedDbType(shared), "同层重复成员渲染结束后下发值必须归零");
+		assertEquals(sql, outer.getSql(), "重复渲染稳定");
+		assertNull(propagatedDbType(shared));
+	}
+
 	private static Object propagatedDbType(LambdaQuery<?> query) throws Exception {
 		Field field = LambdaQuery.class.getDeclaredField("propagatedDbType");
 		field.setAccessible(true);
 		return field.get(query);
+	}
+
+	private static void setPropagatedDbType(LambdaQuery<?> query, Integer value) throws Exception {
+		Field field = LambdaQuery.class.getDeclaredField("propagatedDbType");
+		field.setAccessible(true);
+		field.set(query, value);
+	}
+
+	private static boolean recursiveMemberFlag(LambdaQuery<?> query) throws Exception {
+		Class<?> clazz = query.getClass();
+		Field field = null;
+		while (clazz != null) {
+			try {
+				field = clazz.getDeclaredField("joinContext");
+				break;
+			} catch (NoSuchFieldException e) {
+				clazz = clazz.getSuperclass();
+			}
+		}
+		field.setAccessible(true);
+		Object joinContext = field.get(query);
+		Method method = joinContext.getClass().getMethod("isRecursiveMember");
+		return (Boolean) method.invoke(joinContext);
+	}
+
+	@Test
+	public void sharedMemberDbTypeRestoredToOuterValue() throws Exception {
+		// update 2026-11-12 栈式恢复:成员已持有外层下发的dbType(模拟共享成员先被外层dispatch),
+		// 再被内层组合渲染后必须恢复外层值——修复前内层finally无条件置null,外层随后渲染该成员
+		// 回落-1,DB2隐式JOIN/CH UNION DISTINCT等方言分支静默失配
+		LambdaQuery<ScopeUser> member = buildUnboundMember();
+		setPropagatedDbType(member, 20);
+		LambdaQuery<ScopeUser> inner = buildOuter(member);
+		inner.getSql();
+		assertEquals(Integer.valueOf(20), propagatedDbType(member), "内层渲染结束必须恢复外层下发的dbType");
+	}
+
+	@Test
+	public void sharedMemberBetweenCteAndOuterUnionRendersStable() throws Exception {
+		// update 2026-11-12 共享拓扑:同一成员同时是内层CTE的union成员和外层直接union成员,
+		// 渲染必须稳定且结束后成员下发值归零(不残留)
+		LambdaQuery<ScopeUser> shared = buildUnboundMember();
+		LambdaQuery<ScopeUser> cteInner = buildUnboundMember().unionAll(shared);
+		cteInner.assemble(context::getEntityMeta);
+		LambdaQuery<ScopeUser> outer = lightDao.lambdaQuery(ScopeUser.class).from(ScopeUser.class)
+				.select(JoinCol.of(ScopeUser::getId).as("id")).eq(ScopeUser::getId, 1).with("c", cteInner)
+				.unionAll(shared);
+		outer.assemble(context::getEntityMeta);
+		String first = outer.getSql();
+		assertTrue(first.contains("WITH") && first.contains("UNION ALL"), first);
+		assertNull(propagatedDbType(shared), "共享成员渲染结束后下发值必须归零");
+		assertEquals(first, outer.getSql(), "重复渲染必须稳定");
+		assertNull(propagatedDbType(shared));
+	}
+
+	@Test
+	public void recursiveMarkCoversNestedCteAndFastInner() throws Exception {
+		// update 2026-11-12 递归成员自身的CTE/@fast内层同属递归成员SQL(DB2禁显式JOIN),
+		// 原实现只遍历unions漏标——直接调用标记方法断言嵌套组合全部被标记
+		LambdaQuery<ScopeUser> nestedCte = buildUnboundMember();
+		LambdaQuery<ScopeUser> memberWithCte = buildUnboundMember().with("nc", nestedCte);
+		LambdaQuery<ScopeUser> fastInner = buildUnboundMember();
+		LambdaQuery<ScopeUser> memberWithFast = LambdaQuery.create(ScopeUser.class).fromFast(fastInner, "f");
+		LambdaQuery<ScopeUser> anchor = buildUnboundMember().unionAll(memberWithCte).unionAll(memberWithFast);
+
+		Method method = LambdaQuery.class.getDeclaredMethod("markRecursiveMembers", LambdaQuery.class,
+				java.util.List.class, java.util.List.class);
+		method.setAccessible(true);
+		java.util.List<LambdaQuery<?>> marked = new java.util.ArrayList<>();
+		java.util.List<Boolean> flags = new java.util.ArrayList<>();
+		method.invoke(anchor, anchor, marked, flags);
+
+		assertTrue(recursiveMemberFlag(memberWithCte), "递归成员本身应被标记");
+		assertTrue(recursiveMemberFlag(nestedCte), "递归成员自身的CTE应被标记(修复前漏标)");
+		assertTrue(recursiveMemberFlag(memberWithFast), "带@fast的递归成员应被标记");
+		assertTrue(recursiveMemberFlag(fastInner), "递归成员的@fast内层应被标记(修复前漏标)");
+		assertEquals(4, marked.size(), "标记收集不应重复");
 	}
 
 	private static int resolveDbType(LambdaQuery<?> query) throws Exception {

@@ -204,4 +204,38 @@ public class DorisStarRocksDb2DdlDefectTest {
 		assertTrue(idIdx >= 0 && nameIdx >= 0 && idIdx < nameIdx, "大小写错配仍须前置: " + doris);
 		assertTrue(doris.contains("UNIQUE KEY(ID)"), doris);
 	}
+
+	@Test
+	public void keyColumnsForcedNotNull() {
+		// update 2026-11-12 StarRocks PRIMARY模型键列必须NOT NULL(真库实测"primary key
+		// column[id] cannot be nullable"),实体键列默认nullable时生成DDL须强制NOT NULL;
+		// 与DB2主键-542修复同类。非键列保持可空不被误加。
+		// update 2026-11-12 评审R3收窄:Doris UNIQUE/DUPLICATE键列可空合法(真库实测),
+		// 不强制NOT NULL;StarRocks DUPLICATE模型键列亦允许可空
+		String starrocks = new StarRocksDDLGenerator().createTableSql(table(true), null, null, DBType.STARROCKS);
+		assertTrue(lineOf(starrocks, "id").contains("NOT NULL"), "SR主键列必须NOT NULL: " + starrocks);
+		assertFalse(starrocks.contains("vc_col VARCHAR(50) NOT NULL"), "非键列不应被误加NOT NULL: " + starrocks);
+		String doris = new DorisDDLGenerator().createTableSql(table(true), null, null, DBType.DORIS);
+		assertFalse(lineOf(doris, "id").contains("NOT NULL"), "Doris UNIQUE键列可空合法,不应强制: " + doris);
+		// orderBy指定的键列(排序键)在SR PRIMARY同样强制NOT NULL
+		String srOrder = new StarRocksDDLGenerator().createTableSql(withMpp("PRIMARY", "id", "ts_col"), null, null,
+				DBType.STARROCKS);
+		assertTrue(lineOf(srOrder, "ts_col").contains("NOT NULL"), "SR排序键列必须NOT NULL: " + srOrder);
+		// update 2026-11-12 真库探针:SR仅PRIMARY强制,UNIQUE/AGGREGATE/DUPLICATE键列可空均合法
+		String srUnique = new StarRocksDDLGenerator().createTableSql(withMpp("UNIQUE", "id"), null, null,
+				DBType.STARROCKS);
+		assertFalse(lineOf(srUnique, "id").contains("NOT NULL"), "SR UNIQUE键列可空合法,不应强制: " + srUnique);
+		String srDup = new StarRocksDDLGenerator().createTableSql(withMpp("DUPLICATE", "id"), null, null,
+				DBType.STARROCKS);
+		assertFalse(lineOf(srDup, "id").contains("NOT NULL"), "SR DUPLICATE键列允许可空: " + srDup);
+	}
+
+	private static String lineOf(String ddl, String colName) {
+		for (String line : ddl.split("\\r?\\n")) {
+			if (line.trim().startsWith(colName + " ")) {
+				return line;
+			}
+		}
+		return "";
+	}
 }

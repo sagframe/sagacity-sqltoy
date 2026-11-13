@@ -40,7 +40,9 @@ public class FindInSetDialectTest {
 
 	@Test
 	public void mysqlFamilyNativePassthrough() {
-		for (String dialect : new String[] { "mysql", "mysql57", "tidb", "oceanbase" }) {
+		// update 2026-11-12 OB移出mysql家族:框架约定dialect=oceanbase即Oracle模式租户,
+		// 归Oracle系instr+||组合(见oracleFamilyUsesInstrConcatenation)
+		for (String dialect : new String[] { "mysql", "mysql57", "tidb" }) {
 			assertEquals(RAINBOW_SQL, FunctionUtils.getDialectSql(RAINBOW_SQL, dialect),
 					dialect + "原生find_in_set应透传不改写");
 		}
@@ -58,7 +60,8 @@ public class FindInSetDialectTest {
 
 	@Test
 	public void oracleFamilyUsesInstrConcatenation() {
-		for (String dialect : new String[] { "oracle", "oracle11", "dm" }) {
+		// update 2026-11-12 OB归Oracle系(框架约定dialect=oceanbase即Oracle模式租户)
+		for (String dialect : new String[] { "oracle", "oracle11", "dm", "oceanbase" }) {
 			assertEquals(
 					"(mq_consumer_nodes is null or (instr(','||mq_consumer_nodes||',', ','||?||',')>0)) and status=1",
 					FunctionUtils.getDialectSql(RAINBOW_SQL, dialect), dialect + "应改写为||+instr形态");

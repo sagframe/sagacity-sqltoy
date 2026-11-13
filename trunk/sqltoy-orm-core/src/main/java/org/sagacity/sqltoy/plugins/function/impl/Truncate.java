@@ -100,8 +100,10 @@ public class Truncate extends IFunction {
 	 * @return true 表示 MySQL 协议系(默认双引号按字符串字面量解释)
 	 */
 	private static boolean isMySqlFamily(int dialect) {
+		// update 2026-11-12 OB移出:框架约定dialect=oceanbase即Oracle模式租户,双引号是标识符,
+		// 与标准SQL/Oracle同口径(与DateDiff/GroupConcat的OB归属一致)
 		return dialect == DBType.MYSQL || dialect == DBType.MYSQL57 || dialect == DBType.TIDB || dialect == DBType.DORIS
-				|| dialect == DBType.STARROCKS || dialect == DBType.OCEANBASE;
+				|| dialect == DBType.STARROCKS;
 	}
 
 	/**
@@ -116,10 +118,10 @@ public class Truncate extends IFunction {
 	 */
 	public static String numericTrunc(int dialect, String functionName, String num, String scale) {
 		String funLow = functionName.toLowerCase(Locale.ROOT);
-		// MySQL 系/CH/OB(MySQL 模式):truncate 原生;CH 的 trunc 亦原生
+		// MySQL 系/CH:truncate 原生;CH 的 trunc 亦原生
+		// update 2026-11-12 OB移出:框架约定dialect=oceanbase即Oracle模式租户,走下方trunc原生分支
 		boolean mysqlFamily = dialect == DBType.MYSQL || dialect == DBType.MYSQL57 || dialect == DBType.TIDB
-				|| dialect == DBType.DORIS || dialect == DBType.STARROCKS || dialect == DBType.OCEANBASE
-				|| dialect == DBType.CLICKHOUSE;
+				|| dialect == DBType.DORIS || dialect == DBType.STARROCKS || dialect == DBType.CLICKHOUSE;
 		if (mysqlFamily) {
 			// CH 两函数皆原生;其余 MySQL 系仅 truncate 原生,源 trunc 须改名 truncate
 			if (dialect == DBType.CLICKHOUSE || "truncate".equals(funLow)) {
@@ -127,8 +129,9 @@ public class Truncate extends IFunction {
 			}
 			return "truncate(" + num + "," + scale + ")";
 		}
-		// Oracle/DM/PG 系/DB2/H2:trunc 为原生数值截断函数
+		// Oracle/DM/PG 系/DB2/H2:trunc 为原生数值截断函数(OB Oracle模式同Oracle)
 		boolean truncNative = dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DM
+				|| dialect == DBType.OCEANBASE
 				|| dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.OPENGAUSS
 				|| dialect == DBType.GAUSSDB || dialect == DBType.MOGDB || dialect == DBType.VASTBASE
 				|| dialect == DBType.STARDB || dialect == DBType.OSCAR || dialect == DBType.KINGBASE

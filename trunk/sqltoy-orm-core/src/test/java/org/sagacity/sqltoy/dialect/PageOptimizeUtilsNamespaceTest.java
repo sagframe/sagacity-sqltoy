@@ -157,6 +157,30 @@ public class PageOptimizeUtilsNamespaceTest {
 	}
 
 	@Test
+	public void schemaSwitchOnSamePoolChangesIdentity() throws Exception {
+		// update 2026-11-12 同一连接池经setSchema切换多租户时身份必须随会话变化,
+		// 否则首次会话被永久钉死,不同schema共用count缓存(租户串用)
+		String url = "jdbc:h2:mem:page_opt_schema_switch;DB_CLOSE_DELAY=-1";
+		JdbcDataSource dataSource = new JdbcDataSource();
+		dataSource.setURL(url);
+		dataSource.setUser("sa");
+		try (java.sql.Connection conn = dataSource.getConnection()) {
+			org.sagacity.sqltoy.model.DBProfile profile = new org.sagacity.sqltoy.model.DBProfile(url, "h2",
+					org.sagacity.sqltoy.utils.DataSourceUtils.DBType.H2, "H2", 2, null, null, false);
+			String keyDefault = PageOptimizeUtils.buildDataSourceKey(profile, conn, dataSource);
+			try (java.sql.Statement stmt = conn.createStatement()) {
+				stmt.execute("create schema if not exists tenant_b");
+			}
+			conn.setSchema("TENANT_B");
+			String keyTenantB = PageOptimizeUtils.buildDataSourceKey(profile, conn, dataSource);
+			assertFalse(keyDefault.equals(keyTenantB), "schema切换后count缓存身份必须变化");
+			conn.setSchema("PUBLIC");
+			assertEquals(keyDefault, PageOptimizeUtils.buildDataSourceKey(profile, conn, dataSource),
+					"切回原schema身份应恢复");
+		}
+	}
+
+	@Test
 	public void namespaceCacheIsBoundedByLru() {
 		// update 2026-11-11 命名空间硬上限:大量长生存数据源/账号时不线性增长,超限按最近访问淘汰(只影响命中率)
 		SqlToyContext context = new SqlToyContext();

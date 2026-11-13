@@ -73,6 +73,7 @@ public class DateTrunc extends IFunction {
 		// ---- 原生透传族 ----
 		// oracle兼容格式模型;无date_trunc函数由下方转换族承担)
 		boolean truncNative = dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DM
+				|| dialect == DBType.OCEANBASE
 				|| dialect == DBType.DB2 || dialect == DBType.OPENGAUSS || dialect == DBType.GAUSSDB
 				|| dialect == DBType.MOGDB || dialect == DBType.OSCAR || dialect == DBType.STARDB
 				|| dialect == DBType.VASTBASE || dialect == DBType.KINGBASE;
@@ -116,8 +117,9 @@ public class DateTrunc extends IFunction {
 			return "date_trunc('" + unit.toLowerCase(Locale.ROOT) + "'," + FunctionUtils.castLiteralTimestamp(base)
 					+ ")";
 		}
-		// mysql语法族(含OB/tidb/starrocks):组合形态
-		if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57 || dialect == DBType.OCEANBASE
+		// mysql语法族(含tidb/starrocks):组合形态
+		// update 2026-11-12 OB移出:框架约定dialect=oceanbase即Oracle模式租户,归truncNative族
+		if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57
 				|| dialect == DBType.TIDB || dialect == DBType.STARROCKS) {
 			switch (unit) {
 			case "DAY":

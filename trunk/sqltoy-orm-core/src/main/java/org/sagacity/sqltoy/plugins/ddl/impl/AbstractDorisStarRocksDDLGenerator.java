@@ -64,6 +64,17 @@ public abstract class AbstractDorisStarRocksDDLGenerator implements DialectDDLGe
 		// "Key columns should be a ordered prefix"/"must be the first few columns"),
 		// 实体 @Id 列若未声明在首位,生成 DDL 会被拒。这里把键列按键序前置,其余列保持原序
 		java.util.List<ColumnMeta> orderedColumns = orderKeyColumnsFirst(tableMeta.getColumns(), keyColumns);
+		// update 2026-11-12 键列强制NOT NULL:StarRocks PRIMARY模型键列必须NOT NULL(真库实测
+		// "primary key column[id] cannot be nullable"),与DB2主键-542修复同类。
+		// update 2026-11-12 评审R3收窄+真库探针精确化:仅StarRocks PRIMARY强制——
+		// SR UNIQUE/AGGREGATE/DUPLICATE键列可空均合法(真库实测建表成功),Doris各模型键列
+		// 可空亦合法(可插NULL),统一强制会破坏存量可空键写入语义
+		java.util.Set<String> keyColumnSet = new java.util.HashSet<>();
+		if (dbType == DBType.STARROCKS && "PRIMARY".equals(keyModel) && keyColumns != null) {
+			for (String key : keyColumns) {
+				keyColumnSet.add(key.toLowerCase(java.util.Locale.ROOT));
+			}
+		}
 		StringBuilder tableSql = new StringBuilder();
 		String tableName = StringUtil.toLowerOrUpper(tableMeta.getTableName(), upperOrLower);
 		tableSql.append("CREATE TABLE ").append(tableName).append(NEWLINE);
@@ -75,7 +86,8 @@ public abstract class AbstractDorisStarRocksDDLGenerator implements DialectDDLGe
 			}
 			tableSql.append(TAB).append(StringUtil.toLowerOrUpper(colMeta.getColName(), upperOrLower));
 			tableSql.append(" ").append(mppType(colMeta, dbType));
-			if (!colMeta.isNullable()) {
+			if (!colMeta.isNullable()
+					|| keyColumnSet.contains(colMeta.getColName().toLowerCase(java.util.Locale.ROOT))) {
 				tableSql.append(" NOT NULL");
 			}
 			// 默认值(计算列场景defaultValue为表达式)

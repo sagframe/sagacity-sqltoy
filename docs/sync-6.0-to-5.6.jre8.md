@@ -6,6 +6,12 @@
 >
 > **首轮全量同步完成(2026-11-12)**:211 个文件(139M+71A+1D),测试矩阵 2196 例全绿。
 > 适配点登记如下,后续每轮同步按清单检查是否需更新。
+>
+> **第二轮同步完成(2026-11-13,6.0.10 正式发版)**:18 个 main 文件(17 拷贝+DialectUtils 正则 hunk 合并)
+> + 12 个本轮测试 + 补齐首轮遗漏的 SqlConfigParseUtilsTest(30 例 like 转义)/SqlUtilTest(整体替换为
+> 6.0 进化版,新增 12 例 convertFieldsToCols 边界)+ 8 个 6.0 独有测试补入(5 个 jre8-clean 直接拷贝
+> +SqlConfigParseUtilsProcessSqlTest/FileUtilCopyFolderTest/StringUtilEdgeTest 轻量适配)。
+> 另:6.0 在历史 revert(ad2fb8863)中丢失的 BeanUtilTest/SqlToyConstantsTest 为 5.6 原生资产,保留不删。
 
 ## 同步流程(每个 6.0 release tag 执行一轮)
 
@@ -26,6 +32,7 @@
 | `lambda/toolkit/FieldNature`(record 语法) | jre8 无 record 语法 | 改写为普通不可变类(保留组件方法名 entityClass()/fieldName() 以兼容 lambda 引用) |
 | ES栈的rest5-client | rest5-client(co.elastic.clients) 为 JDK17 字节码(class 61) | ElasticEndpoint/ElasticSearchPlugin/ElasticSearchUtils/ElasticSqlPlugin/link/Elastic 保留5.6版本(httpclient4+elasticsearch-rest-client) |
 | 测试中record用例 | record特性在jre8不存在 | 不拷入(BeanUtilEdgeTest/BeanUtilRecordColumnTypesTest/BeanUtilSmokeTest/VectorGeometryRecordEdgeTest/Student fixture) |
+| `plugins/json/JsonProviderMatrixTest.java` | jackson3 候选矩阵含 JDK17 专属用例+文本块 | 不拷入(5.6 的 JsonProvider fastjson2/jackson2 实现由既有测试背书;如需矩阵化再按 jackson3 剔除改造) |
 
 ## 适配清单(定点语法/API 修正)
 

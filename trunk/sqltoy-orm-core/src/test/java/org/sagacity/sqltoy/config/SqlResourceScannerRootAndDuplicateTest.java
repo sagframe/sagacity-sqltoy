@@ -206,6 +206,48 @@ public class SqlResourceScannerRootAndDuplicateTest {
 	}
 
 	@Test
+	public void bootFatJarOuterRootNotDuplicatedWithNestedRoot() throws Exception {
+		// update 2026-11-12 Boot fat-jar:LaunchedClassLoader提供嵌套根(此处模拟2.x/3.0的
+		// jar:file:/app.jar!/BOOT-INF/classes!/形态),父链可达系统加载器时java.class.path中的
+		// 外层app.jar不能再补为根,否则同一SQL以两种URL形态各命中一次,sqlId重复阻断启动
+		// (不用@TempDir:Windows下URLClassLoader/JarFile缓存持有jar句柄,测试后临时目录删不掉)
+		Path jarPath = Files.createTempFile("fat-app", ".jar");
+		try (OutputStream out = Files.newOutputStream(jarPath); JarOutputStream jarOut = new JarOutputStream(out)) {
+			// 标准jar handler要求"BOOT-INF/classes!/"entry真实存在才能解析嵌套根(真实Boot由专用handler提供)
+			jarOut.putNextEntry(new JarEntry("BOOT-INF/classes!/"));
+			jarOut.closeEntry();
+			jarOut.putNextEntry(new JarEntry("BOOT-INF/classes/demo/fat.sql.xml"));
+			jarOut.write(sqlXml("fat_jar_fixture", "select 1").getBytes(StandardCharsets.UTF_8));
+			jarOut.closeEntry();
+		}
+		String oldClassPath = System.getProperty("java.class.path");
+		ClassLoader origin = Thread.currentThread().getContextClassLoader();
+		try {
+			URL nestedRoot = new URL("jar:" + jarPath.toUri().toURL().toExternalForm() + "!/BOOT-INF/classes!/");
+			System.setProperty("java.class.path",
+					oldClassPath + System.getProperty("path.separator") + jarPath.toAbsolutePath());
+			Thread.currentThread().setContextClassLoader(
+					new URLClassLoader(new URL[] { nestedRoot }, ClassLoader.getSystemClassLoader()));
+			List resources = SqlResourceScanner.getSqlResources("classpath*:**/*.sql.xml", null);
+			int fatJarHits = 0;
+			for (Object resource : resources) {
+				if (String.valueOf(resource).contains(jarPath.getFileName().toString())) {
+					fatJarHits++;
+				}
+			}
+			assertEquals(1, fatJarHits, "fat-jar内同一SQL不能经嵌套根+外层根重复命中:" + resources);
+		} finally {
+			Thread.currentThread().setContextClassLoader(origin);
+			System.setProperty("java.class.path", oldClassPath);
+			try {
+				Files.deleteIfExists(jarPath);
+			} catch (Exception ignore) {
+				// Windows下jar句柄可能被加载器缓存持有,删除失败不影响测试结论
+			}
+		}
+	}
+
+	@Test
 	public void traditionalClasspathJarPrefixHasDirectoryBoundary(@TempDir Path tempDir) throws Exception {
 		Path jarPath = tempDir.resolve("boundary.jar");
 		writeJar(jarPath, new String[][] { { "com/app/sql/a.sql.xml", "boundary_inside", "select 1" },

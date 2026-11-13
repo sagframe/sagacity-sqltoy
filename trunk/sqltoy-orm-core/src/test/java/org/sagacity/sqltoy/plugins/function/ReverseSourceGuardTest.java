@@ -220,14 +220,17 @@ public class ReverseSourceGuardTest {
 
 	@Test
 	public void splitPartMysqlFamilySharesGuardedComposition() {
-		// mysql家族其余成员(doris/starrocks/OB/mysql57)与mysql同组合+段数守卫
+		// mysql家族其余成员(doris/starrocks/mysql57)与mysql同组合+段数守卫
+		// update 2026-11-12 OB移出mysql家族:框架约定dialect=oceanbase即Oracle模式,走instr组合
 		String sql = "select split_part('a,b,c,d,e',',',-2) from t";
-		for (String dialect : new String[] { "doris", "starrocks", "oceanbase", "mysql57" }) {
+		for (String dialect : new String[] { "doris", "starrocks", "mysql57" }) {
 			String out = c(sql, dialect);
 			assertTrue(out.contains("substring_index(substring_index('a,b,c,d,e',',',-2),',',1)"),
 					dialect + "负索引组合:" + out);
 			assertTrue(out.contains("then ''"), dialect + "越界守卫:" + out);
 		}
+		String ob = c(sql, "oceanbase");
+		assertTrue(ob.contains("instr("), "OB Oracle模式split_part应走instr组合:" + ob);
 	}
 
 	@Test
@@ -244,7 +247,9 @@ public class ReverseSourceGuardTest {
 		// 2000-01-03为周一锚点;1999-12-31(周五)差值为负,oracle的mod(-3,7)=-3须归一为4
 		assertEquals("select mod(mod(trunc(date '1999-12-31') - date '2000-01-03', 7) + 7, 7) from t",
 				c("select weekday(date '1999-12-31') from t", "oracle"));
-		assertEquals("select mod(mod(days('1999-12-31') - days('2000-01-03'), 7) + 7, 7) from t",
+		// update 2026-11-12 DB2字面量cast定型:week组合的'串'-N days日期算术要求显式date类型
+		// (裸串在days()/dayofweek()可用,但日期减法报SQLCODE=-182,真库v12实测)
+		assertEquals("select mod(mod(days(cast('1999-12-31' as date)) - days('2000-01-03'), 7) + 7, 7) from t",
 				c("select weekday('1999-12-31') from t", "db2"));
 		assertEquals("select ((datediff(day, '2000-01-03', '1999-12-31') % 7 + 7) % 7) from t",
 				c("select weekday('1999-12-31') from t", "sqlserver"));

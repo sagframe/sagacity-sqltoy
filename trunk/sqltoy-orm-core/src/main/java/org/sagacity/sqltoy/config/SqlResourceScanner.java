@@ -329,7 +329,7 @@ public class SqlResourceScanner {
 	 * @param url jar资源URL
 	 * @return 是否为嵌套jar(Spring Boot 3.0/3.1多个"!/"或3.2+的nested:协议);嵌套jar的JarFile由加载器缓存持有
 	 */
-	private static boolean isNestedJarUrl(URL url) {
+	static boolean isNestedJarUrl(URL url) {
 		String external = url.toExternalForm();
 		return external.contains("nested:") || external.indexOf("!/") != external.lastIndexOf("!/");
 	}
@@ -687,14 +687,55 @@ public class SqlResourceScanner {
 				}
 				for (File child : children) {
 					String name = child.getName().toLowerCase(Locale.ROOT);
-					if (name.endsWith(".jar") || name.endsWith(".zip")) {
+					if ((name.endsWith(".jar") || name.endsWith(".zip")) && !coveredByNestedRoot(roots, child)) {
 						addRootUrl(roots, rootKeys, toFileRootUrl(child));
 					}
 				}
 				continue;
 			}
-			addRootUrl(roots, rootKeys, toFileRootUrl(new File(entry)));
+			File entryFile = new File(entry);
+			// update 2026-11-12 Boot fat-jar的外层jar已被嵌套根覆盖时不再补外层根(见coveredByNestedRoot)
+			if (!entryFile.isDirectory() && coveredByNestedRoot(roots, entryFile)) {
+				continue;
+			}
+			addRootUrl(roots, rootKeys, toFileRootUrl(entryFile));
 		}
+	}
+
+	/**
+	 * update 2026-11-12 判断jar是否已被嵌套jar根覆盖(Spring Boot fat-jar):Boot的LaunchedClassLoader
+	 * 已提供jar:nested:/app.jar/!BOOT-INF/classes!/(3.2+)或jar:file:/app.jar!/BOOT-INF/classes!/
+	 * (2.x/3.0-3.1)形态的内层根,若再从java.class.path补外层app.jar根,同一SQL会以两种URL形态各命中
+	 * 一次(按URL字符串去重失效),breakWhenSqlRepeat默认true时判重复sqlId直接阻断启动
+	 *
+	 * @param roots   已收集的类路径根(含加载器层级提供的嵌套根)
+	 * @param jarFile java.class.path中的jar文件
+	 * @return true表示该jar的内容已经由嵌套根承载,不应再补外层根
+	 */
+	private static boolean coveredByNestedRoot(List<URL> roots, File jarFile) {
+		String fileUrl;
+		try {
+			fileUrl = jarFile.toURI().toURL().toExternalForm();
+		} catch (Exception e) {
+			return false;
+		}
+		// nested:协议形态(Boot 3.2+):jar:nested:/path/app.jar/!BOOT-INF/classes!/
+		String nestedPath = "nested:" + fileUrl.substring("file:".length()) + "/";
+		for (URL root : roots) {
+			if (!isNestedJarUrl(root)) {
+				continue;
+			}
+			String external = root.toExternalForm();
+			// update 2026-11-12 评审R4:仅classes内层根才代表外层jar内容已被完整承载;
+			// 若加载器只暴露BOOT-INF/lib/*嵌套根,外层根仍须保留以发现BOOT-INF/classes资源
+			if (!external.contains("classes!/")) {
+				continue;
+			}
+			if (external.contains(fileUrl + "!/") || external.contains(nestedPath)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

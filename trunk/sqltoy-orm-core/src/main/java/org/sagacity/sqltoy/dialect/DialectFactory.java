@@ -1171,6 +1171,11 @@ public class DialectFactory {
 		queryResult.setPageNo(pageNo);
 		queryResult.setPageSize(pageSize);
 		Executor taskExecutor = sqlToyContext.getTaskExecutor();
+		// update 2026-11-12 count的SQL准备(参数求值+租户/权限拦截器)在调用线程完成:应用租户上下文
+		// 通常是普通ThreadLocal,TTL executor也只传播TransmittableThreadLocal,工作线程构建count SQL
+		// 会丢租户过滤——count值本身失真,还会登记进含租户key的缓存造成跨租户串用。
+		// 工作线程只执行 prepared SQL 的JDBC查询
+		final PreparedCountSql preparedCount = prepareCountSql(sqlToyContext, sqlToyConfig, queryExecutor, profile);
 		try {
 			// 查询总记录数量
 			CompletableFuture countCompletableFuture = CompletableFuture.runAsync(() -> {
@@ -1181,8 +1186,9 @@ public class DialectFactory {
 					DataSourceUtils.processDataSource(sqlToyContext, dataSource, new DataSourceCallbackHandler() {
 						@Override
 						public void doConnection(Connection countConn, DBProfile profile) throws Exception {
-							queryResult.setRecordCount(
-									getCountBySql(sqlToyContext, sqlToyConfig, queryExecutor, countConn, profile));
+							queryResult.setRecordCount(getDialectSqlWrapper(profile.getDbType()).getCountBySql(
+									sqlToyContext, sqlToyConfig, preparedCount.sql, preparedCount.paramsValue,
+									preparedCount.isLastSql, queryExecutor.getInnerModel(), countConn, profile));
 						}
 					});
 					SqlExecuteStat.debug("parallel count query cost time",
@@ -1442,16 +1448,18 @@ public class DialectFactory {
 	}
 
 	/**
+	 * update 2026-11-12 count SQL准备(选countSql/union-all-count改写+参数求值+拦截器),
+	 * 与JDBC执行分离:并行分页时本方法在调用线程执行,保住ThreadLocal租户/权限上下文
+	 *
 	 * @param sqlToyContext
 	 * @param sqlToyConfig
 	 * @param queryExecutor
-	 * @param conn
 	 * @param profile       连接维度的数据库特征档案
-	 * @return
-	 * @throws Exception 获取记录总数
+	 * @return 准备好的count SQL与参数
+	 * @throws Exception
 	 */
-	private Long getCountBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
-			final QueryExecutor queryExecutor, final Connection conn, DBProfile profile) throws Exception {
+	private PreparedCountSql prepareCountSql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
+			final QueryExecutor queryExecutor, DBProfile profile) throws Exception {
 		Integer dbType = profile.getDbType();
 		String dialect = profile.getDialect();
 		String sql;
@@ -1558,8 +1566,30 @@ public class DialectFactory {
 		queryParam = DialectUtils.doInterceptors(sqlToyContext, sqlToyConfig,
 				(extend.entityClass == null) ? OperateType.count : OperateType.singleTable, queryParam,
 				extend.entityClass, profile);
-		return getDialectSqlWrapper(dbType).getCountBySql(sqlToyContext, sqlToyConfig, queryParam.getSql(),
-				queryParam.getParamsValue(), isLastSql, extend, conn, profile);
+		return new PreparedCountSql(queryParam.getSql(), queryParam.getParamsValue(), isLastSql);
+	}
+
+	/**
+	 * update 2026-11-12 count SQL准备结果:参数求值与租户/权限等拦截器必须在调用线程完成
+	 * (应用上下文通常是普通ThreadLocal,并行工作线程取不到),工作线程只拿准备好的SQL和参数做JDBC执行
+	 */
+	private static final class PreparedCountSql {
+		private final String sql;
+		private final Object[] paramsValue;
+		private final boolean isLastSql;
+
+		private PreparedCountSql(String sql, Object[] paramsValue, boolean isLastSql) {
+			this.sql = sql;
+			this.paramsValue = paramsValue;
+			this.isLastSql = isLastSql;
+		}
+	}
+
+	private Long getCountBySql(final SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig,
+			final QueryExecutor queryExecutor, final Connection conn, DBProfile profile) throws Exception {
+		PreparedCountSql prepared = prepareCountSql(sqlToyContext, sqlToyConfig, queryExecutor, profile);
+		return getDialectSqlWrapper(profile.getDbType()).getCountBySql(sqlToyContext, sqlToyConfig, prepared.sql,
+				prepared.paramsValue, prepared.isLastSql, queryExecutor.getInnerModel(), conn, profile);
 	}
 
 	// mysql、postgresql、sqlite等类似的on duplicate key update

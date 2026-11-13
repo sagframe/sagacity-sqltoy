@@ -47,9 +47,11 @@ public class PageOptimizeUtils {
 	static final int NAMESPACE_MAX_SIZE = 1024;
 	// 命名空间LRU访问序号:单调递增,避免依赖毫秒时钟(同毫秒内多次访问时淘汰顺序不确定)
 	private static final AtomicLong ACCESS_SEQ = new AtomicLong();
-	// 数据源维度的会话身份(账号/schema/catalog):按数据源弱引用缓存,避免每次分页都读连接元数据;
-	// 弱引用保证动态数据源可回收(与命名空间弱引用同一动因)
-	private static final Map<Object, String> SESSION_IDENTITY_CACHE = Collections
+	// 数据源维度的会话账号:按数据源弱引用缓存(同一池内账号恒定),避免每次分页读元数据;
+	// 弱引用保证动态数据源可回收(与命名空间弱引用同一动因)。
+	// update 2026-11-12 schema/catalog不再缓存:同一连接池经setSchema()/setCatalog()切换多租户时,
+	// 缓存首次会话会把身份钉死,不同schema共用count缓存(租户串用);账号读取失败也不缓存
+	private static final Map<Object, String> SESSION_USER_CACHE = Collections
 			.synchronizedMap(new WeakHashMap<Object, String>());
 
 	/**
@@ -399,7 +401,8 @@ public class PageOptimizeUtils {
 	/**
 	 * 构造分页count缓存用的稳定数据源身份:url+账号/schema/catalog。
 	 * <p>
-	 * url已由DBProfile按连接档案缓存;账号/schema/catalog按数据源弱引用缓存(同一池内恒定),避免每次分页读元数据。
+	 * url已由DBProfile按连接档案缓存;账号按数据源弱引用缓存(同一池内恒定);schema/catalog每次从当前
+	 * 连接读取(同一池setSchema/setCatalog切换多租户时身份随会话变化,不串用count缓存)。
 	 * 同一库重建连接池可复用缓存,命名空间数量随真实"库端点×会话"收敛;url不可用(非JDBC/无档案)时返回null,
 	 * 调用侧回退数据源对象身份。
 	 * </p>
@@ -420,41 +423,43 @@ public class PageOptimizeUtils {
 		if (conn == null) {
 			return "";
 		}
-		if (dataSource == null) {
-			return readSessionIdentity(conn);
-		}
-		synchronized (SESSION_IDENTITY_CACHE) {
-			String cached = SESSION_IDENTITY_CACHE.get(dataSource);
-			if (cached == null) {
-				cached = readSessionIdentity(conn);
-				SESSION_IDENTITY_CACHE.put(dataSource, cached);
-			}
-			return cached;
-		}
-	}
-
-	/**
-	 * 读取连接级会话身份:账号+默认schema+catalog。驱动不支持getSchema/getCatalog时对应位留空,
-	 * 不因元数据异常影响分页
-	 */
-	private static String readSessionIdentity(Connection conn) {
-		String userName = null;
+		// update 2026-11-12 schema/catalog每次从当前连接读取(多租户schema切换场景身份必须随会话变化);
+		// 仅账号按数据源缓存,读取失败不缓存,避免瞬时元数据异常把空身份永久钉死
+		String userName = (dataSource == null) ? readUserName(conn) : cachedUserName(dataSource, conn);
 		String schema = null;
 		String catalog = null;
-		try {
-			userName = conn.getMetaData().getUserName();
-		} catch (Exception ignore) {
-		}
+		// update 2026-11-12 评审R4:catch Throwable——老驱动未实现JDBC4.1的getSchema/getCatalog
+		// 时抛AbstractMethodError(Error非Exception),元数据读取失败不得影响分页
 		try {
 			schema = conn.getSchema();
-		} catch (Exception ignore) {
+		} catch (Throwable ignore) {
 		}
 		try {
 			catalog = conn.getCatalog();
-		} catch (Exception ignore) {
+		} catch (Throwable ignore) {
 		}
 		return (userName == null ? "" : userName) + '\u0001' + (schema == null ? "" : schema) + '\u0001'
 				+ (catalog == null ? "" : catalog);
+	}
+
+	private static String cachedUserName(DataSource dataSource, Connection conn) {
+		String cached = SESSION_USER_CACHE.get(dataSource);
+		if (cached != null) {
+			return cached;
+		}
+		String userName = readUserName(conn);
+		if (userName != null && !userName.isEmpty()) {
+			SESSION_USER_CACHE.put(dataSource, userName);
+		}
+		return userName;
+	}
+
+	private static String readUserName(Connection conn) {
+		try {
+			return conn.getMetaData().getUserName();
+		} catch (Throwable ignore) {
+			return null;
+		}
 	}
 
 	private static CacheNamespace buildNamespace(SqlToyConfig sqlToyConfig, String dialect, SqlToyContext sqlToyContext,

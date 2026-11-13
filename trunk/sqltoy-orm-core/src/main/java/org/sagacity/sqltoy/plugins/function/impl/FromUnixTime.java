@@ -14,7 +14,8 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  *              TIMEZONE偏移)秒; H2在UTC基准加时后按会话时区转本地墙钟(目标日期DST感知);sqlite
  *              datetime(n,'unixepoch','localtime');Oracle先标UTC再 at time zone
  *              sessiontimezone按目标日期应用DST呈现;HANA add_seconds+当前偏移(固定偏移口径,真库实测);
- *              OB/CH(MySQL兼容)透传。
+ *              OB按框架约定为Oracle模式,归Oracle系转换;CH转fromUnixTimestamp。
+ *              单参to_timestamp(列/占位符)在oracle/db2/dm/OB为原生文本解析,透传不转epoch。
  *              带fmt格式参数的形态仅MySQL系/DM原生(跨库需格式串方言转换,组合复杂,其余方言响亮)。
  * @author zhongxuchen
  * @version v1.0,Date:2026-11-10
@@ -54,6 +55,18 @@ public class FromUnixTime extends IFunction {
 		if (pgEpochSrc && isQuotedNonNumeric(n)) {
 			return super.IGNORE;
 		}
+		// update 2026-11-12 单参to_timestamp(列/占位符)在oracle/dm/OB(Oracle模式)是原生文本
+		// 解析写法(6.0.9原生透传),按epoch转换会ORA-01722/静默NULL:透传由原生裁决,
+		// 与双参形态的原生保护(ToDate)口径对齐。
+		// DB2不在此列:真库v12.1.5实测单参to_timestamp对ISO/FF等常见格式一律SQLCODE=-20448,
+		// 原生单参解析实际不可用,保留epoch转换(数值epoch列可用,文本列响亮类型错)。
+		// update 2026-11-12 评审R2:数值字面量(含引号数值)epoch意图明确,仍按epoch转换,
+		// 只有列/占位符/非数值形态才透传——避免to_timestamp(1794362400)在Oracle报ORA-00932
+		if (pgEpochSrc && (dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DM
+				|| dialect == DBType.OCEANBASE)
+				&& !n.matches("[-+]?[0-9]+(\\.[0-9]+)?") && !n.matches("'[-+]?[0-9]+(\\.[0-9]+)?'")) {
+			return super.IGNORE;
+		}
 		// 带fmt格式参数:仅MySQL系/DM原生(其余方言需格式串转换,响亮)
 		// update 2026-11-11 DM归原生:dm8的from_unixtime原生支持MySQL风格fmt(真库实测
 		// from_unixtime(1794362400,'%Y-%m-%d %H:%i')='2026-11-11 10:00')
@@ -64,11 +77,13 @@ public class FromUnixTime extends IFunction {
 			}
 			return super.IGNORE;
 		}
-		// MySQL系/OB/DM原生(from_unixtime源);PG的to_timestamp源在此须转为from_unixtime
+		// MySQL系/DM原生(from_unixtime源);PG的to_timestamp源在此须转为from_unixtime
 		// update 2026-11-11 DM归原生:dm8自带from_unixtime且会话时区感知正确(真库实测
 		// from_unixtime(1794362400)='2026-11-11 10:00:00',即+08墙钟呈现)
+		// update 2026-11-12 OB移出:框架约定dialect=oceanbase即Oracle模式租户(与DateDiff/GroupConcat
+		// 一致),MySQL模式应配dialect=mysql;OB Oracle模式无from_unixtime,走下方Oracle系转换
 		if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57 || dialect == DBType.TIDB || dialect == DBType.DORIS
-				|| dialect == DBType.STARROCKS || dialect == DBType.OCEANBASE || dialect == DBType.DM) {
+				|| dialect == DBType.STARROCKS || dialect == DBType.DM) {
 			return pgEpochSrc ? "from_unixtime(" + n + ")" : super.IGNORE;
 		}
 		// update 2026-11-10 CH修正:无from_unixtime(真库同族问题),转CH原生fromUnixTimestamp(仅无fmt形态)
@@ -107,8 +122,9 @@ public class FromUnixTime extends IFunction {
 			return "timestamp(timestamp('1970-01-01 00:00:00') + (" + n + " + " + tzOffset + ") seconds)";
 		}
 		// Oracle先将epoch基准标注为UTC,再按会话命名时区呈现;AT TIME ZONE按目标时刻计算DST偏移
-		// (update 2026-11-11 真库Oracle23实测放开;DM归原生透传,见上方原生分支注释)
-		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11) {
+		// (update 2026-11-11 真库Oracle23实测放开;DM归原生透传,见上方原生分支注释;
+		// update 2026-11-12 OB Oracle模式归入本分支)
+		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.OCEANBASE) {
 			return "cast(from_tz(timestamp '1970-01-01 00:00:00' + numtodsinterval(" + n
 					+ ", 'SECOND'), 'UTC') at time zone sessiontimezone as timestamp)";
 		}

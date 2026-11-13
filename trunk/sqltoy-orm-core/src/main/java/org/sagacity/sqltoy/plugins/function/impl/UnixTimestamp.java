@@ -38,12 +38,14 @@ public class UnixTimestamp extends IFunction {
 	public String wrap(int dialect, String functionName, boolean hasArgs, String... args) {
 		// 无参:当前时间戳;有参:取首参(ts表达式)
 		boolean hasTs = args != null && args.length > 0 && !args[0].trim().isEmpty();
-		// MySQL系/OB(MySQL模式)原生
+		// MySQL系/DM原生
 		// update 2026-11-11 DM归原生透传:dm8自带unix_timestamp且语义与MySQL一致(真库实测
 		// unix_timestamp('2026-11-11 10:00:00')=1794362400,即+08墙钟的绝对epoch;无参取当前时刻),
 		// 此前"dm墙钟差偏8小时"的实测是组合公式的问题,原生函数本身时区感知正确
+		// update 2026-11-12 OB移出:框架约定dialect=oceanbase即Oracle模式租户(与DateDiff/GroupConcat
+		// 一致),MySQL模式应配dialect=mysql;OB Oracle模式无unix_timestamp,走下方Oracle系转换
 		if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57 || dialect == DBType.TIDB || dialect == DBType.DORIS
-				|| dialect == DBType.STARROCKS || dialect == DBType.OCEANBASE || dialect == DBType.DM) {
+				|| dialect == DBType.STARROCKS || dialect == DBType.DM) {
 			return super.IGNORE;
 		}
 		// update 2026-11-10
@@ -103,7 +105,8 @@ public class UnixTimestamp extends IFunction {
 		}
 		// Oracle通过会话命名时区完成epoch映射;字面量入参仍IGNORE(受NLS_DATE_FORMAT影响),
 		// 不做格式猜测,响亮交由用户改为列/参数或to_date
-		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11) {
+		// update 2026-11-12 OB Oracle模式归入本分支
+		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.OCEANBASE) {
 			if (hasTs && Truncate.isQuotedLiteral(args[0].trim())) {
 				return super.IGNORE;
 			}

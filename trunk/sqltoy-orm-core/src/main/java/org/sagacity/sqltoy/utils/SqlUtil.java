@@ -123,7 +123,11 @@ public class SqlUtil {
 	// union 匹配模式
 	public static final Pattern UNION_PATTERN = Pattern.compile("(?i)\\W+union\\W+");
 	// 集合运算匹配模式:union/intersect/except/minus(分页派生表包裹判定,与 UNION_PATTERN 同风格)
-	public static final Pattern SET_OPERATION_PATTERN = Pattern.compile("(?i)\\W+(union|intersect|except|minus)\\W+");
+	// update 2026-11-12 排除函数调用形态:minus(a,b)是ClickHouse常用算术函数,关键字后紧跟"("且
+	// 括号内非select时按函数处理不命中(否则CH分页误包派生表,内层重复列名报Duplicate column name);
+	// except(select ...)等关键字紧贴括号的集合运算写法仍正常命中
+	public static final Pattern SET_OPERATION_PATTERN = Pattern
+			.compile("(?i)\\W+(union|intersect|except|minus)(?!\\s*\\((?!\\s*select))\\W+");
 	public final static String BLANK = " ";
 	// 为了便于sql调试(@fast不方便调试)利用/*@fast_start*/代替@fast标记位置
 	private final static String[] FAST_START_REGEXS = { "(?i)\\-{2}\\s+\\@fast\\_start",

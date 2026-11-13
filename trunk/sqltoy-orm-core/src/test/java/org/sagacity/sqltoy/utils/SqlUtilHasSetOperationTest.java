@@ -41,6 +41,25 @@ public class SqlUtilHasSetOperationTest {
 	}
 
 	@Test
+	public void setKeywordFunctionFormNotDetected() {
+		// update 2026-11-12 minus(a,b)是ClickHouse算术函数,不是集合运算:
+		// 误命中会让CH分页误包派生表,内层重复列名(t1.id,t2.id)报Duplicate column name
+		assertFalse(SqlUtil.hasSetOperation("select t1.id,t2.id from t where minus(a,b)>0", true),
+				"minus()函数不命中");
+		assertFalse(SqlUtil.hasSetOperation("select minus(a,b) diff from t", true), "select列中的minus()");
+		assertFalse(SqlUtil.hasSetOperation("select id from t where t.minus(a,b)>0", true), "限定名minus()");
+		assertFalse(SqlUtil.hasSetOperation("select id from t where minus (a,b)>0", true), "minus与括号间有空格");
+		assertFalse(SqlUtil.hasSetOperation("select id from t where name = 'a minus b'", true),
+				"字面量内minus不命中");
+		// 关键字紧贴括号但内容是select的集合运算写法仍命中
+		assertTrue(SqlUtil.hasSetOperation("select id from t1 minus(select id from t2)", true), "minus(select");
+		assertTrue(SqlUtil.hasSetOperation("select id from t1 minus (select id from t2)", true), "minus (select");
+		// 函数与真实集合运算并存时仍命中
+		assertTrue(SqlUtil.hasSetOperation("select minus(a,b) d from t union select id from t2", true),
+				"函数+真实union");
+	}
+
+	@Test
 	public void literalSetKeywordNotDetected() {
 		// 字面量内的except不触发(掩码口径,与hasUnion一致)
 		assertFalse(SqlUtil.hasSetOperation("select id from t1 where name = 'a except b'", true));

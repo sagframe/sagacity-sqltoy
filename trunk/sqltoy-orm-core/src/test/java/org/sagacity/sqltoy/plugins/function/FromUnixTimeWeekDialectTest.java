@@ -32,7 +32,63 @@ public class FromUnixTimeWeekDialectTest {
 		String sql = "select from_unixtime(ts_col) from t";
 		assertEquals(sql, c(sql, "mysql"));
 		assertEquals(sql, c(sql, "tidb"));
-		assertEquals(sql, c(sql, "oceanbase"));
+		// update 2026-11-12 OB归Oracle系(框架约定dialect=oceanbase即Oracle模式,与DateDiff一致):
+		// Oracle模式无from_unixtime,转from_tz+sessiontimezone组合;MySQL模式应配dialect=mysql
+		assertTrue(c(sql, "oceanbase").contains("at time zone sessiontimezone"),
+				"OB Oracle模式应走Oracle系epoch转换");
+	}
+
+	@Test
+	public void singleArgToTimestampNativeParsePassthrough() {
+		// update 2026-11-12 单参to_timestamp(列/占位符)在oracle/dm/OB是原生文本解析写法
+		// (6.0.9原生透传),不能按PG epoch语义转换(ORA-01722/静默NULL)
+		String colSql = "select to_timestamp(create_time) from t";
+		assertEquals(colSql, c(colSql, "oracle"));
+		assertEquals(colSql, c(colSql, "oracle11"));
+		assertEquals(colSql, c(colSql, "dm"));
+		assertEquals(colSql, c(colSql, "oceanbase"));
+		String paramSql = "select to_timestamp(:ts) from t";
+		assertEquals(paramSql, c(paramSql, "oracle"));
+		// update 2026-11-12 评审R2:数值字面量epoch意图明确,Oracle/DM/OB仍按epoch转换
+		// (列/占位符才透传),避免to_timestamp(1794362400)在Oracle报ORA-00932
+		String epochSql = "select to_timestamp(1794314096) from t";
+		assertTrue(c(epochSql, "oracle").contains("numtodsinterval"), "oracle数值epoch应转换");
+		assertEquals("select from_unixtime(1794314096) from t", c(epochSql, "dm"), "dm数值epoch转from_unixtime");
+		assertTrue(c(epochSql, "oceanbase").contains("numtodsinterval"), "OB数值epoch应走Oracle转换");
+		assertTrue(c("select to_timestamp('1794314096') from t", "oracle").contains("numtodsinterval"),
+				"引号数值epoch应转换");
+		// DB2单参原生解析真库v12实测不可用(常见格式一律-20448),保留epoch转换
+		assertTrue(c(colSql, "db2").contains("1970-01-01"), "db2应保留epoch转换");
+		// epoch数值入参在mysql/pg系仍正常转换(不受影响)
+		assertEquals("select from_unixtime(1794314096) from t", c("select to_timestamp(1794314096) from t", "mysql"));
+		assertEquals("select to_timestamp(1794314096) from t", c("select to_timestamp(1794314096) from t", "postgresql"));
+	}
+
+	@Test
+	public void weekOracleLiteralShapedAgainstNls() {
+		// update 2026-11-12 Oracle/DM/OB字面量入参包to_date定型:默认NLS_DATE_FORMAT(DD-MON-RR)
+		// 下trunc('2026-11-11')报ORA-01861,与DateDiff/Extract口径对齐
+		assertTrue(c("select week('2026-11-11') from t", "oracle").contains("to_date('2026-11-11','yyyy-MM-dd')"),
+				"oracle week字面量应定型");
+		assertTrue(c("select weekday('2026-11-11') from t", "dm").contains("to_date('2026-11-11','yyyy-MM-dd')"),
+				"dm weekday字面量应定型");
+		assertTrue(c("select dayofweek('2026-11-11 10:00:00') from t", "oceanbase")
+				.contains("to_date('2026-11-11 10:00:00','yyyy-MM-dd hh24:mi:ss')"), "OB dayofweek字面量应定型");
+		// 列形态不受影响
+		assertTrue(c("select weekday(ts) from t", "oracle").contains("trunc(ts)"), "列形态保持原样");
+		// update 2026-11-12 DB2裸串字面量报SQLCODE=-182(真库实测),cast定型
+		assertTrue(c("select weekday('2026-11-11') from t", "db2").contains("cast('2026-11-11' as date)"),
+				"db2 weekday字面量应cast定型");
+		assertTrue(c("select week('2026-11-11 10:00:00') from t", "db2").contains("cast('2026-11-11 10:00:00' as timestamp)"),
+				"db2日期时间字面量应cast为timestamp");
+	}
+
+	@Test
+	public void weekOceanbaseOracleModeComposition() {
+		// update 2026-11-12 OB Oracle模式无week/weekday/dayofweek,走Oracle系锚点组合
+		assertTrue(c("select weekday(ts) from t", "oceanbase").contains("mod(mod(trunc(ts) - date '2000-01-03'"),
+				"OB weekday应走Oracle组合");
+		assertTrue(c("select week(ts) from t", "oceanbase").contains("trunc(ts,'yyyy')"), "OB week应走Oracle年锚");
 	}
 
 	@Test

@@ -346,13 +346,35 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	 * @description 递归标记:cteQuery自身是anchor,union拼接的成员及其嵌套组合全部标记为递归成员;
 	 *              被标记成员收集进markedMembers,由composeSql在渲染结束后按作用域复位(避免脏标记残留)
 	 */
-	private void markRecursiveMembers(LambdaQuery<?> cteQuery, List<LambdaQuery<?>> markedMembers) {
+	private void markRecursiveMembers(LambdaQuery<?> cteQuery, List<LambdaQuery<?>> markedMembers,
+			List<Boolean> previousRecursiveFlags) {
 		for (Object[] u : cteQuery.unions) {
-			LambdaQuery<?> member = (LambdaQuery<?>) u[1];
-			member.joinContext.markRecursiveMember();
-			markedMembers.add(member);
-			if (member.composed) {
-				markRecursiveMembers(member, markedMembers);
+			markRecursiveMemberTree((LambdaQuery<?>) u[1], markedMembers, previousRecursiveFlags);
+		}
+	}
+
+	/**
+	 * update 2026-11-12 递归成员及其嵌套组合的标记树:成员自身的CTE/@fast内层同样属于递归成员
+	 * SQL(DB2同样禁显式JOIN,原实现只遍历unions漏标嵌套场景报SQLCODE=-345);
+	 * 标记前记录旧状态供栈式恢复;身份去重防共享成员重复记录与循环引用
+	 */
+	private void markRecursiveMemberTree(LambdaQuery<?> member, List<LambdaQuery<?>> markedMembers,
+			List<Boolean> previousRecursiveFlags) {
+		if (markedMembers.contains(member)) {
+			return;
+		}
+		previousRecursiveFlags.add(member.joinContext.isRecursiveMember());
+		member.joinContext.markRecursiveMember();
+		markedMembers.add(member);
+		for (CteDef cte : member.ctes) {
+			markRecursiveMemberTree(cte.query, markedMembers, previousRecursiveFlags);
+		}
+		if (member.fastInner != null) {
+			markRecursiveMemberTree(member.fastInner, markedMembers, previousRecursiveFlags);
+		}
+		if (member.composed) {
+			for (Object[] u : member.unions) {
+				markRecursiveMemberTree((LambdaQuery<?>) u[1], markedMembers, previousRecursiveFlags);
 			}
 		}
 	}
@@ -481,33 +503,51 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		// DISTINCT/RECURSIVE关键字)会静默失配,故由外层下发;但成员实例可能被复用(独立执行、换
 		// dataSource、被另一库的组合再次渲染),长期留在实例上的旧库类型会压过成员自身的dao/dataSource
 		// 解析,因此渲染结束必须归还(见finally)
+		// update 2026-11-12 栈式保存/恢复:成员可能同时被外层union与内层CTE共享引用,内层渲染
+		// 结束须恢复外层已下发的值(而非无条件置null),否则外层随后渲染该成员回落-1方言失配
 		List<LambdaQuery<?>> propagatedMembers = new ArrayList<>(2);
+		List<Integer> previousDbTypes = new ArrayList<>(2);
 		if (dbType >= 0) {
+			// update 2026-11-12 评审R4:同一实例同层同时出现在ctes与unions时按身份去重,
+			// 否则previousDbTypes记录到中间态,正向恢复会残留最后一次下发的dbType
 			for (CteDef cte : ctes) {
-				cte.query.propagateDbType(dbType);
-				propagatedMembers.add(cte.query);
+				if (!propagatedMembers.contains(cte.query)) {
+					propagatedMembers.add(cte.query);
+					previousDbTypes.add(cte.query.propagatedDbType);
+					cte.query.propagateDbType(dbType);
+				}
 			}
 			for (Object[] u : unions) {
 				LambdaQuery<?> member = (LambdaQuery<?>) u[1];
-				member.propagateDbType(dbType);
-				propagatedMembers.add(member);
+				if (!propagatedMembers.contains(member)) {
+					propagatedMembers.add(member);
+					previousDbTypes.add(member.propagatedDbType);
+					member.propagateDbType(dbType);
+				}
 			}
-			if (fastInner != null) {
-				fastInner.propagateDbType(dbType);
+			if (fastInner != null && !propagatedMembers.contains(fastInner)) {
 				propagatedMembers.add(fastInner);
+				previousDbTypes.add(fastInner.propagatedDbType);
+				fastInner.propagateDbType(dbType);
 			}
 		}
 		List<LambdaQuery<?>> recursiveMarkedMembers = new ArrayList<>(2);
+		List<Boolean> previousRecursiveFlags = new ArrayList<>(2);
 		try {
-			return composeSqlBody(dbType, recursiveMarkedMembers);
+			return composeSqlBody(dbType, recursiveMarkedMembers, previousRecursiveFlags);
 		} finally {
 			for (int i = 0, n = propagatedMembers.size(); i < n; i++) {
-				propagatedMembers.get(i).propagatedDbType = null;
+				propagatedMembers.get(i).propagatedDbType = previousDbTypes.get(i);
 			}
 			// 递归成员标记与dbType下发同为渲染作用域:成员可能被复用为独立DB2外连接查询,
-			// 残留的recursiveMember会误触隐式JOIN守卫(外连接抛错/内连接静默改逗号连接),故渲染结束复位
+			// 残留的recursiveMember会误触隐式JOIN守卫(外连接抛错/内连接静默改逗号连接),故渲染结束复位;
+			// 共享成员被内层标记时恢复外层标记前的状态(栈式),不能无条件清除外层已下发的标记
 			for (int i = 0, n = recursiveMarkedMembers.size(); i < n; i++) {
-				recursiveMarkedMembers.get(i).joinContext.clearRecursiveMember();
+				if (previousRecursiveFlags.get(i)) {
+					recursiveMarkedMembers.get(i).joinContext.markRecursiveMember();
+				} else {
+					recursiveMarkedMembers.get(i).joinContext.clearRecursiveMember();
+				}
 			}
 		}
 	}
@@ -517,7 +557,8 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	 * @param dbType 本次渲染使用的执行库类型
 	 * @param recursiveMarkedMembers 收集本次渲染标记的递归成员,供composeSql在finally按作用域复位
 	 */
-	private String composeSqlBody(int dbType, List<LambdaQuery<?>> recursiveMarkedMembers) {
+	private String composeSqlBody(int dbType, List<LambdaQuery<?>> recursiveMarkedMembers,
+			List<Boolean> previousRecursiveFlags) {
 		// @fast内层SQL在下发作用域内惰性渲染:此时fastInner.propagatedDbType已由外层置好,
 		// 未bind内层据外层执行库类型渲染方言分支(DB2递归成员隐式JOIN/CH UNION DISTINCT/RECURSIVE关键字)
 		if (fastInner != null) {
@@ -543,7 +584,7 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 				// update 2026-11-10 渲染时动态标记递归成员(markRecursiveMember幂等):
 				// 覆盖withRecursive调用之后追加的union成员,否则DB2隐式JOIN改写漏标
 				if (cte.recursive) {
-					markRecursiveMembers(cte.query, recursiveMarkedMembers);
+					markRecursiveMembers(cte.query, recursiveMarkedMembers, previousRecursiveFlags);
 				}
 				sb.append(cte.name);
 				// 递归CTE列清单(H2等强制):WITH RECURSIVE t(a,b) AS

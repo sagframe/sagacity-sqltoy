@@ -49,6 +49,19 @@ public class Week extends IFunction {
 		if (isPgFamily(dialect)) {
 			d = FunctionUtils.castLiteralTimestamp(d);
 		}
+		// update 2026-11-12 Oracle系(含OB Oracle模式)字面量入参显式定型:trunc('2026-11-11')在
+		// 默认NLS_DATE_FORMAT(DD-MON-RR)下报ORA-01861,与DateDiff/Extract的oracleDateLiteralExpr
+		// 口径对齐(仅对单引号字面量生效,列/参数形态不受影响)
+		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DM
+				|| dialect == DBType.OCEANBASE) {
+			d = FunctionUtils.oracleDateLiteralExpr(d);
+		}
+		// update 2026-11-12 DB2字面量入参显式定型:days('2026-11-10')/dayofweek('...')对裸串
+		// 报SQLCODE=-182(真库v12.1.5实测),cast为date/timestamp后可用(仅单引号字面量生效)
+		if (dialect == DBType.DB2 && d.length() > 2 && d.charAt(0) == '\'' && d.endsWith("'")
+				&& d.indexOf('\'', 1) == d.length() - 1) {
+			d = "cast(" + d + (d.length() > 12 ? " as timestamp)" : " as date)");
+		}
 		// update 2026-11-10 ClickHouse 从 mysqlFamily 移出:CH 无 weekday 函数(真库
 		// UNKNOWN_FUNCTION),
 		// 且 dayOfWeek 为 ISO 周一=1..周日=7,与 MySQL 的 ODBC 周日=1..周六=7 语义相反,不能透传。
@@ -65,8 +78,10 @@ public class Week extends IFunction {
 			// week(d) 单参原生正确;week(d,mode) 两参模式语义不同,均透传
 			return super.IGNORE;
 		}
+		// update 2026-11-12 OB移出mysqlFamily:框架约定dialect=oceanbase即Oracle模式租户
+		// (与DateDiff/GroupConcat一致),Oracle模式无week/weekday/dayofweek,走下方Oracle系组合
 		boolean mysqlFamily = dialect == DBType.MYSQL || dialect == DBType.MYSQL57 || dialect == DBType.TIDB
-				|| dialect == DBType.DORIS || dialect == DBType.STARROCKS || dialect == DBType.OCEANBASE;
+				|| dialect == DBType.DORIS || dialect == DBType.STARROCKS;
 		if (mysqlFamily) {
 			return super.IGNORE;
 		}
@@ -96,7 +111,8 @@ public class Week extends IFunction {
 		// 2000-01-03为周一:日期差取模
 		// update 2026-11-10 oracle/dm/db2/sqlserver的取模对负被除数返回负数(2000-01-03之前的日期
 		// 差值为负,weekday会得到负值),统一补mod(mod(x,7)+7,7)/((x%7+7)%7)归一到0-6
-		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DM) {
+		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DM
+				|| dialect == DBType.OCEANBASE) {
 			return "mod(mod(trunc(" + d + ") - date '2000-01-03', 7) + 7, 7)";
 		}
 		if (dialect == DBType.DB2) {
@@ -135,7 +151,8 @@ public class Week extends IFunction {
 		if (dialect == DBType.DB2 || dialect == DBType.H2) {
 			return super.IGNORE;
 		}
-		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DM) {
+		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DM
+				|| dialect == DBType.OCEANBASE) {
 			// update 2026-11-10 负被除数归一(同weekday):2000-01-02之前日期差为负
 			return "mod(mod(trunc(" + d + ") - date '2000-01-02', 7) + 7, 7) + 1";
 		}
@@ -163,7 +180,8 @@ public class Week extends IFunction {
 	 */
 	private String wrapWeek(int dialect, String d) {
 		// Oracle系:jan1=trunc(d,'yyyy');dow0(x)=mod(x-date'2000-01-02',7)(0=周日)
-		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DM) {
+		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DM
+				|| dialect == DBType.OCEANBASE) {
 			String jan1 = "trunc(" + d + ",'yyyy')";
 			String firstSunday = jan1 + " + mod(7 - mod(" + jan1 + " - date '2000-01-02', 7), 7)";
 			return "(case when trunc(" + d + ") < " + firstSunday + " then 0 else floor((trunc(" + d + ") - ("

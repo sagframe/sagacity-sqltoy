@@ -414,6 +414,10 @@ public class CommonFuncDialectTest {
 				c("select date_trunc('month', create_time) from t", "oracle"));
 		assertEquals("select TRUNC(create_time,'Q') from t",
 				c("select date_trunc('quarter', create_time) from t", "dm"));
+		// update 2026-11-12 OB归Oracle系:trunc原生透传,date_trunc源转TRUNC码形态
+		assertEquals("select trunc(create_time,'MM') from t", c("select trunc(create_time,'MM') from t", "oceanbase"));
+		assertEquals("select TRUNC(create_time,'MM') from t",
+				c("select date_trunc('month', create_time) from t", "oceanbase"));
 		assertEquals("select date_trunc('month',create_time) from t",
 				c("select trunc(create_time,'MM') from t", "postgresql"));
 		// mysql系/mysql语法族:组合形态

@@ -47,12 +47,15 @@ public class SubstringIndex extends IFunction {
 		// MySQL系与CH(MySQL兼容函数)原生
 		// (update 2026-11-11 真库实测CH的substring_index:负count/0/超界语义与MySQL一致,
 		// 但分隔符仅接受单字符,多字符报BAD_ARGUMENTS响亮——CH原生substringIndex同限,透传口径成立)
+		// update 2026-11-12 OB移出:框架约定dialect=oceanbase即Oracle模式租户(与DateDiff/GroupConcat
+		// 一致),Oracle模式无substring_index,走下方Oracle系instr组合
 		if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57 || dialect == DBType.TIDB || dialect == DBType.DORIS
-				|| dialect == DBType.STARROCKS || dialect == DBType.CLICKHOUSE || dialect == DBType.OCEANBASE) {
+				|| dialect == DBType.STARROCKS || dialect == DBType.CLICKHOUSE) {
 			return super.IGNORE;
 		}
 		// Oracle系:instr带occurrence与负向定位;DB2的locate_in_string同语义
-		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DM || dialect == DBType.DB2) {
+		if (dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DM || dialect == DBType.DB2
+				|| dialect == DBType.OCEANBASE) {
 			String instr = (dialect == DBType.DB2) ? "locate_in_string" : "instr";
 			// occurrence做case包装:count=0/负时包装为合法正整数(该分支结果不被外层case采用,
 			// 但常量0/负在DB2编译期即报SQLCODE=-171,Oracle的instr同防)
@@ -131,8 +134,9 @@ public class SubstringIndex extends IFunction {
 			return "arrayElement(splitByString(" + delim + "," + str + "), " + n + ")";
 		}
 		boolean mysqlFamily = dialect == DBType.MYSQL || dialect == DBType.MYSQL57 || dialect == DBType.TIDB
-				|| dialect == DBType.DORIS || dialect == DBType.STARROCKS || dialect == DBType.OCEANBASE;
-		boolean oracleFamily = dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DM;
+				|| dialect == DBType.DORIS || dialect == DBType.STARROCKS;
+		boolean oracleFamily = dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DM
+				|| dialect == DBType.OCEANBASE;
 		if (!mysqlFamily && !oracleFamily) {
 			// db2/sqlserver/sqlite/h2未适配响亮
 			return super.IGNORE;

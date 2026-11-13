@@ -1786,7 +1786,12 @@ public class SqlXMLConfigParse {
 	 */
 	private static InputStream openUrlStream(URL resourceUrl) throws Exception {
 		java.net.URLConnection connection = resourceUrl.openConnection();
-		connection.setUseCaches(false);
+		// update 2026-11-12 与扫描侧(SqlResourceScanner)策略对齐:嵌套jar(Spring Boot)的JarFile由
+		// 加载器缓存共享,禁用缓存会让流关闭时连带关闭共享JarFile,后续读取报"zip file closed";
+		// 普通jar禁用缓存安全释放句柄(Windows热部署不锁定jar)
+		if (!SqlResourceScanner.isNestedJarUrl(resourceUrl)) {
+			connection.setUseCaches(false);
+		}
 		return connection.getInputStream();
 	}
 

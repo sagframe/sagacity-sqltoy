@@ -114,8 +114,13 @@ public class DialectUtils {
 	 * 集合操作匹配模式:update 2026-11-10 count改写器此前的union守卫不识别minus/except/intersect,
 	 * 裸集合查询走fast-path后count(1)被塞进第一个分支参与集合运算,分页记录数静默失真
 	 * (h2真库复现:except实际3行、count读出0);命中即改走包裹路径
+	 * update 2026-11-12 与SqlUtil.SET_OPERATION_PATTERN口径对齐:排除函数调用形态
+	 * (minus(a,b)是ClickHouse算术函数,关键字后紧跟"("且括号内非select时不命中),
+	 * 否则count改写/top/random链路误包派生表(旧版CH子查询重复列名报Duplicate column name);
+	 * except(select ...)等集合运算紧贴括号写法仍命中
 	 */
-	public static final Pattern SET_OPERATION_PATTERN = Pattern.compile("(?i)\\W+(minus|except|intersect)(\\W+|$)");
+	public static final Pattern SET_OPERATION_PATTERN = Pattern
+			.compile("(?i)\\W+(minus|except|intersect)(?!\\s*\\((?!\\s*select))(\\W+|$)");
 
 	public static final Pattern ORDER_BY_PATTERN = Pattern.compile("(?i)\\Worder\\s+by\\W");
 

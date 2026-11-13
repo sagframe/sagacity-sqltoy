@@ -778,6 +778,14 @@ public class JoinContext {
 	}
 
 	/**
+	 * update 2026-11-12 当前递归成员标记状态:供外层渲染栈式保存/恢复(共享成员被内层
+	 * 组合渲染时,内层结束须恢复外层已下发的标记而非无条件清除)
+	 */
+	public boolean isRecursiveMember() {
+		return recursiveMember;
+	}
+
+	/**
 	 * 复位递归成员标记:标记仅限单次组合渲染作用域,渲染结束由外层composeSql调用,
 	 * 避免成员被复用为独立查询时残留旧标记误触DB2隐式JOIN守卫
 	 */
