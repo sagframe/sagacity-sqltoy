@@ -50,17 +50,25 @@ import org.slf4j.LoggerFactory;
 public class HttpClientUtils {
 
 	/**
-	 * rest通用请求的httpclient5配置(RequestConfig.setConnectTimeout已废弃,连接超时由connectionConfig配置)
+	 * rest通用请求的httpclient5配置(RequestConfig.setConnectTimeout已废弃,连接超时由connectionConfig配置);
+	 * 仅用于表单post(JWT/translate)的一次性客户端,elastic查询按endpoint/语句动态构建
 	 */
 	private final static org.apache.hc.client5.http.config.RequestConfig restRequestConfig = org.apache.hc.client5.http.config.RequestConfig
-			.custom().setConnectionRequestTimeout(org.apache.hc.core5.util.Timeout.ofMilliseconds(30000))
-			.setResponseTimeout(org.apache.hc.core5.util.Timeout.ofMilliseconds(180000)).build();
+			.custom()
+			.setConnectionRequestTimeout(
+					org.apache.hc.core5.util.Timeout.ofMilliseconds(NoSqlConfigModel.DEFAULT_REQUEST_TIMEOUT))
+			.setResponseTimeout(
+					org.apache.hc.core5.util.Timeout.ofMilliseconds(NoSqlConfigModel.DEFAULT_SOCKET_TIMEOUT))
+			.build();
 
 	/**
 	 * rest通用请求的httpclient5连接配置(连接超时)
 	 */
 	private final static org.apache.hc.client5.http.config.ConnectionConfig restConnectionConfig = org.apache.hc.client5.http.config.ConnectionConfig
-			.custom().setConnectTimeout(org.apache.hc.core5.util.Timeout.ofMilliseconds(10000)).build();
+			.custom()
+			.setConnectTimeout(
+					org.apache.hc.core5.util.Timeout.ofMilliseconds(NoSqlConfigModel.DEFAULT_CONNECT_TIMEOUT))
+			.build();
 
 	/**
 	 * 定义全局日志
