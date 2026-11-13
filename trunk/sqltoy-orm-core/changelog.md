@@ -18,6 +18,7 @@
 17、资源扫描三连修复(参照6.0于2026-11-11的更新):①jar内sql资源保留物理URL(buildJarEntryUrl构造jar:file:/x.jar!/entry),解析按该URL开流并setUseCaches(false)防Windows锁jar——原只存逻辑路径经TCCL开流,classes与依赖jar同名时恒读到classes、jar独有sqlId静默缺失;②EntityScanner嵌套jar经JarURLConnection.getJarFile()取内层jar——原getJarPath在第一个"!"截断,Spring Boot可执行jar(BOOT-INF/classes或嵌套jar)实体全量漏扫;③目录与jar统一AntPathUtils匹配器(**匹配0层目录)——原PathMatcher glob下"com.foo.**.entity"漏掉"com.foo.entity.X"基包直属类
 18、动态SQL处理热路径性能优化(参照6.0于2026-11-11的更新,语义经SqlConfigParseUtilsEquivalenceTest差分锁定):"?"计数由正则扫描改逐字符计数(免子串拷贝);^锚定模式(and/or/where close/@blank起始)由find全串扫描改lookingAt;$锚定模式(where结尾/where 1=1/set结尾)改末尾256窗口+末字符预判(未命中回退全串保严格等价);括号组内悬挂and/or清理先逐字符探测再替换(预编译Pattern复用,绝大多数sql零正则执行)
 19、VO映射计划缓存(参照6.0于2026-11-11的更新):reflectListToBean的set方法/方法类型/泛型/字段注解sqlType按(类+有序属性表+列类型+是否自动转换)构建一次缓存复用(putBounded上限2万,动态列场景防无界),高频查询免重复反射构建
+20、移植6.0的原生ES SQL游标分页:Elastic.findPage对native-sql端点原直接抛UnsupportedOperationException,现按ES官方fetch_size+cursor游标分页实现——首页发query+fetch_size、续页发cursor+fetch_size顺序取页,只支持顺序翻页不支持跳页(pageNo不参与定位)、服务端不提供总数(recordCount保持0);返回的Page内部携带游标,调用方传回上次返回对象即续取下一页,取尽(响应无cursor)后再传回返回空页不再发请求(以rows为空作为循环终止条件是安全的);游标页响应不含columns,因此eql需配置fields属性以完成字段映射;多地址端点轮询不同协调节点不影响续页(游标编码分片上下文,同集群任意节点可恢复);HttpClientUtils重构出doPostBody(整体序列化请求体,不做sql模式包装)与doPostEntity(统一rest-client/直连两条执行路径),结构与6.0对齐(本侧为hc4+fastjson2形态)
 
 # v5.2.9  2022-8-21
 1、针对一下产品化的软件(适配多种数据库:mysql\oracle\postgres\db2\mssql),要求在一个数据库场景下可以测试相同的功能是否可以适配不同数据库

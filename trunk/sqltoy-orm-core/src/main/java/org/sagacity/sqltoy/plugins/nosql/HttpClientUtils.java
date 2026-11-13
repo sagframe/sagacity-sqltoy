@@ -232,6 +232,45 @@ public class HttpClientUtils {
 		}
 		((StringEntity) httpEntity).setContentEncoding(charset);
 		((StringEntity) httpEntity).setContentType(CONTENT_TYPE);
+		return doPostEntity(sqltoyContext, nosqlConfig, esConfig, httpEntity);
+	}
+
+	/**
+	 * 发送整体序列化的json请求体(不做sql模式包装,面向ES SQL的fetch_size+cursor游标分页等
+	 * 需要自定义请求体结构的场景)
+	 *
+	 * @param sqltoyContext
+	 * @param nosqlConfig
+	 * @param esConfig
+	 * @param bodyObject    请求体对象(将整体序列化为json发送,不做sql模式包装)
+	 * @return
+	 * @throws Exception
+	 */
+	public static JSONObject doPostBody(SqlToyContext sqltoyContext, NoSqlConfigModel nosqlConfig,
+			ElasticEndpoint esConfig, Object bodyObject) throws Exception {
+		if (esConfig.getUrl() == null) {
+			throw new IllegalArgumentException(
+					"elastic server address is not configured, please check sqltoyContext elasticConfigs!");
+		}
+		String charset = (nosqlConfig.getCharset() == null) ? CHARSET : nosqlConfig.getCharset();
+		HttpEntity httpEntity = new StringEntity(JSON.toJSONString(bodyObject), charset);
+		((StringEntity) httpEntity).setContentEncoding(charset);
+		((StringEntity) httpEntity).setContentType(CONTENT_TYPE);
+		return doPostEntity(sqltoyContext, nosqlConfig, esConfig, httpEntity);
+	}
+
+	/**
+	 * 发送请求体并解析响应(统一elastic rest client与直连httpclient两条路径)
+	 *
+	 * @param sqltoyContext
+	 * @param nosqlConfig
+	 * @param esConfig
+	 * @param httpEntity
+	 * @return
+	 * @throws Exception
+	 */
+	private static JSONObject doPostEntity(SqlToyContext sqltoyContext, NoSqlConfigModel nosqlConfig,
+			ElasticEndpoint esConfig, HttpEntity httpEntity) throws Exception {
 		String realUrl;
 		// 返回结果
 		String result = null;
@@ -239,8 +278,7 @@ public class HttpClientUtils {
 		if (esConfig.getRestClient() != null) {
 			realUrl = wrapUrl(esConfig, nosqlConfig);
 			if (sqltoyContext.isDebug()) {
-				logger.debug("esRestClient execution:URL=[{}],Path={}, the posted JSON=[{}]", esConfig.getUrl(),
-						realUrl, JSON.toJSONString(postValue));
+				logger.debug("esRestClient execution:URL=[{}],Path={}", esConfig.getUrl(), realUrl);
 			}
 			// 默认采用post请求
 			RestClient restClient = esConfig.getRestClient();
@@ -256,8 +294,7 @@ public class HttpClientUtils {
 			realUrl = wrapUrl(esConfig, nosqlConfig);
 			HttpPost httpPost = new HttpPost(realUrl);
 			if (sqltoyContext.isDebug()) {
-				logger.debug("httpClient execution URL=[{}], the posted JSON=[{}]", realUrl,
-						JSON.toJSONString(postValue));
+				logger.debug("httpClient execution URL=[{}]", realUrl);
 			}
 			httpPost.setEntity(httpEntity);
 			// 设置connection是否自动关闭

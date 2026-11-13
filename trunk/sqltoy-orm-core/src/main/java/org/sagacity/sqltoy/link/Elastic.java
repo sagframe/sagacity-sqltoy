@@ -227,9 +227,14 @@ public class Elastic extends BaseLink {
 			if (noSqlConfig.isSqlMode()) {
 				ElasticEndpoint esConfig = sqlToyContext.getElasticEndpoint(noSqlConfig.getEndpoint());
 				if (esConfig.isNativeSql()) {
-					throw new UnsupportedOperationException("elastic native sql pagination is not support!");
+					// 原生es sql采用游标分页(fetch_size+cursor):只支持顺序翻页不支持跳页,
+					// 返回的Page内部携带游标,传回返回值即续取下一页,取尽后再次传回返回空页;
+					// 服务端不提供总数(recordCount保持0);游标编码分片上下文,同集群任意协调节点均可恢复
+					pageResult = ElasticSqlPlugin.findNativeSqlPage(sqlToyContext, realSqlConfig, pageModel,
+							queryExecutor);
+				} else {
+					pageResult = ElasticSqlPlugin.findPage(sqlToyContext, realSqlConfig, pageModel, queryExecutor);
 				}
-				pageResult = ElasticSqlPlugin.findPage(sqlToyContext, realSqlConfig, pageModel, queryExecutor);
 			} else {
 				pageResult = ElasticSearchPlugin.findPage(sqlToyContext, realSqlConfig, pageModel, queryExecutor);
 			}
