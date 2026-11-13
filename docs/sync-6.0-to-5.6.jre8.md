@@ -9,9 +9,16 @@
 >
 > **第二轮同步完成(2026-11-13,6.0.10 正式发版)**:18 个 main 文件(17 拷贝+DialectUtils 正则 hunk 合并)
 > + 12 个本轮测试 + 补齐首轮遗漏的 SqlConfigParseUtilsTest(30 例 like 转义)/SqlUtilTest(整体替换为
-> 6.0 进化版,新增 12 例 convertFieldsToCols 边界)+ 8 个 6.0 独有测试补入(5 个 jre8-clean 直接拷贝
+> 6.0 进化版,新增 12 例 convertFieldsToCols 边界)+ 6.0 侧 8 个独有测试补入(5 个 jre8-clean 直接拷贝
 > +SqlConfigParseUtilsProcessSqlTest/FileUtilCopyFolderTest/StringUtilEdgeTest 轻量适配)。
 > 另:6.0 在历史 revert(ad2fb8863)中丢失的 BeanUtilTest/SqlToyConstantsTest 为 5.6 原生资产,保留不删。
+>
+> **对齐审计完成(2026-11-13)**:逐 hunk 核验全部残余差异,修正 5.6 侧无理由偏离——BeanUtil 级联缓存
+> 恢复泛型、HttpClientUtils 的 doPostBody/wrapPath 注释对齐 6.0 原文并移植 wrapUrl 多地址取首节点
+> 修复、ElasticEndpoint 移植 keystore 缺失显式报错、SqlConfigParseUtilsTest 以 6.0 当前文件重建
+> (消除首轮适配引入的断言换行漂移,差异收敛为 9 处纯文本块转换)。审计后差异全景:main 11 文件
+> (7 个纯语法适配+BeanUtil/JsonProviders/HttpClientUtils/ElasticEndpoint 四个登记适配)、test 14 文件
+> (纯语法适配)、排除 8+原生 2,无任何业务逻辑分歧。
 
 ## 同步流程(每个 6.0 release tag 执行一轮)
 

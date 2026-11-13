@@ -20,6 +20,7 @@
 19、VO映射计划缓存(参照6.0于2026-11-11的更新):reflectListToBean的set方法/方法类型/泛型/字段注解sqlType按(类+有序属性表+列类型+是否自动转换)构建一次缓存复用(putBounded上限2万,动态列场景防无界),高频查询免重复反射构建
 20、移植6.0的原生ES SQL游标分页:Elastic.findPage对native-sql端点原直接抛UnsupportedOperationException,现按ES官方fetch_size+cursor游标分页实现——首页发query+fetch_size、续页发cursor+fetch_size顺序取页,只支持顺序翻页不支持跳页(pageNo不参与定位)、服务端不提供总数(recordCount保持0);返回的Page内部携带游标,调用方传回上次返回对象即续取下一页,取尽(响应无cursor)后再传回返回空页不再发请求(以rows为空作为循环终止条件是安全的);游标页响应不含columns,因此eql需配置fields属性以完成字段映射;多地址端点轮询不同协调节点不影响续页(游标编码分片上下文,同集群任意节点可恢复);HttpClientUtils重构出doPostBody(整体序列化请求体,不做sql模式包装)与doPostEntity(统一rest-client/直连两条执行路径),结构与6.0对齐(本侧为hc4+fastjson2形态)
 21、ES栈JSON切换为JsonProvider抽象(与6.0对齐,2026-11-13):ElasticSearchUtils/ElasticSearchPlugin/ElasticSqlPlugin/link/Elastic四个文件与6.0逐字一致,HttpClientUtils的ES方法(doPost/doPostBody/doPostEntity/parseElasticResult)全部改走JsonProviders——ES特性不再硬绑fastjson2,仅装jackson2的classpath同样可用(JsonProvider随全量同步进入,jackson3候选已按jre8剔除,fastjson2仍为探测首位故存量行为不变);顺带修复ES rest路径多地址url拼接产生非法uri(改相对路径wrapPath,与6.0同款修法;原单地址以全量URL传给RestClient的形态碰巧可用,多地址必坏);rest翻译/JWT通用提交的httpclient5路径不受影响
+22、发版前对齐审计修正(2026-11-13,逐hunk核验与6.0的全部残余差异):①ES直连路径wrapUrl多地址时取首节点并归一化全角分隔符(与6.0同款修复,多地址直连模式原必产生非法uri);②ElasticEndpoint的keystore文件缺失显式报错(KeyStore.load(null)会静默初始化空keystore,导致SSL握手失败难排查);③BeanUtil级联模型缓存恢复泛型声明(cascadeModels/parseCascadeModels与6.0一致);④SqlConfigParseUtilsTest以6.0当前文件重建(消除首轮文本块适配引入的断言换行漂移,与6.0差异收敛为9处纯文本块转换),方法顺序与6.0完全一致
 
 # v5.2.9  2022-8-21
 1、针对一下产品化的软件(适配多种数据库:mysql\oracle\postgres\db2\mssql),要求在一个数据库场景下可以测试相同的功能是否可以适配不同数据库
