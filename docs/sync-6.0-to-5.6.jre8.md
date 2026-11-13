@@ -37,7 +37,7 @@
 | BeanUtil 的 records 支持分支 | `Class.isRecord()/getRecordComponents()` 为 JDK16 API,jre8 无解 | 拷入后剥离 record 分支(保留其余全部: BeanMappingPlan/classFieldTypeMap/loadClass/methodToProperty/isGetter/isSetter) |
 | `config/model/PropertyType.java` | record 支持专用模型,BeanUtil 剥离后无引用 | 不拷入 |
 | `lambda/toolkit/FieldNature`(record 语法) | jre8 无 record 语法 | 改写为普通不可变类(保留组件方法名 entityClass()/fieldName() 以兼容 lambda 引用) |
-| ES栈的rest5-client | rest5-client(co.elastic.clients) 为 JDK17 字节码(class 61) | 仅ElasticEndpoint(hc4 RestClient构建器)与HttpClientUtils(hc4执行路径,JSON已切JsonProvider+wrapPath多节点修复)保留hc4形态;ElasticSearchUtils/ElasticSearchPlugin/ElasticSqlPlugin/link/Elastic四文件与6.0逐字一致(2026-11-13 ES栈JSON切换为JsonProvider抽象,含原生SQL游标分页findNativeSqlPage) |
+| ES栈的rest5-client | rest5-client(co.elastic.clients) 为 JDK17 字节码(class 61) | 仅ElasticEndpoint与HttpClientUtils保留hc4+elasticsearch-rest-client形态,但已合并6.0于2026-11-13的改进批次(单/多地址统一走rest客户端、直连httpclient路径移除、超时/字符集endpoint默认+语句级覆盖、按超时组合缓存客户端、pathPrefix网关子路径、池化连接失效重试一次、4xx响应经ResponseException取回走统一错误解析);ElasticSearchUtils/ElasticSearchPlugin/ElasticSqlPlugin/link/Elastic/NoSqlConfigModel/SqlToyContext与6.0逐字一致 |
 | 测试中record用例 | record特性在jre8不存在 | 不拷入(BeanUtilEdgeTest/BeanUtilRecordColumnTypesTest/BeanUtilSmokeTest/VectorGeometryRecordEdgeTest/Student fixture) |
 | `plugins/json/JsonProviderMatrixTest.java` | jackson3 候选矩阵含 JDK17 专属用例+文本块 | 不拷入(5.6 的 JsonProvider fastjson2/jackson2 实现由既有测试背书;如需矩阵化再按 jackson3 剔除改造) |
 

@@ -1,28 +1,18 @@
 package org.sagacity.sqltoy.plugins.nosql;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import org.apache.http.ConnectionClosedException;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.ResponseHandler;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
+import org.apache.http.NoHttpResponseException;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
@@ -41,7 +31,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
- * @description 提供基于http请求的工具类
+ * @description 提供基于http请求的工具类(elastic查询统一走rest客户端:单地址/多地址、eql自定义url
+ *              一致,base path由pathPrefix承载,请求路径由buildRequestPath组织)
  * @author zhongxuchen
  * @version v1.0,Date:2018-01-07
  * @modified 2025-3-17 适配性优化，为切换httpclient5做准备
@@ -52,13 +43,11 @@ import org.slf4j.LoggerFactory;
  *             不再硬绑fastjson2);rest路径改相对路径wrapPath(修复多地址url拼接非法uri)
  * @modified 2026-10-02 rest请求认证增加jwt token模式(配合HttpAuthConfig\JwtTokenManager),
  *             401时强制失效token并重试一次,兼容既有basic认证
+ * @modified 2026-11-13 elastic查询统一走rest客户端(单地址/多地址一致,直连httpclient路径移除);
+ *             超时与字符集改为endpoint默认+语句级覆盖,池中连接被对端关闭时重试一次
+ *             (自6.0于2026-11-13的改进批次合并,本侧为httpclient4+elasticsearch-rest-client形态)
  */
 public class HttpClientUtils {
-	/**
-	 * 请求配置
-	 */
-	private final static RequestConfig requestConfig = RequestConfig.custom().setConnectionRequestTimeout(30000)
-			.setConnectTimeout(10000).setSocketTimeout(180000).build();
 
 	/**
 	 * rest通用请求的httpclient5配置(RequestConfig.setConnectTimeout已废弃,连接超时由connectionConfig配置)
@@ -201,22 +190,30 @@ public class HttpClientUtils {
 	}
 
 	/**
-	 * 执行post请求
+	 * 执行post请求(按查询配置解释postValue的含义)
+	 * <p>
+	 * 三种模式:1)sqlMode且为原生sql(如_sql、_xpack/sql):postValue为SQL文本,包装为{"query":"..."};
+	 * 2)sqlMode且非原生sql(elasticsearch-sql等插件路径):postValue为完整请求体文本,原样发送;
+	 * 3)非sqlMode(eql):postValue为查询对象,整体序列化为json发送(传字符串会被二次转义,属误用)。
+	 * 需要发送完整请求体(如原生sql游标分页的fetch_size+cursor)时应改用{@link #doPostBody}。
 	 *
 	 * @param sqltoyContext
 	 * @param nosqlConfig
 	 * @param esConfig
-	 * @param postValue
+	 * @param postValue     sql模式为SQL文本(CharSequence),json模式为查询对象
 	 * @return
 	 * @throws Exception
 	 */
 	public static JsonObject doPost(SqlToyContext sqltoyContext, NoSqlConfigModel nosqlConfig, ElasticEndpoint esConfig,
 			Object postValue) throws Exception {
-		if (esConfig.getUrl() == null) {
-			throw new IllegalArgumentException(
-					"elastic server address is not configured, please check sqltoyContext elasticConfigs!");
+		checkEndpoint(esConfig);
+		// sql模式的入参是SQL文本:传Map等对象时toString()会得到{a=b}这类非json内容,服务端只能返回400,
+		// 在发请求前给出明确错误(nativeSql包装前同样由此保证非空)
+		if (nosqlConfig.isSqlMode() && !(postValue instanceof CharSequence)) {
+			throw new IllegalArgumentException("elastic sql mode requires the SQL text as CharSequence, but got:["
+					+ (postValue == null ? "null" : postValue.getClass().getName()) + "]");
 		}
-		String charset = (nosqlConfig.getCharset() == null) ? CHARSET : nosqlConfig.getCharset();
+		ContentType contentType = ContentType.create(CONTENT_TYPE, resolveCharset(nosqlConfig, esConfig));
 		HttpEntity httpEntity = null;
 		// sql 模式
 		if (nosqlConfig.isSqlMode()) {
@@ -224,43 +221,36 @@ public class HttpClientUtils {
 			if (esConfig.isNativeSql()) {
 				Map<String, String> map = new HashMap<String, String>();
 				map.put("query", postValue.toString());
-				httpEntity = new StringEntity(JsonProviders.get().toJSONString(map), charset);
+				httpEntity = new StringEntity(JsonProviders.get().toJSONString(map), contentType);
 			} else {
-				httpEntity = new StringEntity(postValue.toString(), charset);
+				httpEntity = new StringEntity(postValue.toString(), contentType);
 			}
 		} else {
-			httpEntity = new StringEntity(JsonProviders.get().toJSONString(postValue), charset);
+			httpEntity = new StringEntity(JsonProviders.get().toJSONString(postValue), contentType);
 		}
-		((StringEntity) httpEntity).setContentEncoding(charset);
-		((StringEntity) httpEntity).setContentType(CONTENT_TYPE);
 		return doPostEntity(sqltoyContext, nosqlConfig, esConfig, httpEntity);
 	}
 
 	/**
-	 * 发送自定义请求体的post请求(请求体以json序列化),用于es原生sql的游标分页等场景
+	 * 发送完整请求体(原样json序列化,不按sql模式包装),用于es原生sql的游标分页等协议级请求
 	 *
 	 * @param sqltoyContext
 	 * @param nosqlConfig
 	 * @param esConfig
-	 * @param bodyObject    请求体对象(将整体序列化为json发送,不做sql模式包装)
+	 * @param bodyObject    完整请求体对象(如{"query":"...","fetch_size":100})
 	 * @return
 	 * @throws Exception
 	 */
 	public static JsonObject doPostBody(SqlToyContext sqltoyContext, NoSqlConfigModel nosqlConfig,
 			ElasticEndpoint esConfig, Object bodyObject) throws Exception {
-		if (esConfig.getUrl() == null) {
-			throw new IllegalArgumentException(
-					"elastic server address is not configured, please check sqltoyContext elasticConfigs!");
-		}
-		String charset = (nosqlConfig.getCharset() == null) ? CHARSET : nosqlConfig.getCharset();
-		HttpEntity httpEntity = new StringEntity(JsonProviders.get().toJSONString(bodyObject), charset);
-		((StringEntity) httpEntity).setContentEncoding(charset);
-		((StringEntity) httpEntity).setContentType(CONTENT_TYPE);
+		checkEndpoint(esConfig);
+		ContentType contentType = ContentType.create(CONTENT_TYPE, resolveCharset(nosqlConfig, esConfig));
+		HttpEntity httpEntity = new StringEntity(JsonProviders.get().toJSONString(bodyObject), contentType);
 		return doPostEntity(sqltoyContext, nosqlConfig, esConfig, httpEntity);
 	}
 
 	/**
-	 * 发送请求体并解析响应(统一elastic rest client与直连httpclient两条路径)
+	 * 发送请求体并解析响应(统一走rest客户端:单地址/多地址、eql自定义url一致)
 	 *
 	 * @param sqltoyContext
 	 * @param nosqlConfig
@@ -271,64 +261,28 @@ public class HttpClientUtils {
 	 */
 	private static JsonObject doPostEntity(SqlToyContext sqltoyContext, NoSqlConfigModel nosqlConfig,
 			ElasticEndpoint esConfig, HttpEntity httpEntity) throws Exception {
-		String realUrl;
-		// 返回结果
-		String result = null;
-		// 使用elastic rest client(默认)
-		if (esConfig.getRestClient() != null) {
-			// 多节点客户端自带base地址,请求只需相对路径(修复多地址url直接拼接产生非法uri的问题)
-			realUrl = wrapPath(esConfig, nosqlConfig);
-			if (sqltoyContext.isDebug()) {
-				logger.debug("esRestClient execution:URL=[{}],Path={}", esConfig.getUrl(), realUrl);
-			}
-			// 默认采用post请求
-			RestClient restClient = esConfig.getRestClient();
-			Request request = new Request(POST, realUrl);
-			request.setEntity(httpEntity);
-			Response response = restClient.performRequest(request);
-			HttpEntity reponseEntity = response.getEntity();
-			if (reponseEntity != null) {
-				result = EntityUtils.toString(reponseEntity, nosqlConfig.getCharset());
-			}
-		} // 组织httpclient模式调用(此种模式不推荐使用)
-		else {
-			realUrl = wrapUrl(esConfig, nosqlConfig);
-			HttpPost httpPost = new HttpPost(realUrl);
-			if (sqltoyContext.isDebug()) {
-				logger.debug("httpClient execution URL=[{}]", realUrl);
-			}
-			httpPost.setEntity(httpEntity);
-			// 设置connection是否自动关闭
-			httpPost.setHeader("Connection", "close");
-			CloseableHttpClient client = null;
-			try {
-				if (StringUtil.isNotBlank(esConfig.getUsername()) && StringUtil.isNotBlank(esConfig.getPassword())) {
-					// 凭据提供器
-					CredentialsProvider credsProvider = new BasicCredentialsProvider();
-					credsProvider.setCredentials(AuthScope.ANY,
-							// 认证用户名和密码
-							new UsernamePasswordCredentials(esConfig.getUsername(), esConfig.getPassword()));
-					client = HttpClients.custom().setDefaultRequestConfig(getRequestConfig(nosqlConfig))
-							.setDefaultCredentialsProvider(credsProvider).build();
-				} else {
-					client = HttpClients.custom().setDefaultRequestConfig(getRequestConfig(nosqlConfig)).build();
-				}
-				result = client.execute(httpPost, new ResponseHandler<String>() {
-					@Override
-					public String handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-						HttpEntity reponseEntity = response.getEntity();
-						if (reponseEntity != null) {
-							return EntityUtils.toString(reponseEntity, nosqlConfig.getCharset());
-						}
-						return null;
-					}
-				});
-			} catch (Exception e) {
-				throw e;
-			} finally {
-				IOUtil.closeQuietly(client);
-			}
+		// 语句级超时优先,endpoint配置兜底
+		int requestTimeout = resolveRequestTimeout(nosqlConfig, esConfig);
+		int connectTimeout = resolveConnectTimeout(nosqlConfig, esConfig);
+		int socketTimeout = resolveSocketTimeout(nosqlConfig, esConfig);
+		// 与endpoint默认超时不同的语句使用独立的rest客户端(客户端超时只能在构建时确定)
+		RestClient restClient = esConfig.getRestClient(requestTimeout, connectTimeout, socketTimeout);
+		if (restClient == null) {
+			throw new IllegalArgumentException(
+					"elastic rest client initialize failed, please check elastic url config:[" + esConfig.getUrl()
+							+ "]");
 		}
+		// 客户端已携带节点base地址与pathPrefix,请求只需相对路径
+		String realUrl = buildRequestPath(esConfig, nosqlConfig);
+		if (sqltoyContext.isDebug()) {
+			logger.debug("esRestClient execution:URL=[{}],Path={}", esConfig.getUrl(), realUrl);
+		}
+		Request request = new Request(POST, realUrl);
+		request.setEntity(httpEntity);
+		Response response = performRequest(restClient, request);
+		HttpEntity reponseEntity = response.getEntity();
+		String result = (reponseEntity == null) ? null
+				: EntityUtils.toString(reponseEntity, resolveCharset(nosqlConfig, esConfig));
 		if (StringUtil.isBlank(result)) {
 			return null;
 		}
@@ -372,20 +326,16 @@ public class HttpClientUtils {
 	}
 
 	/**
-	 * 重新组织url(直连模式:节点地址+查询路径)
+	 * 组织rest客户端的请求相对路径(节点地址与base path由客户端构建时的HttpHost/pathPrefix承载);
+	 * 包级可见以便同包测试
 	 *
 	 * @param esConfig
 	 * @param nosqlConfig
-	 * @return
+	 * @return 以"/"开头的请求路径
 	 */
-	private static String wrapUrl(ElasticEndpoint esConfig, NoSqlConfigModel nosqlConfig) {
-		// 多地址(逗号分隔)时取首个节点,与initRestClient一致先归一化全角分隔符
-		String url = esConfig.getUrl().replaceAll("\\；", ";").replaceAll("\\，", ",").replaceAll("\\;", ",")
-				.split("\\,")[0].trim();
-		String sqlPath = esConfig.getSqlPath();
-		if (StringUtil.isBlank(sqlPath)) {
-			sqlPath = "_sql";
-		}
+	static String buildRequestPath(ElasticEndpoint esConfig, NoSqlConfigModel nosqlConfig) {
+		String sqlPath = StringUtil.isBlank(esConfig.getSqlPath()) ? "_sql" : esConfig.getSqlPath();
+		String path = "";
 		// elasticsearch6.3.x 通过xpack支持sql查询
 		// 6.3 /_xpack/sql
 		// 7.x /_sql
@@ -393,62 +343,108 @@ public class HttpClientUtils {
 		// elasticsearch-sql7.5+ /_nlpcn/sql
 		// elasticsearch-sql7.9.3 之后不再维护,启用_opendistro/_sql
 		if (nosqlConfig.isSqlMode()) {
-			if (!url.toLowerCase(Locale.ROOT).contains(sqlPath)) {
-				url = url.concat(url.endsWith("/") ? "" : "/").concat(sqlPath);
-			}
-		} else {
-			if (StringUtil.isNotBlank(nosqlConfig.getIndex())) {
-				url = url.concat(url.endsWith("/") ? "" : "/").concat(nosqlConfig.getIndex());
-			}
-			// es6.x 支持，7开始废弃
-			if (StringUtil.isNotBlank(nosqlConfig.getType())) {
-				url = url.concat(url.endsWith("/") ? "" : "/").concat(nosqlConfig.getType());
-			}
-			if (!url.toLowerCase(Locale.ROOT).endsWith(SEARCH)) {
-				url = url.concat(url.endsWith("/") ? "" : "/").concat(SEARCH);
-			}
+			return join(path, sqlPath);
 		}
-		return url;
-	}
-
-	/**
-	 * 组织rest-client请求的相对路径(客户端构建时已携带全部节点base地址,请求只需路径)
-	 *
-	 * @param esConfig
-	 * @param nosqlConfig
-	 * @return
-	 */
-	private static String wrapPath(ElasticEndpoint esConfig, NoSqlConfigModel nosqlConfig) {
-		String path = "";
-		String sqlPath = esConfig.getSqlPath();
-		if (StringUtil.isBlank(sqlPath)) {
-			sqlPath = "_sql";
+		if (StringUtil.isNotBlank(nosqlConfig.getIndex())) {
+			path = join(path, nosqlConfig.getIndex());
 		}
-		if (nosqlConfig.isSqlMode()) {
-			path = path.concat("/").concat(sqlPath);
-		} else {
-			if (StringUtil.isNotBlank(nosqlConfig.getIndex())) {
-				path = path.concat("/").concat(nosqlConfig.getIndex());
-			}
-			// es6.x 支持，7开始废弃
-			if (StringUtil.isNotBlank(nosqlConfig.getType())) {
-				path = path.concat("/").concat(nosqlConfig.getType());
-			}
-			if (!path.toLowerCase(Locale.ROOT).endsWith(SEARCH)) {
-				path = path.concat("/").concat(SEARCH);
-			}
+		// es6.x 支持，7开始废弃
+		if (StringUtil.isNotBlank(nosqlConfig.getType())) {
+			path = join(path, nosqlConfig.getType());
+		}
+		if (!path.toLowerCase(Locale.ROOT).endsWith(SEARCH)) {
+			path = join(path, SEARCH);
 		}
 		return path;
 	}
 
-	private static RequestConfig getRequestConfig(NoSqlConfigModel nosqlConfig) {
-		if (nosqlConfig != null && (nosqlConfig.getRequestTimeout() != 30000 || nosqlConfig.getConnectTimeout() != 10000
-				|| nosqlConfig.getSocketTimeout() != 180000)) {
-			return RequestConfig.custom().setConnectTimeout(nosqlConfig.getConnectTimeout())
-					.setConnectionRequestTimeout(nosqlConfig.getRequestTimeout())
-					.setSocketTimeout(nosqlConfig.getSocketTimeout()).build();
-		} else {
-			return requestConfig;
+	/**
+	 * 执行rest请求:池化后的keep-alive连接可能已被服务端/LB单方面关闭,此类失败重建请求重试一次
+	 * (查询类请求可安全重发,Request持有可重复写出的StringEntity)
+	 * <p>
+	 * (jre8适配:httpclient4形态的rest client对4xx/5xx状态码直接抛ResponseException,而rest5
+	 * 返回响应体交由parseElasticResult统一解析;此处取回异常持有的响应走同一解析路径,保证
+	 * 错误信息提取与DataAccessException语义两侧一致)
+	 */
+	private static Response performRequest(RestClient restClient, Request request) throws IOException {
+		try {
+			return restClient.performRequest(request);
+		} catch (org.elasticsearch.client.ResponseException e) {
+			return e.getResponse();
+		} catch (IOException e) {
+			if (!isStaleConnection(e)) {
+				throw e;
+			}
+			// 属于keep-alive的正常失效(服务端/LB空闲回收),按debug记录避免刷日志
+			logger.debug("elastic pooled connection was closed by peer, retry once: [{}]", e.getMessage());
+			return restClient.performRequest(request);
 		}
+	}
+
+	/**
+	 * 拼接路径段:base以"/"结尾时不再重复补"/",base为空串时得到"/segment"
+	 */
+	private static String join(String base, String segment) {
+		return base.concat(base.endsWith("/") ? "" : "/").concat(segment);
+	}
+
+	/**
+	 * 校验es地址配置,地址为空(含仅分隔符)时给出明确提示(避免拼出非法uri)
+	 */
+	private static void checkEndpoint(ElasticEndpoint esConfig) {
+		if (esConfig == null || esConfig.getUrlList().length == 0) {
+			throw new IllegalArgumentException(
+					"elastic server address is not configured, please check sqltoyContext elasticConfigs!");
+		}
+	}
+
+	/**
+	 * 解析字符集:语句级配置优先,endpoint(默认UTF-8)兜底;配置值非法时给出明确的配置错误。
+	 * 包级可见以便同包测试
+	 *
+	 * @param nosqlConfig
+	 * @param esConfig
+	 * @return
+	 */
+	static Charset resolveCharset(NoSqlConfigModel nosqlConfig, ElasticEndpoint esConfig) {
+		String charset = (nosqlConfig.isCharsetSet() && StringUtil.isNotBlank(nosqlConfig.getCharset()))
+				? nosqlConfig.getCharset() : esConfig.getCharset();
+		if (StringUtil.isBlank(charset)) {
+			return Charset.forName(CHARSET);
+		}
+		try {
+			return Charset.forName(charset);
+		} catch (Exception e) {
+			throw new IllegalArgumentException("illegal elastic charset:[" + charset + "]", e);
+		}
+	}
+
+	/**
+	 * 语句级配置优先,endpoint配置兜底
+	 *
+	 * @param nosqlConfig
+	 * @param esConfig
+	 * @return
+	 */
+	static int resolveRequestTimeout(NoSqlConfigModel nosqlConfig, ElasticEndpoint esConfig) {
+		return nosqlConfig.hasRequestTimeout() ? nosqlConfig.getRequestTimeout() : esConfig.getRequestTimeout();
+	}
+
+	static int resolveConnectTimeout(NoSqlConfigModel nosqlConfig, ElasticEndpoint esConfig) {
+		return nosqlConfig.hasConnectTimeout() ? nosqlConfig.getConnectTimeout() : esConfig.getConnectTimeout();
+	}
+
+	static int resolveSocketTimeout(NoSqlConfigModel nosqlConfig, ElasticEndpoint esConfig) {
+		return nosqlConfig.hasSocketTimeout() ? nosqlConfig.getSocketTimeout() : esConfig.getSocketTimeout();
+	}
+
+	/**
+	 * 判定是否"池中连接已被对端关闭"类异常:仅这类失败可安全重试。包级可见以便同包测试
+	 *
+	 * @param e
+	 * @return
+	 */
+	static boolean isStaleConnection(IOException e) {
+		return e instanceof NoHttpResponseException || e instanceof ConnectionClosedException;
 	}
 }

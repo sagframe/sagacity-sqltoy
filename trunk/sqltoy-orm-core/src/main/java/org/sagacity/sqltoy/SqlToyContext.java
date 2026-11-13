@@ -187,6 +187,11 @@ public class SqlToyContext {
 	private HashMap<String, ElasticEndpoint> elasticEndpoints = new HashMap<String, ElasticEndpoint>();
 
 	/**
+	 * eql中自定义url的端点缓存:按url复用端点,避免逐次新建导致rest5客户端无法复用/释放
+	 */
+	private final Map<String, ElasticEndpoint> customElasticEndpoints = new ConcurrentHashMap<String, ElasticEndpoint>();
+
+	/**
 	 * 单记录保存采用identity、sequence主键策略，并返回主键值时，字段名称大小写处理(lower/upper)
 	 */
 	private IgnoreKeyCaseMap<String, String> dialectReturnPrimaryColumnCase = new IgnoreKeyCaseMap<String, String>();
@@ -1186,7 +1191,9 @@ public class SqlToyContext {
 				.get(StringUtil.isBlank(id) ? defaultElastic : id.toLowerCase(Locale.ROOT));
 		// 取不到,则可能sql中自定义url地址,自行构建模型，按指定的url进行查询
 		if (result == null) {
-			return new ElasticEndpoint(id);
+			// 自定义url端点按url缓存:连接池随端点复用,destroy时统一关闭
+			final String customKey = (id == null) ? "" : id.toLowerCase(Locale.ROOT);
+			result = customElasticEndpoints.computeIfAbsent(customKey, key -> new ElasticEndpoint(id));
 		}
 		return result;
 	}
@@ -1276,12 +1283,17 @@ public class SqlToyContext {
 			if (dynamicFecthCacheManager != null) {
 				dynamicFecthCacheManager.destroy();
 			}
-			// 关闭ElasticSearch RestClient
+			// 关闭ElasticSearch rest5客户端(含语句级超时的客户端组合)
 			if (elasticEndpoints != null) {
 				for (ElasticEndpoint endpoint : elasticEndpoints.values()) {
-					endpoint.closeRestClient();
+					endpoint.close();
 				}
 			}
+			// 自定义url端点同样持有rest5客户端资源
+			for (ElasticEndpoint endpoint : customElasticEndpoints.values()) {
+				endpoint.close();
+			}
+			customElasticEndpoints.clear();
 		} catch (Exception e) {
 			// 清理失败仅记录,不能中断其余资源的销毁
 			logger.error("exception occurred during sqltoy context resource destroy!", e);
