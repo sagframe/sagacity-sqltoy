@@ -5,12 +5,39 @@ import java.io.Serializable;
 /**
  * @project sagacity-sqltoy
  * @description 基于mongo或elasticSearch的配置
+ * 
+ *              说明:elasticSearch的超时与字符集采用"endpoint默认+语句覆盖":eql上显式配置的
+ *              request-timeout/connection-timeout/socket-timeout/charset优先,未配置时取
+ *              ElasticEndpoint(由starter的ElasticConfig注入);单地址/多地址/eql自定义url统一走
+ *              rest5客户端,超时组合与endpoint默认值不同的语句使用独立客户端(异步客户端超时
+ *              只能在构建时确定)。
  * @author zhongxuchen
  * @version v1.0,Date:2018-01-03
  */
 public class NoSqlConfigModel implements Serializable, Cloneable {
 
 	private static final long serialVersionUID = -2126986650751681962L;
+
+	/**
+	 * 默认的从连接池获取连接等待时长:30秒
+	 */
+	public final static int DEFAULT_REQUEST_TIMEOUT = 30000;
+
+	/**
+	 * 默认的连接超时时长:10秒
+	 */
+	public final static int DEFAULT_CONNECT_TIMEOUT = 10000;
+
+	/**
+	 * 默认的响应超时时长:3分钟
+	 */
+	public final static int DEFAULT_SOCKET_TIMEOUT = 180000;
+
+	/**
+	 * 默认字符集
+	 */
+	public final static String DEFAULT_CHARSET = "UTF-8";
+
 	/**
 	 * mongo的集合
 	 */
@@ -32,26 +59,31 @@ public class NoSqlConfigModel implements Serializable, Cloneable {
 	private String index;
 
 	/**
-	 * 请求获取数据超时时间默认为30秒
+	 * 从连接池获取连接的最大等待时长(毫秒),未配置时取ElasticEndpoint(默认30秒)。
+	 * 注意:该值不是请求超时,真正等待服务端返回数据的超时是socketTimeout
 	 */
-	@Deprecated
-	private int requestTimeout = 30000;
-
-	// 连接超时时间为10秒
-	@Deprecated
-	private int connectTimeout = 10000;
+	private Integer requestTimeout;
 
 	/**
-	 * 整个请求超时时长,3分钟
+	 * 建立连接的超时时长(毫秒),未配置时取ElasticEndpoint(默认10秒)。
+	 * 该值与endpoint不同的语句使用独立rest5客户端(建连超时只能在客户端构建时确定)
 	 */
-	@Deprecated
-	private int socketTimeout = 180000;
+	private Integer connectTimeout;
 
 	/**
-	 * url请求是字符集类型
+	 * 等待服务端返回数据的响应超时时长(毫秒),未配置时取ElasticEndpoint(默认3分钟)
 	 */
-	@Deprecated
-	private String charset = "UTF-8";
+	private Integer socketTimeout;
+
+	/**
+	 * 请求与响应的字符集,未配置时取ElasticEndpoint(默认UTF-8)
+	 */
+	private String charset = DEFAULT_CHARSET;
+
+	/**
+	 * charset是否被显式设置:未设置时采用ElasticEndpoint上的字符集
+	 */
+	private boolean charsetSet;
 
 	/**
 	 * 是否有聚合查询
@@ -127,10 +159,17 @@ public class NoSqlConfigModel implements Serializable, Cloneable {
 	}
 
 	/**
-	 * @return the requestTimeout
+	 * @return 从连接池获取连接的等待上限(毫秒),未配置时返回默认值
 	 */
 	public int getRequestTimeout() {
-		return requestTimeout;
+		return requestTimeout == null ? DEFAULT_REQUEST_TIMEOUT : requestTimeout;
+	}
+
+	/**
+	 * @return 是否显式配置了requestTimeout
+	 */
+	public boolean hasRequestTimeout() {
+		return requestTimeout != null;
 	}
 
 	/**
@@ -141,10 +180,17 @@ public class NoSqlConfigModel implements Serializable, Cloneable {
 	}
 
 	/**
-	 * @return the connectTimeout
+	 * @return 建立连接的超时时长(毫秒),未配置时返回默认值
 	 */
 	public int getConnectTimeout() {
-		return connectTimeout;
+		return connectTimeout == null ? DEFAULT_CONNECT_TIMEOUT : connectTimeout;
+	}
+
+	/**
+	 * @return 是否显式配置了connectTimeout
+	 */
+	public boolean hasConnectTimeout() {
+		return connectTimeout != null;
 	}
 
 	/**
@@ -162,10 +208,18 @@ public class NoSqlConfigModel implements Serializable, Cloneable {
 	}
 
 	/**
+	 * @return 是否显式配置了charset
+	 */
+	public boolean isCharsetSet() {
+		return charsetSet;
+	}
+
+	/**
 	 * @param charset the charset to set
 	 */
 	public void setCharset(String charset) {
 		this.charset = charset;
+		this.charsetSet = true;
 	}
 
 	/**
@@ -225,10 +279,17 @@ public class NoSqlConfigModel implements Serializable, Cloneable {
 	}
 
 	/**
-	 * @return the socketTimeout
+	 * @return 等待服务端返回数据的响应超时时长(毫秒),未配置时返回默认值
 	 */
 	public int getSocketTimeout() {
-		return socketTimeout;
+		return socketTimeout == null ? DEFAULT_SOCKET_TIMEOUT : socketTimeout;
+	}
+
+	/**
+	 * @return 是否显式配置了socketTimeout
+	 */
+	public boolean hasSocketTimeout() {
+		return socketTimeout != null;
 	}
 
 	/**

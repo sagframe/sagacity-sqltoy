@@ -719,8 +719,12 @@ public class SqlResourceScanner {
 		} catch (Exception e) {
 			return false;
 		}
-		// nested:协议形态(Boot 3.2+):jar:nested:/path/app.jar/!BOOT-INF/classes!/
-		String nestedPath = "nested:" + fileUrl.substring("file:".length()) + "/";
+		// update 2026-11-13 嵌套根须按"URL编码路径"与"原始路径"双形态比对:真实LaunchedClassLoader
+		// (Boot 3.2/4.x实测)用File.toURI().getRawPath()拼接nested URL,部署路径含空格/中文时为%xx编码,
+		// 而java.class.path给出的是原始字符路径;只按原始路径比对会在含空格/中文的路径下漏配,
+		// 导致外层jar重复补根、同一sqlId以两种URL各命中一次(breakWhenSqlRepeat默认true时阻断启动)
+		String encodedPath = fileUrl.startsWith("file:") ? fileUrl.substring("file:".length()) : fileUrl;
+		String rawPath = jarFile.getAbsolutePath().replace('\\', '/');
 		for (URL root : roots) {
 			if (!isNestedJarUrl(root)) {
 				continue;
@@ -728,10 +732,15 @@ public class SqlResourceScanner {
 			String external = root.toExternalForm();
 			// update 2026-11-12 评审R4:仅classes内层根才代表外层jar内容已被完整承载;
 			// 若加载器只暴露BOOT-INF/lib/*嵌套根,外层根仍须保留以发现BOOT-INF/classes资源
-			if (!external.contains("classes!/")) {
+			// update 2026-11-13 兼容两代classes内层根形态:Boot 2.x/3.0为"classes!/",
+			// Boot 3.2+嵌套entry名须以/结尾,真实形态为"classes/!/",漏配会让外层jar重复补根、
+			// 同一sqlId两种URL各命中一次,breakWhenSqlRepeat默认true时阻断启动(真实LaunchedClassLoader实证)
+			if (!external.contains("classes!/") && !external.contains("classes/!/")) {
 				continue;
 			}
-			if (external.contains(fileUrl + "!/") || external.contains(nestedPath)) {
+			// 经典形态jar:file:/path/app.jar!/BOOT-INF/classes!/ 或 嵌套形态jar:nested:[/]path/app.jar/!BOOT-INF/classes/!/
+			if (external.contains(fileUrl + "!/") || external.contains("nested:" + encodedPath + "/!")
+					|| external.contains("nested:" + rawPath + "/!") || external.contains("nested:/" + rawPath + "/!")) {
 				return true;
 			}
 		}

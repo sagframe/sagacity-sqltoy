@@ -2181,7 +2181,8 @@ public class SqlConfigParseUtils {
 			return;
 		}
 		// 提取with as 和fast部分的sql，用于分页或取随机记录查询记录数量提供最简sql
-		SqlWithAnalysis sqlWith = new SqlWithAnalysis(sqlToyConfig.getSql(dialect));
+		SqlWithAnalysis sqlWith = new SqlWithAnalysis(sqlToyConfig.getSql(dialect),
+				DataSourceUtils.getDBType(dialect));
 		// 存在with xxx as () 形式的查询
 		if (null != sqlWith.getWithSqlSet()) {
 			String[] aliasTableAs;

@@ -1185,7 +1185,10 @@ public class BeanUtil {
 			if ("".equals(valueStr.trim())) {
 				return null;
 			}
-			return Short.valueOf(Double.valueOf(convertBoolean(valueStr)).shortValue());
+			// update 2026-11-13 原Double中转在越界时静默回绕("99999"->-31073),改为与
+			// Integer/Long同口径:先由toIntegerText归一(小数/科学计数向零截断、剥千分位),
+			// 再由Short精确解析,越界显式抛NumberFormatException,不再产生错误值
+			return Short.valueOf(toIntegerText(valueStr));
 		}
 		// 25
 		if (DataType.primitiveShortType == typeValue) {
@@ -1193,7 +1196,7 @@ public class BeanUtil {
 			if ("".equals(valueStr.trim())) {
 				return 0;
 			}
-			return Double.valueOf(convertBoolean(valueStr)).shortValue();
+			return Short.parseShort(toIntegerText(valueStr));
 		}
 		// 26
 		if (DataType.sqlDateType == typeValue) {
@@ -3264,10 +3267,10 @@ public class BeanUtil {
 	 * @param entityClass 实体类型(支持多级继承)
 	 * @return 含级联注解的字段数组
 	 */
-	private static Field[] parseCascadeFields(Class entityClass) {
+	private static Field[] parseCascadeFields(Class<?> entityClass) {
 		Set<String> fieldSet = new HashSet<String>();
 		List<Field> cascadeFields = new ArrayList<Field>();
-		Class classType = entityClass;
+		Class<?> classType = entityClass;
 		String fieldName;
 		while (classType != null && !classType.equals(Object.class)) {
 			for (Field field : classType.getDeclaredFields()) {
@@ -3290,13 +3293,13 @@ public class BeanUtil {
 	 * @param entityClass 实体类型
 	 * @return 级联关系配置模型列表(含oneToMany、oneToOne)，无级联返回空列表
 	 */
-	public static List<TableCascadeModel> getCascadeModels(Class entityClass) {
+	public static List<TableCascadeModel> getCascadeModels(Class<?> entityClass) {
 		// update 2026-11-10 改ClassValue承载:缓存条目挂在Class自身(类卸载即回收),
 		// 避免静态Map以Class为键强引用应用类(devtools/OSGi热重载下阻滞加载器回收);解析仍只执行一次
 		return cascadeModels.get(entityClass);
 	}
 
-	private static List<TableCascadeModel> parseCascadeModels(Class entityClass) {
+	private static List<TableCascadeModel> parseCascadeModels(Class<?> entityClass) {
 		List<TableCascadeModel> result = new ArrayList<TableCascadeModel>();
 		Field[] cascadeFields = parseCascadeFields(entityClass);
 		for (Field field : cascadeFields) {
@@ -3309,7 +3312,7 @@ public class BeanUtil {
 				cascadeModel.setFields(oneToMany.fields());
 				cascadeModel.setMappedFields(oneToMany.mappedFields());
 				cascadeModel.setMappedType(
-						(Class) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0]);
+						(Class<?>) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0]);
 				if (StringUtil.isNotBlank(oneToMany.notNullField())) {
 					cascadeModel.setNotNullField(oneToMany.notNullField());
 				}

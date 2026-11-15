@@ -92,6 +92,27 @@ public class BeanUtilIntegerTextConvertTest {
 	}
 
 	@Test
+	public void shortAlignment() throws Exception {
+		assertEquals(Short.valueOf((short) 12), convert("12", DataType.wrapShortType, "java.lang.Short"));
+		// 与Integer/Long一致的文本归一口径:小数向零截断、首尾空白容忍
+		assertEquals(Short.valueOf((short) 12), convert("12.7", DataType.wrapShortType, "java.lang.Short"));
+		assertEquals(Short.valueOf((short) -12), convert("-12.7", DataType.wrapShortType, "java.lang.Short"));
+		assertEquals(Short.valueOf((short) 12), convert(" 12 ", DataType.wrapShortType, "java.lang.Short"));
+		assertEquals(Short.valueOf((short) 32767), convert("32767", DataType.wrapShortType, "java.lang.Short"));
+		assertEquals(Short.valueOf((short) -32768), convert("-32768", DataType.wrapShortType, "java.lang.Short"));
+		assertEquals(Short.valueOf((short) 32767), convert("32767", DataType.primitiveShortType, "short"));
+		// 数值对象同样不能走Double中转:整数在范围内精确转换,越界必须报错
+		assertEquals(Short.valueOf((short) 12), convert(Integer.valueOf(12), DataType.wrapShortType, "java.lang.Short"));
+		assertThrows(NumberFormatException.class,
+				() -> convert(Integer.valueOf(99999), DataType.wrapShortType, "java.lang.Short"));
+		// 越界必须响亮报错,修复前经Double.shortValue()静默回绕:"99999"->-31073、"32768"->-32768
+		assertThrows(NumberFormatException.class, () -> convert("32768", DataType.wrapShortType, "java.lang.Short"));
+		assertThrows(NumberFormatException.class, () -> convert("99999", DataType.wrapShortType, "java.lang.Short"));
+		assertThrows(NumberFormatException.class, () -> convert("-32769", DataType.wrapShortType, "java.lang.Short"));
+		assertThrows(NumberFormatException.class, () -> convert("99999", DataType.primitiveShortType, "short"));
+	}
+
+	@Test
 	public void integerAlignment() throws Exception {
 		assertEquals(Integer.valueOf(1), convert("1.5", DataType.wrapIntegerType, "java.lang.Integer"));
 		assertEquals(Integer.valueOf(12), convert(" 12 ", DataType.wrapIntegerType, "java.lang.Integer"));

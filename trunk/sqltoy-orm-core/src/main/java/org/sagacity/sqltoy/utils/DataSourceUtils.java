@@ -1121,61 +1121,10 @@ public class DataSourceUtils {
 		if (conn == null) {
 			return Dialect.UNDEFINE;
 		}
-		int dbType = getDBType(conn);
-		switch (dbType) {
-		case DBType.DB2:
-			return Dialect.DB2;
-		case DBType.ORACLE:
-			return Dialect.ORACLE;
-		case DBType.ORACLE11:
-			return Dialect.ORACLE11;
-		case DBType.POSTGRESQL:
-			return Dialect.POSTGRESQL;
-		case DBType.POSTGRESQL14:
-			return Dialect.POSTGRESQL14;
-		case DBType.MYSQL:
-			return Dialect.MYSQL;
-		case DBType.MYSQL57:
-			return Dialect.MYSQL57;
-		case DBType.SQLSERVER:
-			return Dialect.SQLSERVER;
-		case DBType.SQLITE:
-			return Dialect.SQLITE;
-		case DBType.CLICKHOUSE:
-			return Dialect.CLICKHOUSE;
-		case DBType.TIDB:
-			return Dialect.TIDB;
-		case DBType.OCEANBASE:
-			return Dialect.OCEANBASE;
-		case DBType.DM:
-			return Dialect.DM;
-		case DBType.KINGBASE:
-			return Dialect.KINGBASE;
-		case DBType.TDENGINE:
-			return Dialect.TDENGINE;
-		case DBType.OPENGAUSS:
-			return Dialect.OPENGAUSS;
-		case DBType.GAUSSDB:
-			return Dialect.GAUSSDB;
-		case DBType.MOGDB:
-			return Dialect.MOGDB;
-		case DBType.STARDB:
-			return Dialect.STARDB;
-		case DBType.IMPALA:
-			return Dialect.IMPALA;
-		case DBType.H2:
-			return Dialect.H2;
-		case DBType.OSCAR:
-			return Dialect.OSCAR;
-		case DBType.VASTBASE:
-			return Dialect.VASTBASE;
-		case DBType.DORIS:
-			return Dialect.DORIS;
-		case DBType.STARROCKS:
-			return Dialect.STARROCKS;
-		default:
-			return Dialect.UNDEFINE;
-		}
+		// update 2026-11-13 统一复用getDialect(Integer)的dbType->方言映射:原独立switch遗漏
+		// HANA/HIGHGO(返回undefine并按DataSource缓存,导致方言变体sql不生效);单一映射源同时
+		// 避免后续新增DBType时两处switch再次漂移
+		return getDialect(getDBType(conn));
 	}
 
 	/**

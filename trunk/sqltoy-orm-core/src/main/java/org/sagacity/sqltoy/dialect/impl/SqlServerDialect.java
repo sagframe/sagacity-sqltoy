@@ -89,7 +89,7 @@ public class SqlServerDialect implements Dialect {
 		StringBuilder sql = DialectUtils.openFastWrap(sqlToyConfig, dialect);
 		String partSql = " select top " + randomCount + " ";
 		if (sqlToyConfig.isHasWith()) {
-			SqlWithAnalysis sqlWith = new SqlWithAnalysis(innerSql);
+			SqlWithAnalysis sqlWith = new SqlWithAnalysis(innerSql, profile.getDbType());
 			sql.append(sqlWith.getWithSql());
 			innerSql = sqlWith.getRejectWithSql();
 		}
@@ -151,7 +151,7 @@ public class SqlServerDialect implements Dialect {
 		// the keyword 'with'");
 		// order/union判定基于剥离后主体,CTE体内order by不再依赖clearDisturbSql剔除
 		if (sqlToyConfig.isHasWith()) {
-			SqlWithAnalysis sqlWith = new SqlWithAnalysis(innerSql);
+			SqlWithAnalysis sqlWith = new SqlWithAnalysis(innerSql, profile.getDbType());
 			sql.append(sqlWith.getWithSql());
 			innerSql = sqlWith.getRejectWithSql();
 		}
@@ -221,7 +221,7 @@ public class SqlServerDialect implements Dialect {
 		StringBuilder sql = DialectUtils.openFastWrap(sqlToyConfig, dialect);
 		String partSql = " select top " + topSize + " ";
 		if (sqlToyConfig.isHasWith()) {
-			SqlWithAnalysis sqlWith = new SqlWithAnalysis(innerSql);
+			SqlWithAnalysis sqlWith = new SqlWithAnalysis(innerSql, profile.getDbType());
 			sql.append(sqlWith.getWithSql());
 			innerSql = sqlWith.getRejectWithSql();
 		}

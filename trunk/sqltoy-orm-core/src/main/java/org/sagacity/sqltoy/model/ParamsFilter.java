@@ -81,6 +81,21 @@ public class ParamsFilter implements Serializable {
 
 	private String splitSign;
 
+	/**
+	 * update 2026-11-13 新like: both/left/right
+	 */
+	private String likeMode = "both";
+
+	/**
+	 * update 2026-11-13 新like: raw/legacy
+	 */
+	private String likeEscapeMode = "raw";
+
+	/**
+	 * update 2026-11-13 新like: 是否将%作为字面量转义
+	 */
+	private boolean likeEscapePercent = true;
+
 	public ParamsFilter(String... params) {
 		this.params = params;
 	}
@@ -187,6 +202,39 @@ public class ParamsFilter implements Serializable {
 
 	public ParamsFilter escapeLike() {
 		this.type = "escapeLike";
+		return this;
+	}
+
+	/**
+	 * update 2026-11-13 统一LIKE:默认both+raw+escapePercent=true
+	 */
+	public ParamsFilter like() {
+		this.type = "like";
+		return this;
+	}
+
+	/**
+	 * @param mode both/left/right(或contains/prefix/suffix)
+	 */
+	public ParamsFilter like(String mode) {
+		this.type = "like";
+		this.likeMode = mode;
+		return this;
+	}
+
+	/**
+	 * @param mode       both/left/right
+	 * @param escapeMode raw/legacy
+	 */
+	public ParamsFilter like(String mode, String escapeMode) {
+		this.type = "like";
+		this.likeMode = mode;
+		this.likeEscapeMode = escapeMode;
+		return this;
+	}
+
+	public ParamsFilter likeEscapePercent(boolean escapePercent) {
+		this.likeEscapePercent = escapePercent;
 		return this;
 	}
 
@@ -366,6 +414,18 @@ public class ParamsFilter implements Serializable {
 	 */
 	public String getType() {
 		return type;
+	}
+
+	public String getLikeMode() {
+		return likeMode;
+	}
+
+	public String getLikeEscapeMode() {
+		return likeEscapeMode;
+	}
+
+	public boolean isLikeEscapePercent() {
+		return likeEscapePercent;
 	}
 
 	/**

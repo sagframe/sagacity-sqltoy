@@ -495,11 +495,11 @@ public class SqlUtil {
 			} else if (jdbcType == java.sql.Types.INTEGER) {
 				pst.setInt(paramIndex, Integer.valueOf(tmpStr));
 			} else if (jdbcType == java.sql.Types.DATE) {
-				pst.setDate(paramIndex, new java.sql.Date(DateUtil.parseString(tmpStr).getTime()));
+				pst.setDate(paramIndex, new java.sql.Date(parseTextDateParam(tmpStr, jdbcType).getTime()));
 			} else if (jdbcType == java.sql.Types.TIMESTAMP) {
-				pst.setTimestamp(paramIndex, new Timestamp(DateUtil.parseString(tmpStr).getTime()));
+				pst.setTimestamp(paramIndex, new Timestamp(parseTextDateParam(tmpStr, jdbcType).getTime()));
 			} else if (jdbcType == java.sql.Types.TIME) {
-				pst.setTime(paramIndex, new Time(DateUtil.parseString(tmpStr).getTime()));
+				pst.setTime(paramIndex, new Time(parseTextDateParam(tmpStr, jdbcType).getTime()));
 			} else {
 				if (jdbcType == java.sql.Types.BOOLEAN) {
 					if (tmpStr.equalsIgnoreCase("true") || tmpStr.equals("1")) {
@@ -525,6 +525,25 @@ public class SqlUtil {
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * update 2026-11-13 DATE/TIME/TIMESTAMP字符串绑定前的判空:
+	 * DateUtil.parseString解析失败返回null,原实现直接new Date(null.getTime())抛NPE,
+	 * 真实原因(值不可解析)被掩盖;改为抛可读IllegalArgumentException。
+	 * 本方法只做判空,不改变DateUtil的宽松解析/滚动语义(strict校验单独评估)。
+	 *
+	 * @param value    待绑定字符串
+	 * @param jdbcType java.sql.Types.DATE/TIME/TIMESTAMP
+	 * @return 解析后的日期对象,不会为null
+	 */
+	private static java.util.Date parseTextDateParam(String value, int jdbcType) {
+		java.util.Date date = DateUtil.parseString(value);
+		if (date == null) {
+			throw new IllegalArgumentException("the parameter value [" + value + "] can not be parsed as jdbcType ["
+					+ jdbcType + "]!");
+		}
+		return date;
 	}
 
 	/**
@@ -2700,20 +2719,79 @@ public class SqlUtil {
 		String maskedSql = SqlConfigParseUtils.maskLiterals(sql, false);
 		// 最后的收括号位置
 		int lastBracketIndex = maskedSql.lastIndexOf(")");
-		boolean result = false;
 		int orderByIndex = StringUtil.matchLastIndex(maskedSql, ORDER_BY_PATTERN, 1);
 		// 存在order by
-		if (orderByIndex > lastBracketIndex) {
-			result = true;
+		boolean result = orderByIndex > lastBracketIndex;
+		if (!result && orderByIndex >= 0) {
+			// update 2026-11-13 修复order by nvl(a,0)/(case when ...)等排序表达式自带收括号的场景:
+			// 原判定要求order by位于全串最后一个)之后,表达式内的收括号会把最外层排序误判为无排序。
+			// 原判定为false时遍历所有order by候选做相对深度复核:从关键字向后扫描,若出现使
+			// 深度低于关键字所在层的")",说明该order by处于某个括号内(子查询/over(...)),否则
+			// 说明收括号属于排序表达式自身,判为最外层true。
+			// 遍历全部候选是因为最后一个候选可能位于排序表达式内的窗口函数/标量子查询中
+			// (如order by a, row_number() over (order by b)),此时更靠前的候选才是最外层排序。
+			// 该分支只把false纠正为true,不会把旧true改成false,保持原判定口径不变。
+			Matcher matcher = ORDER_BY_PATTERN.matcher(maskedSql);
+			int searchStart = 0;
+			while (matcher.find(searchStart)) {
+				if (isTopLevelOrderBy(maskedSql, matcher.start())) {
+					result = true;
+					break;
+				}
+				searchStart = Math.max(matcher.end() - 1, matcher.start() + 1);
+			}
 		}
 		// 特殊处理 order by，通过ORder这种非常规写法代表分页时是否进行外层包裹(建议废弃使用)
 		if (judgeUpcase) {
 			int upcaseOrderBy = StringUtil.matchLastIndex(maskedSql, UPCASE_ORDER_PATTERN, 1);
-			if (upcaseOrderBy > lastBracketIndex) {
+			// 原判定(标记位于最后一个)之后)保持不变;新增顶层复核,避免ORder by nvl(...)这类
+			// 标记位于排序表达式括号之前时因主判定修复而失效(标记语义始终是强制不包裹)
+			if (upcaseOrderBy > lastBracketIndex
+					|| (upcaseOrderBy >= 0 && isTopLevelOrderBy(maskedSql, upcaseOrderBy))) {
 				result = false;
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * 判断order by关键字是否处于sql最外层(而非子查询/over(...)等括号内)。
+	 * 以关键字所在层的深度为基准向后扫描,一旦出现使深度低于该基准的")",说明关键字被某个
+	 * 外层括号闭合,不属于最外层;排序表达式自身的括号先开后闭,不会降低基准深度。
+	 * 调用方保证matchIndex为ORDER_BY_PATTERN/UPCASE_ORDER_PATTERN的匹配起点(模式以单个\W开头,
+	 * 故关键字首字符位于matchIndex+1)。
+	 *
+	 * @param maskedSql  已完成字面量掩码的sql,与原串等长
+	 * @param matchIndex order by/ORder匹配的起始下标(即关键字前一个非单词字符)
+	 * @return true表示该order by不属于任何未闭合的括号层,处于最外层
+	 */
+	private static boolean isTopLevelOrderBy(String maskedSql, int matchIndex) {
+		int keywordIndex = matchIndex + 1;
+		if (keywordIndex < 0 || keywordIndex >= maskedSql.length()) {
+			return false;
+		}
+		int depth = 0;
+		for (int i = 0; i < keywordIndex; i++) {
+			char c = maskedSql.charAt(i);
+			if (c == '(') {
+				depth++;
+			} else if (c == ')') {
+				depth--;
+			}
+		}
+		int keywordDepth = depth;
+		for (int i = keywordIndex, n = maskedSql.length(); i < n; i++) {
+			char c = maskedSql.charAt(i);
+			if (c == '(') {
+				depth++;
+			} else if (c == ')') {
+				depth--;
+				if (depth < keywordDepth) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -3008,7 +3086,7 @@ public class SqlUtil {
 		}
 		// 存在with as ，先剔除(hasWith基于字面量掩码串判定,字面量内的with xx as (不触发剔除)
 		if (SqlConfigParseUtils.hasWith(sql, backslashEscape)) {
-			SqlWithAnalysis sqlWith = new SqlWithAnalysis(sql);
+			SqlWithAnalysis sqlWith = new SqlWithAnalysis(sql, backslashEscape);
 			sql = sqlWith.getRejectWithSql();
 		}
 		// update 2026-11-10 首尾各补空白:尾部补空白保证集合关键字紧邻括号(如 except(select ...))时,
@@ -4318,5 +4396,44 @@ public class SqlUtil {
 			result = result.replace("\u0001", "\\%");
 		}
 		return result;
+	}
+
+	/**
+	 * update 2026-11-13 原始LIKE值单遍转义(不先剥离已有转义):
+	 * 供新的&lt;like escape-mode="raw"&gt;使用,正确区分"用户原始反斜杠"和"已转义值";
+	 * 旧escapeLikeValue保留其幂等语义,供legacy场景使用。
+	 * 转义顺序:反斜杠→下划线→百分号(受escapePercent控制)→SQL Server方括号。
+	 *
+	 * @param value         原始值
+	 * @param dbType        数据库类型
+	 * @param escapePercent true时将%作为字面量转义,false时保留%作为通配符
+	 * @return 单遍转义后的LIKE pattern值
+	 */
+	public static String escapeLikeValueRaw(String value, int dbType, boolean escapePercent) {
+		if (value == null || value.isEmpty()) {
+			return value;
+		}
+		boolean escapeBracket = (dbType == DBType.SQLSERVER);
+		StringBuilder result = new StringBuilder(value.length() + 8);
+		char c;
+		for (int i = 0, n = value.length(); i < n; i++) {
+			c = value.charAt(i);
+			if (c == '\\') {
+				result.append("\\\\");
+			} else if (c == '_') {
+				result.append("\\_");
+			} else if (c == '%') {
+				if (escapePercent) {
+					result.append("\\%");
+				} else {
+					result.append('%');
+				}
+			} else if (c == '[' && escapeBracket) {
+				result.append("\\[");
+			} else {
+				result.append(c);
+			}
+		}
+		return result.toString();
 	}
 }

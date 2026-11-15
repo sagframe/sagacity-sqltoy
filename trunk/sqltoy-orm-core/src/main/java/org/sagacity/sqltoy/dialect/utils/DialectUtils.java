@@ -501,7 +501,7 @@ public class DialectUtils {
 			String withSql = "";
 			// with as分析器(避免每次做with 检测,提升效率)
 			if (sqlToyConfig != null && sqlToyConfig.isHasWith()) {
-				SqlWithAnalysis sqlWith = new SqlWithAnalysis(sql);
+				SqlWithAnalysis sqlWith = new SqlWithAnalysis(sql, dbType);
 				// 判断with as是否在开始位置，如果在内部不做优化处理
 				if (StringUtil.isBlank(sqlWith.getPreSql())) {
 					query_tmp = sqlWith.getRejectWithSql();

@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.SqlToyConstants;
 import org.sagacity.sqltoy.config.SqlConfigParseUtils;
+import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.StringUtil;
 
@@ -63,6 +64,12 @@ public class SqlWithAnalysis implements Serializable {
 	private final boolean stripMaterialized;
 
 	/**
+	 * update 2026-11-14 引号转义语义:mysql系\'为转义(true),标准SQL反斜杠不转义(false)。
+	 * 单参构造固定false保持历史行为;(sql,dbType)构造按方言判定,避免MySQL CTE被标准语义截断。
+	 */
+	private final boolean backslashEscape;
+
+	/**
 	 * update 2026-10-19 位置级剔除后的完整sql:headSql+各CTE定义(ext剔除后)+最终tailSql恰为"
 	 * "+原sql的完整拼接, 去掉首部补位空格即得;未启用剔除或无with时为null,getAdaptedSql回退原sql
 	 */
@@ -71,6 +78,20 @@ public class SqlWithAnalysis implements Serializable {
 	public SqlWithAnalysis(String sql) {
 		this.sql = sql;
 		this.stripMaterialized = false;
+		this.backslashEscape = false;
+		this.parse();
+	}
+
+	/**
+	 * update 2026-11-14 显式指定引号转义语义:mysql系为true,标准SQL为false。
+	 *
+	 * @param sql            原始sql
+	 * @param backslashEscape true:反斜杠转义引号(MySQL);false:标准SQL
+	 */
+	public SqlWithAnalysis(String sql, boolean backslashEscape) {
+		this.sql = sql;
+		this.stripMaterialized = false;
+		this.backslashEscape = backslashEscape;
 		this.parse();
 	}
 
@@ -85,6 +106,7 @@ public class SqlWithAnalysis implements Serializable {
 	public SqlWithAnalysis(String sql, int dbType) {
 		this.sql = sql;
 		this.stripMaterialized = !supportsCteMaterialized(dbType);
+		this.backslashEscape = DataSourceUtils.isBackslashEscapeDbType(dbType);
 		this.parse();
 	}
 
@@ -150,7 +172,7 @@ public class SqlWithAnalysis implements Serializable {
 		// 字面量掩码串与原串等长:with、逗号as的定位均在掩码串上进行,
 		// 规避字面量内的with xx as (文本误触发解析导致字面量被截断;
 		// 内容截取仍基于原串tailSql,掩码串位置可直接用于原串
-		String maskedTailSql = SqlConfigParseUtils.maskLiterals(tailSql, false);
+		String maskedTailSql = SqlConfigParseUtils.maskLiterals(tailSql, backslashEscape);
 		String aliasTable;
 		int endWith;
 		int asIndex;
@@ -203,7 +225,10 @@ public class SqlWithAnalysis implements Serializable {
 			// update 2026-9-3 findBodyEnd替代原getSymMarkIndex配对
 			// endWith = StringUtil.getSymMarkIndex("(", ")", tailSql, withAsMatcher.start()
 			// + asIndex);
-			endWith = findBodyEnd(tailSql, withAsMatcher.start() + asIndex);
+			endWith = findBodyEnd(tailSql, withAsMatcher.start() + asIndex, backslashEscape);
+			if (endWith < 0) {
+				throw cteBodyException();
+			}
 			cteDef = tailSql.substring(withAsMatcher.start() + 1, endWith + 1);
 			// update 2026-10-19
 			// ext位置级剔除:cteDef较groupStr超前1字符(跳过匹配前导\W),ext在cteDef内起止为[asIndex+1,parenIdx-1);
@@ -256,7 +281,10 @@ public class SqlWithAnalysis implements Serializable {
 			// update 2026-9-3 findBodyEnd替代原getSymMarkIndex配对
 			// endWith = StringUtil.getSymMarkIndex("(", ")", tailSql, otherMatcher.start()
 			// + asIndex);
-			endWith = findBodyEnd(tailSql, otherMatcher.start() + asIndex);
+			endWith = findBodyEnd(tailSql, otherMatcher.start() + asIndex, backslashEscape);
+			if (endWith < 0) {
+				throw cteBodyException();
+			}
 			cteDef = tailSql.substring(0, endWith + 1);
 			// update 2026-10-19
 			// ext位置级剔除:循环CTE的groupStr与cteDef同以0起(otherMatcher.start()恒为0,否则已break),
@@ -294,8 +322,31 @@ public class SqlWithAnalysis implements Serializable {
 	 * @return 配对')'的位置,未找到返回-1
 	 */
 	private static int findBodyEnd(String sql, int fromIndex) {
+		return findBodyEnd(sql, fromIndex, false);
+	}
+
+	/**
+	 * update 2026-11-14 按方言引号语义查找with体配对')':mysql系\'为转义,标准SQL反斜杠不转义。
+	 *
+	 * @param sql             sql
+	 * @param fromIndex       从该位置开始查找with体的'('
+	 * @param backslashEscape true:反斜杠转义引号(MySQL);false:标准SQL
+	 * @return 配对')'的位置,未找到返回-1
+	 */
+	private static int findBodyEnd(String sql, int fromIndex, boolean backslashEscape) {
 		// 委托StringUtil的字面量感知括号配对(语义一致,统一维护)
-		return StringUtil.getSymMarkIndexSkipQuoted("(", ")", sql, fromIndex);
+		return StringUtil.getSymMarkIndexSkipQuoted("(", ")", sql, fromIndex, backslashEscape);
+	}
+
+	/**
+	 * update 2026-11-14 兜底:with体括号无法配对时不再抛StringIndexOutOfBoundsException,
+	 * 改为携带SQL片段的可读异常,便于定位到具体SQL。
+	 */
+	private IllegalArgumentException cteBodyException() {
+		String preview = (sql == null) ? "null"
+				: (sql.length() > 200 ? sql.substring(0, 200).concat("...") : sql);
+		return new IllegalArgumentException(
+				"the CTE body bracket can not be matched, please check the SQL: " + preview);
 	}
 
 	/**

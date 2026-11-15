@@ -1,15 +1,21 @@
 package org.sagacity.sqltoy.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.File;
 import java.io.OutputStream;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.net.URLConnection;
+import java.net.URLStreamHandler;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -274,6 +280,85 @@ public class SqlResourceScannerRootAndDuplicateTest {
 			}
 		}
 		return false;
+	}
+
+	@Test
+	public void coveredByNestedRootMatchesBothBootGenerations(@TempDir Path tempDir) throws Exception {
+		File jar = tempDir.resolve("app.jar").toFile();
+		Files.write(jar.toPath(), new byte[0]);
+		String fileUrl = jar.toURI().toURL().toExternalForm();
+		String abs = jar.getAbsolutePath().replace('\\', '/');
+		Method method = SqlResourceScanner.class.getDeclaredMethod("coveredByNestedRoot", List.class, File.class);
+		method.setAccessible(true);
+
+		// Boot 2.x/3.0经典多叹号形态:jar:file:/path/app.jar!/BOOT-INF/classes!/
+		assertTrue((Boolean) method.invoke(null, roots("jar:" + fileUrl + "!/BOOT-INF/classes!/"), jar),
+				"经典classes内层根应判定外层jar已被覆盖");
+		// Boot 3.2+嵌套形态(带前导斜杠):jar:nested:/path/app.jar/!BOOT-INF/classes/!/
+		assertTrue((Boolean) method.invoke(null, roots("jar:nested:/" + abs + "/!BOOT-INF/classes/!/"), jar),
+				"Boot3.2+带前导斜杠嵌套classes根应判定覆盖");
+		// Boot 3.2+嵌套形态(Windows盘符无前导斜杠):jar:nested:C:/path/app.jar/!BOOT-INF/classes/!/
+		assertTrue((Boolean) method.invoke(null, roots("jar:nested:" + abs + "/!BOOT-INF/classes/!/"), jar),
+				"Boot3.2+无前导斜杠嵌套classes根应判定覆盖");
+		// 仅暴露BOOT-INF/lib嵌套根:外层jar的BOOT-INF/classes资源未被承载,须保留外层根
+		assertFalse((Boolean) method.invoke(null, roots("jar:nested:/" + abs + "/!BOOT-INF/lib/dep.jar!/"), jar),
+				"仅lib嵌套根不能判定外层jar被覆盖");
+		// 普通非嵌套jar根不参与覆盖判定
+		assertFalse((Boolean) method.invoke(null, roots("jar:" + fileUrl + "!/"), jar),
+				"非嵌套根不参与覆盖判定");
+	}
+
+	/**
+	 * 真实Boot 3.2/4.x的nested URL用File.toURI().getRawPath()拼接,路径含空格/中文时为%xx编码;
+	 * java.class.path给的是原始字符路径,覆盖判定必须同时匹配编码形态,否则外层jar会重复补根
+	 */
+	@Test
+	public void coveredByNestedRootMatchesUrlEncodedPath(@TempDir Path tempDir) throws Exception {
+		Method method = SqlResourceScanner.class.getDeclaredMethod("coveredByNestedRoot", List.class, File.class);
+		method.setAccessible(true);
+		// 空格路径(Windows常见:Program Files/My Documents)
+		File jar = tempDir.resolve("app with space").resolve("app.jar").toFile();
+		Files.createDirectories(jar.getParentFile().toPath());
+		Files.write(jar.toPath(), new byte[0]);
+		String nestedUrl = "jar:nested:" + jar.toURI().toURL().toExternalForm().substring("file:".length())
+				+ "/!BOOT-INF/classes/!/";
+		assertTrue(nestedUrl.contains("%20"), "用例前置:路径应被URL编码:" + nestedUrl);
+		assertTrue((Boolean) method.invoke(null, roots(nestedUrl), jar), "URL编码(空格)路径也必须判定覆盖:" + nestedUrl);
+		// 中文路径
+		File cjkJar = tempDir.resolve("应用 目录").resolve("app.jar").toFile();
+		Files.createDirectories(cjkJar.getParentFile().toPath());
+		Files.write(cjkJar.toPath(), new byte[0]);
+		String cjkUrl = "jar:nested:" + cjkJar.toURI().toURL().toExternalForm().substring("file:".length())
+				+ "/!BOOT-INF/classes/!/";
+		assertTrue((Boolean) method.invoke(null, roots(cjkUrl), cjkJar), "中文路径也必须判定覆盖:" + cjkUrl);
+	}
+
+	private static List<URL> roots(String spec) throws Exception {
+		List<URL> list = new ArrayList<URL>();
+		list.add(new URL(null, spec, new URLStreamHandler() {
+			@Override
+			protected URLConnection openConnection(URL u) {
+				return null;
+			}
+		}));
+		return list;
+	}
+
+	@Test
+	public void coveredByNestedRootMatchesEncodedDeployPath(@TempDir Path tempDir) throws Exception {
+		// 部署路径含空格/中文:真实LaunchedClassLoader用toURI().getRawPath()编码态拼nested URL,
+		// java.class.path给的是原始字符路径,须按编码态比对才能判定外层jar已被嵌套根覆盖
+		File jar = Files.createDirectories(tempDir.resolve("dir with space")).resolve("应用.jar").toFile();
+		Files.write(jar.toPath(), new byte[0]);
+		Method method = SqlResourceScanner.class.getDeclaredMethod("coveredByNestedRoot", List.class, File.class);
+		method.setAccessible(true);
+		String encodedNested = "jar:nested:" + jar.toURI().getRawPath() + "/!BOOT-INF/classes/!/";
+		assertTrue((Boolean) method.invoke(null, roots(encodedNested), jar),
+				"编码态嵌套classes根应判定外层jar被覆盖:" + encodedNested);
+		// 仅lib嵌套根(编码态)仍不能判定覆盖
+		String encodedLib = "jar:nested:" + jar.toURI().getRawPath() + "/!BOOT-INF/lib/dep.jar!/";
+		assertFalse((Boolean) method.invoke(null, roots(encodedLib), jar),
+				"编码态仅lib嵌套根不能判定外层jar被覆盖");
 	}
 
 	private static ConcurrentHashMap<String, SqlToyConfig> parse(List resources) throws Exception {
