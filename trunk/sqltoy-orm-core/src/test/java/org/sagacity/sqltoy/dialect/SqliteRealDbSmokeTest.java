@@ -4,6 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -22,7 +25,7 @@ public class SqliteRealDbSmokeTest {
 	public static void init() throws Exception {
 		conn = DriverManager.getConnection("jdbc:sqlite::memory:");
 		FunctionUtils.setFunctionConverts(java.util.Arrays.asList("default"));
-		try (java.sql.Statement st = conn.createStatement()) {
+		try (Statement st = conn.createStatement()) {
 			st.execute("create table t (name varchar(100))");
 			st.execute("insert into t values ('xxadminxx')");
 		}
@@ -40,7 +43,7 @@ public class SqliteRealDbSmokeTest {
 	}
 
 	private String queryStr(String sql) throws Exception {
-		try (java.sql.PreparedStatement pst = conn.prepareStatement(sql); java.sql.ResultSet rs = pst.executeQuery()) {
+		try (PreparedStatement pst = conn.prepareStatement(sql); ResultSet rs = pst.executeQuery()) {
 			rs.next();
 			return rs.getString(1);
 		}

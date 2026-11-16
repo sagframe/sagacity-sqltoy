@@ -92,8 +92,14 @@ public class EntityManager {
 
 	/**
 	 * 存放主键生成策略实例
+	 * update 2026-11-15 static改为实例字段:原JVM级共享导致首个解析实体的上下文独占初始化生成器
+	 * (RedisIdGenerator经initialize绑定该上下文的redisTemplate),后续上下文containsKey短路跳过
+	 * 初始化而串用首个上下文的连接工厂(quickstart CI实测:Lesson01的嵌入式redis被无视,save走了
+	 * 主上下文无redis的STOPPED工厂报"LettuceConnectionFactory has been STOPPED");EntityManager
+	 * 本为每SqlToyContext一份,元数据缓存entitysMetaMap亦为实例级,生成器随上下文走;
+	 * 与cascadeModels改ClassValue同族的"静态结构持有上下文资源"治理;无状态生成器行为不变
 	 */
-	private static IgnoreKeyCaseMap<String, IdGenerator> IdGeneratorsInstance = new IgnoreKeyCaseMap<String, IdGenerator>();
+	private IgnoreKeyCaseMap<String, IdGenerator> IdGeneratorsInstance = new IgnoreKeyCaseMap<String, IdGenerator>();
 
 	/**
 	 * 定义常用的主键生成方式类名称

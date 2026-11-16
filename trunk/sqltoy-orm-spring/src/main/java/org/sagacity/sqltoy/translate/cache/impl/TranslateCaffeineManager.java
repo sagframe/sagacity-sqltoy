@@ -19,8 +19,8 @@ import com.github.benmanes.caffeine.cache.Caffeine;
  * @project sagacity-sqltoy
  * @description 提供基于Caffeine缓存实现
  * @author 740202157@qq.com
- * @version v1.0, Date:2021-1-25
- * @modify 2021-1-25,修改说明
+ * @version v1.0,Date:2021-01-25
+ * @modify Date:2021-01-25 修改说明
  */
 public class TranslateCaffeineManager extends TranslateCacheManager {
 	/**
@@ -28,7 +28,10 @@ public class TranslateCaffeineManager extends TranslateCacheManager {
 	 */
 	protected final static Logger logger = LoggerFactory.getLogger(TranslateCaffeineManager.class);
 
-	protected static CaffeineCacheManager cacheManager;
+	// update 2026-11-15 原为static:JVM内多个SqlToyContext共用同一个CaffeineCacheManager,
+	// 而cacheNameSet/registerLock是实例字段,后初始化上下文会对同名cache二次registerCustomCache,
+	// 替换前一个上下文的缓存对象(规格以最后注册者为准、已缓存内容丢失);改为实例字段随context隔离
+	protected CaffeineCacheManager cacheManager;
 
 	// 用于判断是否创建过缓存(并发安全集合,避免不同cacheName并发put时结构被破坏)
 	private Set<String> cacheNameSet = ConcurrentHashMap.newKeySet();
@@ -133,7 +136,7 @@ public class TranslateCaffeineManager extends TranslateCacheManager {
 			return true;
 		}
 		cacheManager = new CaffeineCacheManager();
-		logger.debug("已经启动caffeine 缓存管理器--------------------------------------");
+		logger.debug("started caffeine cache manager--------------------------------------");
 		return true;
 	}
 

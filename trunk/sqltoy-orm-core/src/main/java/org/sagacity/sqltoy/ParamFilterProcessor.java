@@ -749,6 +749,9 @@ public class ParamFilterProcessor {
 			result = toString(paramValue, paramFilterModel.getAddQuote());
 		} else if ("to-array".equals(filterType)) {
 			result = toArray(paramValue, paramFilterModel.getDataType());
+		} else if ("like".equals(filterType)) {
+			result = like(paramValue, paramFilterModel.getAppendStr(), paramFilterModel.getLikeMode(),
+					paramFilterModel.getLikeEscapeMode(), paramFilterModel.isLikeEscapePercent(), true);
 		} else if ("l-like".equals(filterType)) {
 			result = like(paramValue, paramFilterModel.getAppendStr(), true);
 		} else if ("r-like".equals(filterType)) {
@@ -946,44 +949,79 @@ public class ParamFilterProcessor {
 	 * @return
 	 */
 	private static Object like(Object paramValue, String appendStr, boolean isLeft) {
+		return like(paramValue, appendStr, isLeft ? "left" : "right", "legacy", true, false);
+	}
+
+	/**
+	 * update 2026-11-13 统一LIKE处理(新&lt;like&gt;元素):
+	 * mode=both/left/right, escapeMode=raw/legacy, escapePercent控制%是否转义。
+	 * 容器统一支持CharSequence/String[]/Object[]/基本类型数组/List/Set/其它Collection;
+	 * 处理顺序固定为“先转义值,再拼appendStr,最后补%”,避免值末尾反斜杠把补的%转义掉。
+	 *
+	 * @param paramValue     原始参数值
+	 * @param appendStr      补%前拼接的字符(仅left/right)
+	 * @param mode           both/left/right
+	 * @param escapeMode     raw/legacy
+	 * @param escapePercent  是否将%作为字面量转义
+	 * @param extendedContainers 是否启用扩展容器(CharSequence/Object[]/基本数组/其它Collection);
+	 *                           旧l-like/r-like保持false,新&lt;like&gt;为true
+	 * @return 处理后的LIKE参数值
+	 */
+	private static Object like(Object paramValue, String appendStr, String mode, String escapeMode,
+			boolean escapePercent, boolean extendedContainers) {
 		if (StringUtil.isBlank(paramValue)) {
 			return null;
+		}
+		// 旧l-like/r-like保持历史容器范围,避免扩展容器改变存量行为
+		if (!extendedContainers && !(paramValue instanceof String) && !(paramValue instanceof String[])
+				&& !(paramValue instanceof List) && !(paramValue instanceof Set)) {
+			return paramValue;
 		}
 		int dbType = DBType.UNDEFINE;
 		// dialect为null时,尝试从运行时上下文获取数据库类型
 		if (SqlExecuteStat.get() != null) {
 			dbType = SqlExecuteStat.get().getDbType();
 		}
-		// appendStr按转义处理后拼接(其中%转为字面量\%),通配符统一仅由本方法补充的%提供,避免拼接后出现%%
-		String escapedAppend = (appendStr == null) ? "" : SqlUtil.escapeLikeValue(appendStr, dbType, true);
-		String escapeStr;
-		if (paramValue instanceof String) {
-			escapeStr = SqlUtil.escapeLikeValue(paramValue.toString(), dbType, true);
-			if (isLeft) {
-				return "%".concat(escapedAppend).concat(escapeStr);
-			}
-			return escapeStr.concat(escapedAppend).concat("%");
-		} else if (paramValue instanceof String[]) {
+		String realMode = normalizeLikeMode(mode);
+		String realEscapeMode = normalizeLikeEscapeMode(escapeMode);
+		String escapedAppend = (appendStr == null) ? ""
+				: escapeLikeText(appendStr, dbType, realEscapeMode, true);
+		if (paramValue instanceof CharSequence) {
+			return wrapLikeValue(paramValue.toString(), escapedAppend, realMode, dbType, realEscapeMode,
+					escapePercent);
+		}
+		if (paramValue instanceof String[]) {
 			String[] tmpAry = (String[]) paramValue;
 			for (int i = 0, n = tmpAry.length; i < n; i++) {
 				if (tmpAry[i] != null) {
-					escapeStr = SqlUtil.escapeLikeValue(tmpAry[i], dbType, true);
-					tmpAry[i] = isLeft ? "%".concat(escapedAppend).concat(escapeStr)
-							: escapeStr.concat(escapedAppend).concat("%");
+					tmpAry[i] = wrapLikeValue(tmpAry[i], escapedAppend, realMode, dbType, realEscapeMode,
+							escapePercent);
 				}
 			}
 			return tmpAry;
-		} else if (paramValue instanceof List) {
+		}
+		if (paramValue.getClass().isArray()) {
+			Object[] arrays = CollectionUtil.convertArray(paramValue);
+			// 基本类型数组/具体类型数组统一转为Object[],避免向Integer[]等写入String时ArrayStoreException
+			Object[] result = new Object[arrays.length];
+			for (int i = 0, n = arrays.length; i < n; i++) {
+				result[i] = arrays[i] == null ? null
+						: wrapLikeValue(arrays[i].toString(), escapedAppend, realMode, dbType, realEscapeMode,
+								escapePercent);
+			}
+			return result;
+		}
+		if (paramValue instanceof List) {
 			List tmpList = (List) paramValue;
 			for (int i = 0, n = tmpList.size(); i < n; i++) {
 				if (tmpList.get(i) != null) {
-					escapeStr = SqlUtil.escapeLikeValue(tmpList.get(i).toString(), dbType, true);
-					tmpList.set(i, isLeft ? "%".concat(escapedAppend).concat(escapeStr)
-							: escapeStr.concat(escapedAppend).concat("%"));
+					tmpList.set(i, wrapLikeValue(tmpList.get(i).toString(), escapedAppend, realMode, dbType,
+							realEscapeMode, escapePercent));
 				}
 			}
 			return tmpList;
-		} else if (paramValue instanceof Set) {
+		}
+		if (paramValue instanceof Set) {
 			Set tmpSet = (Set) paramValue;
 			Set result = (paramValue instanceof LinkedHashSet) ? new LinkedHashSet() : new HashSet();
 			Iterator iter = tmpSet.iterator();
@@ -991,14 +1029,67 @@ public class ParamFilterProcessor {
 			while (iter.hasNext()) {
 				cell = iter.next();
 				if (cell != null) {
-					escapeStr = SqlUtil.escapeLikeValue(cell.toString(), dbType, true);
-					result.add(isLeft ? "%".concat(escapedAppend).concat(escapeStr)
-							: escapeStr.concat(escapedAppend).concat("%"));
+					result.add(wrapLikeValue(cell.toString(), escapedAppend, realMode, dbType, realEscapeMode,
+							escapePercent));
 				}
 			}
 			return result;
 		}
+		if (paramValue instanceof Collection) {
+			List result = new ArrayList();
+			Iterator iter = ((Collection) paramValue).iterator();
+			while (iter.hasNext()) {
+				Object cell = iter.next();
+				result.add(cell == null ? null
+						: wrapLikeValue(cell.toString(), escapedAppend, realMode, dbType, realEscapeMode,
+								escapePercent));
+			}
+			return result;
+		}
 		return paramValue;
+	}
+
+	private static String wrapLikeValue(String value, String escapedAppend, String mode, int dbType,
+			String escapeMode, boolean escapePercent) {
+		String escaped = escapeLikeText(value, dbType, escapeMode, escapePercent);
+		if ("left".equals(mode)) {
+			return "%".concat(escapedAppend).concat(escaped);
+		}
+		if ("right".equals(mode)) {
+			return escaped.concat(escapedAppend).concat("%");
+		}
+		return "%".concat(escaped).concat("%");
+	}
+
+	private static String escapeLikeText(String value, int dbType, String escapeMode, boolean escapePercent) {
+		if ("raw".equals(escapeMode)) {
+			return SqlUtil.escapeLikeValueRaw(value, dbType, escapePercent);
+		}
+		return SqlUtil.escapeLikeValue(value, dbType, escapePercent);
+	}
+
+	private static String normalizeLikeMode(String mode) {
+		if (StringUtil.isBlank(mode)) {
+			return "both";
+		}
+		String realMode = mode.toLowerCase(Locale.ROOT);
+		if ("contains".equals(realMode)) {
+			return "both";
+		}
+		if ("suffix".equals(realMode)) {
+			return "left";
+		}
+		if ("prefix".equals(realMode)) {
+			return "right";
+		}
+		return realMode;
+	}
+
+	private static String normalizeLikeEscapeMode(String escapeMode) {
+		if (StringUtil.isBlank(escapeMode)) {
+			return "legacy";
+		}
+		return "raw".equalsIgnoreCase(escapeMode) ? "raw" : "legacy";
 	}
 
 	/**
@@ -1973,6 +2064,10 @@ public class ParamFilterProcessor {
 			// 公共属性
 			paramFilter.setFilterType(filter.getType());
 			paramFilter.setParams(filter.getParams());
+			// 新like
+			paramFilter.setLikeMode(filter.getLikeMode());
+			paramFilter.setLikeEscapeMode(filter.getLikeEscapeMode());
+			paramFilter.setLikeEscapePercent(filter.isLikeEscapePercent());
 			if (filter.getParams().length == 1) {
 				paramFilter.setParam(filter.getParams()[0]);
 			}

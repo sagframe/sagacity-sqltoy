@@ -71,19 +71,16 @@ public class JwtRestAuthEndToEndTest {
 	}
 
 	private static String formBody(HttpExchange exchange) throws IOException {
-		// (jre8同步适配:readAllBytes为JDK9+,改等价字符串读取)
-		return URLDecoder.decode(new String(readAll(exchange.getRequestBody()), StandardCharsets.UTF_8), "UTF-8");
-	}
-
-	// (jre8同步适配:InputStream.readAllBytes为JDK9+,等价循环读取)
-	private static byte[] readAll(java.io.InputStream in) throws IOException {
+		// (jre8同步适配:InputStream.readAllBytes为JDK9+,等价循环读取)
 		java.io.ByteArrayOutputStream buffer = new java.io.ByteArrayOutputStream();
-		byte[] chunk = new byte[8192];
+		byte[] chunk = new byte[512];
 		int read;
-		while ((read = in.read(chunk)) != -1) {
-			buffer.write(chunk, 0, read);
+		try (java.io.InputStream in = exchange.getRequestBody()) {
+			while ((read = in.read(chunk)) != -1) {
+				buffer.write(chunk, 0, read);
+			}
 		}
-		return buffer.toByteArray();
+		return URLDecoder.decode(new String(buffer.toByteArray(), StandardCharsets.UTF_8), "UTF-8");
 	}
 
 	@Test

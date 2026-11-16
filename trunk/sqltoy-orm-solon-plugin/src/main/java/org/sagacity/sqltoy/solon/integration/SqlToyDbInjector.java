@@ -1,8 +1,5 @@
 package org.sagacity.sqltoy.solon.integration;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import javax.sql.DataSource;
 
 import org.noear.solon.core.BeanInjector;
@@ -17,51 +14,51 @@ import org.sagacity.sqltoy.solon.annotation.Db;
 /**
  * @author 夜の孤城
  * @since 1.5
- * */
+ */
 public class SqlToyDbInjector implements BeanInjector<Db> {
-    private static Map<DataSource, SqlToyLazyDao> daoMap = new ConcurrentHashMap();
-    private static Map<DataSource, SqlToyCRUDService> serviceMap = new ConcurrentHashMap();
+	// update 2026-11-15 移除原先未被使用的static daoMap/serviceMap字段(注入实际走DbManager,
+	// 静态化缓存会再次引入跨上下文共享问题)
 
-    @Override
-    public void doInject(VarHolder varH, Db anno) {
-        String v = anno.value();
-        if (v.equals("")) {
-            varH.context().getWrapAsync(DataSource.class, bw -> {
-                inject(bw.get(), varH);
-            });
-        } else {
-            varH.context().getWrapAsync(v, bw -> {
-                inject(bw.get(), varH);
-            });
-        }
-    }
+	@Override
+	public void doInject(VarHolder varH, Db anno) {
+		String v = anno.value();
+		if (v.equals("")) {
+			varH.context().getWrapAsync(DataSource.class, bw -> {
+				inject(bw.get(), varH);
+			});
+		} else {
+			varH.context().getWrapAsync(v, bw -> {
+				inject(bw.get(), varH);
+			});
+		}
+	}
 
-    private void inject(DataSource dataSource, VarHolder varH) {
-        Class type = varH.getType();
+	private void inject(DataSource dataSource, VarHolder varH) {
+		Class type = varH.getType();
 
-        if (type.equals(DataSource.class)) {
-            varH.setValue(dataSource);
-            return;
-        }
+		if (type.equals(DataSource.class)) {
+			varH.setValue(dataSource);
+			return;
+		}
 
-        varH.context().getWrapAsync(SqlToyContext.class, bw -> {
-            if (type.equals(SqlToyLazyDao.class)) {
-                varH.setValue(DbManager.getDao(dataSource));
-                return;
-            }
-            if(type.equals(LightDao.class)){
-                varH.setValue(DbManager.getLightDao(dataSource));
-                return;
-            }
-            if (type.equals(SqlToyCRUDService.class)) {
-                varH.setValue(DbManager.getService(bw.context(), dataSource));
-                return;
-            }
+		varH.context().getWrapAsync(SqlToyContext.class, bw -> {
+			if (type.equals(SqlToyLazyDao.class)) {
+				varH.setValue(DbManager.getDao(dataSource));
+				return;
+			}
+			if (type.equals(LightDao.class)) {
+				varH.setValue(DbManager.getLightDao(dataSource));
+				return;
+			}
+			if (type.equals(SqlToyCRUDService.class)) {
+				varH.setValue(DbManager.getService(bw.context(), dataSource));
+				return;
+			}
 
 //            if (type.isInterface()) {
 //                varH.setValue(DbManager.getMapper(dataSource, type));
 //                return;
 //            }
-        });
-    }
+		});
+	}
 }

@@ -1323,7 +1323,7 @@ public class DateUtil {
 		// 处理十几的值:单趟逐段替换,避免replaceAll字符串替换的嵌套破坏
 		// (如"十一月二十一日"中"二十一"包含"十一",先替换"十一"会把"二十一"破坏成"二11")
 		Matcher matcher = MORE_TEN_PATTERN.matcher(tmp);
-		// (jre8同步适配:Matcher.appendReplacement/appendTail在JDK8仅接受StringBuffer)
+		// jre8: Matcher.appendReplacement 仅接受 StringBuffer,不能用 StringBuilder
 		StringBuffer tenReplaced = new StringBuffer();
 		while (matcher.find()) {
 			String prefix = matcher.group(1);
@@ -1622,7 +1622,7 @@ public class DateUtil {
 	 */
 	private static String padDateString(String dateStr) {
 		Matcher matcher = DATE_PATTERN.matcher(dateStr);
-		// (jre8同步适配:Matcher.appendReplacement/appendTail在JDK8仅接受StringBuffer)
+		// jre8: Matcher.appendReplacement 仅接受 StringBuffer,不能用 StringBuilder
 		StringBuffer sb = new StringBuffer();
 		while (matcher.find()) {
 			if (matcher.group(2) != null) {

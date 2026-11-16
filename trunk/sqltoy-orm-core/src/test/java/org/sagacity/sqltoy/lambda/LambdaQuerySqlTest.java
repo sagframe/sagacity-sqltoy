@@ -625,14 +625,9 @@ public class LambdaQuerySqlTest {
 	@DisplayName("多次having同名参数不同值必须失败")
 	public void testHavingDuplicateParam() {
 		assertThrows(DataAccessException.class, () -> {
-			// (jre8同步适配:Map.of改匿名HashMap)
-			java.util.Map<String, Object> having1 = new java.util.HashMap<String, Object>();
-			having1.put("v", 1);
-			java.util.Map<String, Object> having2 = new java.util.HashMap<String, Object>();
-			having2.put("v", 2);
 			LambdaQuery<User> query = LambdaQuery.create(User.class)
-					.having("count(1) > :v", having1)
-					.having("sum(age) < :v", having2);
+					.having("count(1) > :v", java.util.Collections.singletonMap("v", 1))
+					.having("sum(age) < :v", java.util.Collections.singletonMap("v", 2));
 			query.assemble(IDENTITY);
 			// 真实执行顺序是先取SQL(触发having合并)再取参数
 			query.getSql();

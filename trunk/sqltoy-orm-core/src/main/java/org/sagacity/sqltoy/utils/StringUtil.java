@@ -464,6 +464,23 @@ public class StringUtil {
 	 * @return 对称结束标记的位置，未找到开始标记或未配对成功返回-1
 	 */
 	public static int getSymMarkIndexSkipQuoted(String beginMark, String endMark, String source, int fromIndex) {
+		// update 2026-11-13 4参保持标准SQL语义(反斜杠不转义),历史行为不变;
+		// mysql系需要\'转义时走5参重载
+		return getSymMarkIndexSkipQuoted(beginMark, endMark, source, fromIndex, false);
+	}
+
+	/**
+	 * 查找对称标记符号的位置,扫描过程跳过'...'字符串字面量:规避字面量内的括号等符号被误当语法符号参与配对
+	 *
+	 * @param beginMark       开始标记(单字符，如"(")，需与endMark不同
+	 * @param endMark         结束标记(单字符，如")")
+	 * @param source          原始字符串，null返回-1
+	 * @param fromIndex       从该位置开始查找开始标记
+	 * @param backslashEscape true时仅奇数个连续反斜杠转义引号(mysql系);false时反斜杠不转义(标准SQL)
+	 * @return 对称结束标记的位置，未找到开始标记或未配对成功返回-1
+	 */
+	public static int getSymMarkIndexSkipQuoted(String beginMark, String endMark, String source, int fromIndex,
+			boolean backslashEscape) {
 		if (source == null) {
 			return -1;
 		}
@@ -479,6 +496,11 @@ public class StringUtil {
 			char c = chars[i];
 			if (inString) {
 				if (c == '\'') {
+					// mysql系:\'转义引号(奇偶判定),先于''成对转义判断
+					if (backslashEscape && isEscapedByOddBackslash(chars, i)) {
+						i++;
+						continue;
+					}
 					// ''成对转义为字面量内容
 					if (i + 1 < n && chars[i + 1] == '\'') {
 						i += 2;
@@ -507,6 +529,17 @@ public class StringUtil {
 			i++;
 		}
 		return -1;
+	}
+
+	/**
+	 * 判断index处的引号是否被奇数个连续反斜杠转义
+	 */
+	private static boolean isEscapedByOddBackslash(char[] chars, int index) {
+		int backslashCount = 0;
+		for (int i = index - 1; i >= 0 && chars[i] == '\\'; i--) {
+			backslashCount++;
+		}
+		return (backslashCount & 1) == 1;
 	}
 
 	/**

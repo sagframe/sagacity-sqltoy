@@ -101,10 +101,7 @@ public class SqlConfigParseUtilsProcessSqlTest {
 
 	@Test
 	public void ifElseBranchesChooseOnlyOneBranch() throws Exception {
-		// (jre8同步适配:6.0为文本块,改为等价字符串拼接)
-		String sql = "select * from t_order where 1=1\n"
-				+ "#[@if(:flag==1) #[and status=:status] #[and saleType is not :saleType] ]\n"
-				+ "#[@elseif(:flag==2) and name like :name]\n" + "#[@else and orderType=:orderType]\n";
+		String sql = "select * from t_order where 1=1\n#[@if(:flag==1) #[and status=:status] #[and saleType is not :saleType] ]\n#[@elseif(:flag==2) and name like :name]\n#[@else and orderType=:orderType]";
 		String[] names = { "flag", "status", "name", "orderType", "saleType" };
 
 		SqlToyResult first = SqlConfigParseUtils.processSql(sql, names,
@@ -131,12 +128,14 @@ public class SqlConfigParseUtilsProcessSqlTest {
 
 	@Test
 	public void nestedIfElseProducesValidSql() throws Exception {
-		// (jre8同步适配:6.0为文本块,改为等价字符串拼接)
-		String sql = "select * from t_order where 1=1\n" + "#[@if(:flag==1)\n"
+		String sql = "select * from t_order where 1=1\n"
+				+ "#[@if(:flag==1)\n"
 				+ "    #[@if(:operateType==1) and status=:status]\n"
 				+ "    #[@elseif(:operateType==2) and saleType is not :saleType]\n"
-				+ "    #[@else and saleType is :saleType]\n" + "]\n"
-				+ "#[@elseif(:flag==2) and name like :name]\n" + "#[@else and orderType=:orderType]\n";
+				+ "    #[@else and saleType is :saleType]\n"
+				+ "]\n"
+				+ "#[@elseif(:flag==2) and name like :name]\n"
+				+ "#[@else and orderType=:orderType]";
 		String[] names = { "flag", "status", "name", "orderType", "saleType", "operateType" };
 		SqlToyResult inner1 = SqlConfigParseUtils.processSql(sql, names,
 				new Object[] { 1, 1, "张", "SALE", null, 1 }, "mysql");

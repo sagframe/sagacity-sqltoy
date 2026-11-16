@@ -98,7 +98,7 @@ public class DefaultDialectUtils {
 		String innerSql = sqlToyConfig.isHasFast() ? sqlToyConfig.getFastSql(dialect) : sqlToyConfig.getSql(dialect);
 		// 存在with语句,将with部分剥离置前,避免replaceFirst将随机列误插入with定义内部
 		if (sqlToyConfig.isHasWith()) {
-			SqlWithAnalysis sqlWith = new SqlWithAnalysis(innerSql);
+			SqlWithAnalysis sqlWith = new SqlWithAnalysis(innerSql, profile.getDbType());
 			sql.append(sqlWith.getWithSql());
 			innerSql = sqlWith.getRejectWithSql();
 		}
@@ -161,7 +161,7 @@ public class DefaultDialectUtils {
 		// 别名复用SqlToyConstants.INTERMEDIATE_TABLE与其他包裹路径统一
 		if ((dbType == DBType.CLICKHOUSE || dbType == DBType.IMPALA) && SqlUtil.hasSetOperation(innerSql, true)) {
 			if (sqlToyConfig.isHasWith()) {
-				SqlWithAnalysis sqlWith = new SqlWithAnalysis(innerSql);
+				SqlWithAnalysis sqlWith = new SqlWithAnalysis(innerSql, dbType);
 				String withSql = sqlWith.getWithSql();
 				// 防御:hasWith标记与传入innerSql不一致时getWithSql可能为空,不能append(null)产出"null"文本
 				if (StringUtil.isNotBlank(withSql)) {
@@ -223,7 +223,7 @@ public class DefaultDialectUtils {
 		// 别名复用SqlToyConstants.INTERMEDIATE_TABLE
 		if ((dbType == DBType.CLICKHOUSE || dbType == DBType.IMPALA) && SqlUtil.hasSetOperation(innerSql, true)) {
 			if (sqlToyConfig.isHasWith()) {
-				SqlWithAnalysis sqlWith = new SqlWithAnalysis(innerSql);
+				SqlWithAnalysis sqlWith = new SqlWithAnalysis(innerSql, dbType);
 				String withSql = sqlWith.getWithSql();
 				// 防御:hasWith标记与传入innerSql不一致时getWithSql可能为空,不能append(null)产出"null"文本
 				if (StringUtil.isNotBlank(withSql)) {

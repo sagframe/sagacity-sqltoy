@@ -1484,7 +1484,7 @@ public class DialectFactory {
 			// 文件通过union-all-count 属性由开发者指定)
 			if (sqlToyConfig.isUnionAllCount()) {
 				if (sqlToyConfig.isHasWith()) {
-					SqlWithAnalysis sqlWith = new SqlWithAnalysis(sql);
+					SqlWithAnalysis sqlWith = new SqlWithAnalysis(sql, dbType);
 					rejectWithSql = sqlWith.getRejectWithSql();
 					withSql = sqlWith.getWithSql();
 				}

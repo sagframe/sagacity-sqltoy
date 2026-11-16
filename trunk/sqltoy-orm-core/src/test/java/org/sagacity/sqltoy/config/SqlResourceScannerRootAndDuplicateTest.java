@@ -344,6 +344,23 @@ public class SqlResourceScannerRootAndDuplicateTest {
 		return list;
 	}
 
+	@Test
+	public void coveredByNestedRootMatchesEncodedDeployPath(@TempDir Path tempDir) throws Exception {
+		// 部署路径含空格/中文:真实LaunchedClassLoader用toURI().getRawPath()编码态拼nested URL,
+		// java.class.path给的是原始字符路径,须按编码态比对才能判定外层jar已被嵌套根覆盖
+		File jar = Files.createDirectories(tempDir.resolve("dir with space")).resolve("应用.jar").toFile();
+		Files.write(jar.toPath(), new byte[0]);
+		Method method = SqlResourceScanner.class.getDeclaredMethod("coveredByNestedRoot", List.class, File.class);
+		method.setAccessible(true);
+		String encodedNested = "jar:nested:" + jar.toURI().getRawPath() + "/!BOOT-INF/classes/!/";
+		assertTrue((Boolean) method.invoke(null, roots(encodedNested), jar),
+				"编码态嵌套classes根应判定外层jar被覆盖:" + encodedNested);
+		// 仅lib嵌套根(编码态)仍不能判定覆盖
+		String encodedLib = "jar:nested:" + jar.toURI().getRawPath() + "/!BOOT-INF/lib/dep.jar!/";
+		assertFalse((Boolean) method.invoke(null, roots(encodedLib), jar),
+				"编码态仅lib嵌套根不能判定外层jar被覆盖");
+	}
+
 	private static ConcurrentHashMap<String, SqlToyConfig> parse(List resources) throws Exception {
 		ConcurrentHashMap<String, SqlToyConfig> cache = new ConcurrentHashMap<String, SqlToyConfig>();
 		ConcurrentHashMap<String, Long> lastModified = new ConcurrentHashMap<String, Long>();

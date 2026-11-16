@@ -325,7 +325,7 @@ public class NumberUtilScenarioTest {
 		System.out.println("\n========== 场景八:超大数字互转 ==========");
 		// 中文:千万亿级(10^15)双向
 		check("8-01", "10^15(一千万亿)", "format(capital)", "一千万亿",
-				NumberUtil.format(("1" + String.join("", java.util.Collections.nCopies(15, "0"))), "capital"));
+				NumberUtil.format("1" + String.join("", java.util.Collections.nCopies(15, "0")), "capital"));
 		check("8-02", "1234567890123456", "format(capital)", "一千二百三十四万亿五千六百七十八亿九千零一十二万三千四百五十六",
 				NumberUtil.format("1234567890123456", "capital"));
 		check("8-03", "1234567890123456.78", "toCapitalMoney",
@@ -371,14 +371,14 @@ public class NumberUtilScenarioTest {
 		check("8-09", "10^64(超出上限)", "toCapitalMoney", "异常:the number exceeds the supported conversion range (10^64)!", overflow);
 		// 英文:QUADRILLION(千万亿)~DECILLION(10^33)双向
 		check("8-10", "10^15(QUADRILLION)", "convertToEnglishMoney", "ONE QUADRILLION ONLY",
-				NumberUtil.convertToEnglishMoney(new BigDecimal(("1" + String.join("", java.util.Collections.nCopies(15, "0"))))));
+				NumberUtil.convertToEnglishMoney(new BigDecimal("1" + String.join("", java.util.Collections.nCopies(15, "0")))));
 		check("8-11", "1234567890123456.78", "convertToEnglishMoney",
 				"ONE QUADRILLION TWO HUNDRED AND THIRTY-FOUR TRILLION FIVE HUNDRED AND SIXTY-SEVEN BILLION EIGHT HUNDRED AND NINETY MILLION ONE HUNDRED AND TWENTY-THREE THOUSAND FOUR HUNDRED AND FIFTY-SIX AND CENTS SEVENTY-EIGHT ONLY",
 				NumberUtil.convertToEnglishMoney(new BigDecimal("1234567890123456.78")));
 		check("8-12", "1234567890123456.78", "convertToEnglishMoney→englishMoneyToNum往返", "1234567890123456.78",
 				NumberUtil.englishMoneyToNum(NumberUtil.convertToEnglishMoney(new BigDecimal("1234567890123456.78")))
 						.stripTrailingZeros().toPlainString());
-		check("8-13", "ONE QUADRILLION ONLY", "englishMoneyToNum", ("1" + String.join("", java.util.Collections.nCopies(15, "0"))),
+		check("8-13", "ONE QUADRILLION ONLY", "englishMoneyToNum", "1" + String.join("", java.util.Collections.nCopies(15, "0")),
 				NumberUtil.englishMoneyToNum("ONE QUADRILLION ONLY").toPlainString());
 		check("8-14", "ONE DECILLION ONLY(10^33)", "englishMoneyToNum", "1" + String.join("", java.util.Collections.nCopies(33, "0")),
 				NumberUtil.englishMoneyToNum("ONE DECILLION ONLY").toPlainString());

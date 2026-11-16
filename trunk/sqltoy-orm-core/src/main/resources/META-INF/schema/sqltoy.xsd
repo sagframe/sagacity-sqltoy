@@ -751,6 +751,23 @@
 						use="required" />
 				</xsd:complexType>
 			</xsd:element>
+			<xsd:element name="like" minOccurs="0"
+				maxOccurs="unbounded">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[统一LIKE处理:mode=both/left/right控制补%方向;escape-mode=raw/legacy控制转义;escape-percent控制%是否作为字面量。raw/legacy需SQL显式声明ESCAPE '\'(mysql为ESCAPE '\\')]]></xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:attribute name="params" type="xsd:string" />
+					<xsd:attribute name="param" type="xsd:string" />
+					<xsd:attribute name="mode" type="xsd:string"
+						default="both" />
+					<xsd:attribute name="escape-mode" type="xsd:string"
+						default="raw" />
+					<xsd:attribute name="escape-percent" type="xsd:boolean"
+						default="true" />
+					<xsd:attribute name="append-str" type="xsd:string" />
+				</xsd:complexType>
+			</xsd:element>
 			<xsd:element name="lt" minOccurs="0"
 				maxOccurs="unbounded">
 				<xsd:annotation>

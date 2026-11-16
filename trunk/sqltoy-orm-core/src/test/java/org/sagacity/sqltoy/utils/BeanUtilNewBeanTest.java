@@ -6,8 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
@@ -29,13 +27,6 @@ public class BeanUtilNewBeanTest {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
-	private static Map<Class, Constructor> constructorCache() throws Exception {
-		Field field = BeanUtil.class.getDeclaredField("noArgConstructors");
-		field.setAccessible(true);
-		return (Map<Class, Constructor>) field.get(null);
-	}
-
 	@Test
 	public void createsBeanAndCachesConstructor() throws Exception {
 		Object first = BeanUtil.newBean(PublicVo.class);
@@ -46,9 +37,9 @@ public class BeanUtilNewBeanTest {
 		assertTrue(first != second);
 		assertEquals(PublicVo.class, first.getClass());
 		// 构造器实例被缓存复用(反射成员查找只发生一次)
-		Constructor cached = constructorCache().get(PublicVo.class);
+		Constructor<?> cached = BeanUtil.cachedNoArgConstructor(PublicVo.class);
 		assertNotNull(cached, "构造器应已进入缓存");
-		assertSame(cached, constructorCache().get(PublicVo.class));
+		assertSame(cached, BeanUtil.cachedNoArgConstructor(PublicVo.class));
 	}
 
 	@Test

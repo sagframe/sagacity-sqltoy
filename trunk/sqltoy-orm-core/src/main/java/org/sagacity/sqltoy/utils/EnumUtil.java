@@ -2,8 +2,6 @@ package org.sagacity.sqltoy.utils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @project sagacity-sqltoy
@@ -12,7 +10,14 @@ import java.util.concurrent.ConcurrentHashMap;
  * @version v1.0,Date:2026-02-06
  */
 public class EnumUtil {
-	private static Map<Class, Boolean> withoutCustomFieldEnumMap = new ConcurrentHashMap<>();
+	// update 2026-11-15 原静态Map<Class,Boolean>改为ClassValue:条目挂Class自身,热部署/多classloader
+	// 下类卸载即回收,静态结构不再强引用应用枚举类
+	private static final ClassValue<Boolean> withoutCustomFieldEnum = new ClassValue<Boolean>() {
+		@Override
+		protected Boolean computeValue(Class<?> enumClass) {
+			return checkEnumWithoutCustomField(enumClass);
+		}
+	};
 
 	/**
 	 * 终极版：判断枚举是否无开发者自定义属性（仅含枚举常量） 核心：仅判断「开发者手动定义的字段」，无视编译器任何隐式生成字段
@@ -21,7 +26,7 @@ public class EnumUtil {
 	 * @return true=无自定义属性，false=有/非枚举
 	 */
 	public static boolean isEnumWithoutCustomField(Class<?> enumClass) {
-		return withoutCustomFieldEnumMap.computeIfAbsent(enumClass, EnumUtil::checkEnumWithoutCustomField);
+		return withoutCustomFieldEnum.get(enumClass);
 	}
 
 	private static boolean checkEnumWithoutCustomField(Class<?> enumClass) {

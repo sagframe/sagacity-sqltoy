@@ -2,7 +2,10 @@ package org.sagacity.sqltoy.dialect.utils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -67,7 +70,7 @@ public class DialectExtUtils {
 		String isNullFunction = profile.getNullFunction();
 		Integer dbType = profile.getDbType();
 		// update 2023-5-13 缓存机制,避免每次动态组织insert语句
-		String sqlCacheKey = getCacheKey(entityMeta, tableName, dbType, pkStrategy);
+		String sqlCacheKey = getCacheKey(entityMeta, tableName, profile, pkStrategy, unifyFieldsHandler);
 		String insertSql = insertSqlCache.get(sqlCacheKey);
 		if (null != insertSql) {
 			return insertSql;
@@ -380,7 +383,7 @@ public class DialectExtUtils {
 		String isNullFunction = profile.getNullFunction();
 		Integer dbType = profile.getDbType();
 		// update 2023-5-13 缓存方式快速获取sql
-		String sqlCacheKey = getCacheKey(entityMeta, tableName, dbType, pkStrategy);
+		String sqlCacheKey = getCacheKey(entityMeta, tableName, profile, pkStrategy, unifyFieldsHandler);
 		String insertIgnoreSql = insertIgnoreSqlCache.get(sqlCacheKey);
 		if (null != insertIgnoreSql) {
 			return insertIgnoreSql;
@@ -537,20 +540,75 @@ public class DialectExtUtils {
 
 	/**
 	 * 组织对象操作sql的key
+	 * <p>
+	 * update 2026-11-15 key补齐"生成结果所依赖的上下文/连接维度":此前只有实体类+表名+dbType+主键策略+rowversion,
+	 * 而insert/insertIgnore/mergeIgnore的sql文本还取决于每SqlToyContext一份的IUnifyFieldsHandler
+	 * (createSqlTimeFields/forceUpdateFields决定时间列是?还是nvl(?,current_timestamp))以及DBProfile的真实库事实
+	 * (isOceanBase决定向量列是否string_to_vector包装;DB2的majorVersion/hasGseSchema决定空间列包装)。静态缓存跨
+	 * 上下文/数据源共享,缺维度会让后一个上下文或数据源串用先落地的sql(多上下文不同unifyFieldsHandler、
+	 * MySQL与按mysql方言配置的OceanBase共存、DB2 11.5与12.1共存等),属"静态缓存key未覆盖全部依赖"的缺陷
+	 * </p>
 	 * 
 	 * @param entityMeta
 	 * @param tableName
-	 * @param dbType
+	 * @param profile
 	 * @param pkStrategy
+	 * @param unifyFieldsHandler
 	 * @return
 	 */
-	static String getCacheKey(EntityMeta entityMeta, String tableName, int dbType, PKStrategy pkStrategy) {
+	static String getCacheKey(EntityMeta entityMeta, String tableName, DBProfile profile, PKStrategy pkStrategy,
+			IUnifyFieldsHandler unifyFieldsHandler) {
 		// update 2026-9-7
 		// 缓存key组成:主键策略(save单条与saveAll批量机制存在差异,save时sequence策略提前获取sequence值变成assign策略)
 		// 与rowversion校准状态(避免校准前后rowVersionColumns判据不同生成的语句命中同一条缓存;与SqlServerDialectUtils.getCacheKey对齐,非sqlserver库恒为null不影响)
+		int dbType = profile.getDbType();
 		return entityMeta.getEntityClass().getName() + "[" + tableName + "]dbType=" + dbType
 				+ ((pkStrategy == null) ? "" : pkStrategy.getValue()) + "|rv="
-				+ ((entityMeta.getRowVersionColumns() == null) ? -1 : entityMeta.getRowVersionColumns().hashCode());
+				+ ((entityMeta.getRowVersionColumns() == null) ? -1 : entityMeta.getRowVersionColumns().hashCode())
+				+ "|pf=" + profile.getRealDBType() + "," + (profile.isOceanBase() ? 1 : 0) + ","
+				+ profile.getMajorVersion() + "," + profile.getHasGseSchema()
+				+ "|uf=" + unifyFieldsSqlToken(unifyFieldsHandler);
+	}
+
+	/**
+	 * update 2026-11-15 unifyFieldsHandler参与缓存key的语义摘要:只取真正影响sql文本的集合
+	 * (createSqlTimeFields与mergeIgnore用到的forceUpdateFields),按集合内容(去序)摘要,
+	 * 使两个配置等价的上下文仍可共享同一条sql;handler为null或两者均空时统一为"-",
+	 * 保证未配置统一字段的场景key形态与历史一致
+	 * 
+	 * @param unifyFieldsHandler
+	 * @return
+	 */
+	private static String unifyFieldsSqlToken(IUnifyFieldsHandler unifyFieldsHandler) {
+		if (unifyFieldsHandler == null) {
+			return "-";
+		}
+		StringBuilder token = new StringBuilder(48);
+		appendSqlTimeFields(token, unifyFieldsHandler.createSqlTimeFields());
+		token.append('/');
+		appendSqlTimeFields(token, unifyFieldsHandler.forceUpdateFields());
+		// 只有分隔符说明两个集合都为空,sql文本与未配置handler等价
+		return (token.length() == 1) ? "-" : token.toString();
+	}
+
+	/**
+	 * 追加时间字段集合摘要:IgnoreCaseSet元素已小写,排序保证与插入顺序/哈希顺序无关
+	 * 
+	 * @param token
+	 * @param sqlTimeFields
+	 */
+	private static void appendSqlTimeFields(StringBuilder token, IgnoreCaseSet sqlTimeFields) {
+		if (sqlTimeFields == null || sqlTimeFields.isEmpty()) {
+			return;
+		}
+		List<String> fields = new ArrayList<String>(sqlTimeFields);
+		Collections.sort(fields);
+		for (int i = 0; i < fields.size(); i++) {
+			if (i > 0) {
+				token.append(',');
+			}
+			token.append(fields.get(i));
+		}
 	}
 
 	// update 2026-9-14

@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.lang.ref.WeakReference;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -157,7 +156,9 @@ public class ClassValueCacheRepeatTest {
 	public void t3_classUnloadReclaimsEntry(@TempDir File tempDir) throws Exception {
 		String className = "DynUnload" + System.nanoTime();
 		File src = new File(tempDir, className + ".java");
-		try (java.io.Writer w = new java.io.OutputStreamWriter(new java.io.FileOutputStream(src), StandardCharsets.UTF_8)) {
+		// (jre8同步适配:FileWriter无Charset构造,改OutputStreamWriter)
+		try (java.io.Writer w = new java.io.OutputStreamWriter(new java.io.FileOutputStream(src),
+				StandardCharsets.UTF_8)) {
 			w.write("public class " + className + " { private Integer id; "
 					+ "public Integer getId() { return id; } public void setId(Integer id) { this.id = id; } }");
 		}

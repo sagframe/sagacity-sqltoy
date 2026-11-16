@@ -226,17 +226,13 @@ public class DateUtilScenarioTest {
 		assertNoFailure("场景三:中文/英文字符转日期");
 	}
 
-	/** 场景四:格式化带入中文、英文、日文等locale(月份、星期名称)
-	 * (jre8同步适配:JDK8的legacy locale数据与JDK9+的CLDR在中文短月份/短星期上不同——
-	 * JDK8的MMM(CHINA)=八月、EEE(CHINA)=星期二,JDK9+ CLDR为8月、周二;两代形态均判合法) */
+	/** 场景四:格式化带入中文、英文、日文等locale(月份、星期名称) */
 	@Test
 	public void scenario4Locale() {
 		System.out.println("\n========== 场景四:locale格式化 ==========");
 		String base = "Date(2026-08-18 12:30:45)";
-		// 4-01:中文短月份,JDK8=八月 / JDK9+=8月
-		String mmm = DateUtil.formatDate(BASE, "yyyy-MM-dd MMM", Locale.CHINA);
-		check("4-01", base, "formatDate(yyyy-MM-dd MMM,CHINA)",
-				("2026-08-18 8月".equals(mmm) || "2026-08-18 八月".equals(mmm)) ? mmm : "2026-08-18 8月|八月", mmm);
+		check("4-01", base, "formatDate(yyyy-MM-dd MMM,CHINA)", "2026-08-18 8月",
+				DateUtil.formatDate(BASE, "yyyy-MM-dd MMM", Locale.CHINA));
 		check("4-02", base, "formatDate(yyyy-MM-dd MMM,ENGLISH)", "2026-08-18 Aug",
 				DateUtil.formatDate(BASE, "yyyy-MM-dd MMM", Locale.ENGLISH));
 		check("4-03", base, "formatDate(MMMM dd, yyyy,CHINA)", "八月 18, 2026",
@@ -245,10 +241,8 @@ public class DateUtilScenarioTest {
 				DateUtil.formatDate(BASE, "MMMM dd, yyyy", Locale.US));
 		check("4-05", base, "formatDate(EEEE,CHINA)", "星期二", DateUtil.formatDate(BASE, "EEEE", Locale.CHINA));
 		check("4-06", base, "formatDate(EEEE,ENGLISH)", "Tuesday", DateUtil.formatDate(BASE, "EEEE", Locale.ENGLISH));
-		// 4-07:中文短星期,JDK8=星期二 / JDK9+=周二
-		String eee = DateUtil.formatDate(BASE, "yyyy-MM-dd EEE", Locale.CHINA);
-		check("4-07", base, "formatDate(yyyy-MM-dd EEE,CHINA)",
-				("2026-08-18 周二".equals(eee) || "2026-08-18 星期二".equals(eee)) ? eee : "2026-08-18 周二|星期二", eee);
+		check("4-07", base, "formatDate(yyyy-MM-dd EEE,CHINA)", "2026-08-18 周二",
+				DateUtil.formatDate(BASE, "yyyy-MM-dd EEE", Locale.CHINA));
 		check("4-08", base, "formatDate(yyyy-MM-dd EEE,ENGLISH)", "2026-08-18 Tue",
 				DateUtil.formatDate(BASE, "yyyy-MM-dd EEE", Locale.ENGLISH));
 		check("4-09", base, "formatDate(yyyy/MM/dd HH:mm:ss EEE,US)", "2026/08/18 12:30:45 Tue",

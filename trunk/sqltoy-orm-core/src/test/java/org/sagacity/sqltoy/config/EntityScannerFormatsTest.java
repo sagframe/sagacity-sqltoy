@@ -140,19 +140,15 @@ public class EntityScannerFormatsTest {
 			if (inputStream == null) {
 				throw new IllegalStateException("test class StaffInfo not found in test classpath");
 			}
-			return readAll(inputStream);
+			// (jre8同步适配:InputStream.readAllBytes为JDK9+,等价循环读取)
+			java.io.ByteArrayOutputStream buffer = new java.io.ByteArrayOutputStream();
+			byte[] chunk = new byte[8192];
+			int read;
+			while ((read = inputStream.read(chunk)) != -1) {
+				buffer.write(chunk, 0, read);
+			}
+			return buffer.toByteArray();
 		}
-	}
-
-	// (jre8同步适配:InputStream.readAllBytes为JDK9+,等价循环读取)
-	private static byte[] readAll(InputStream in) throws IOException {
-		java.io.ByteArrayOutputStream buffer = new java.io.ByteArrayOutputStream();
-		byte[] chunk = new byte[8192];
-		int read;
-		while ((read = in.read(chunk)) != -1) {
-			buffer.write(chunk, 0, read);
-		}
-		return buffer.toByteArray();
 	}
 
 	private static void writeJar(Path jarPath, String entryName, byte[] content) throws Exception {

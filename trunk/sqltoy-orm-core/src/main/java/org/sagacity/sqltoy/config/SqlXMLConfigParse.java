@@ -943,8 +943,35 @@ public class SqlXMLConfigParse {
 	 */
 	private static void parseFilterElt(SqlToyConfig sqlToyConfig, ParamFilterModel filterModel, Element filter,
 			String local) {
+		boolean isLike = "like".equals(filterModel.getFilterType());
 		// 没有设置参数名称，则表示全部参数用*表示
-		if (!filter.hasAttribute("params")) {
+		if (isLike) {
+			// update 2026-11-13 新<like>元素必须显式指定参数,避免params="*"对所有条件补%
+			if (filter.hasAttribute("params") && filter.hasAttribute("param")) {
+				throw new IllegalArgumentException(
+						"the <like> filter can not configure both [params] and [param] attributes!");
+			}
+			if (filter.hasAttribute("params")) {
+				String[] likeParams = StringUtil
+						.trimArray(filter.getAttribute("params").toLowerCase(Locale.ROOT).split("\\,"));
+				if (likeParams.length == 0 || isLikeWildcardParams(likeParams) || hasBlankLikeParam(likeParams)) {
+					throw new IllegalArgumentException(
+							"the <like> filter requires explicit parameter names, [params=\"*\"] is not supported!");
+				}
+				filterModel.setParams(likeParams);
+			} else if (filter.hasAttribute("param")) {
+				String likeParam = filter.getAttribute("param").trim().toLowerCase(Locale.ROOT);
+				if (likeParam.length() == 0 || "*".equals(likeParam)) {
+					throw new IllegalArgumentException(
+							"the <like> filter requires an explicit [param] value, [*] is not supported!");
+				}
+				filterModel.setParams(new String[] { likeParam });
+			} else {
+				throw new IllegalArgumentException(
+						"the <like> filter requires either a [params] or [param] attribute!");
+			}
+			parseLikeAttributes(filterModel, filter);
+		} else if (!filter.hasAttribute("params")) {
 			filterModel.setParams(new String[] { "*" });
 		} else {
 			filterModel.setParams(
@@ -1048,6 +1075,10 @@ public class SqlXMLConfigParse {
 		// 给r-like/l-like 在拼接%号时补充额外的字符(2026-09-09)
 		if (filter.hasAttribute("append-str")) {
 			filterModel.setAppendStr(filter.getAttribute("append-str"));
+		}
+		if (isLike && "both".equals(filterModel.getLikeMode()) && StringUtil.isNotBlank(filterModel.getAppendStr())) {
+			throw new IllegalArgumentException(
+					"the <like> filter does not support [append-str] when mode is [both]!");
 		}
 		// <cache-arg param="" cache-name="" cache-type="" alias-name="">
 		// <filter compare-param="" cache-index=""/>
@@ -1194,6 +1225,64 @@ public class SqlXMLConfigParse {
 						SqlInjectionLevel.valueOf(filter.getAttribute("level").toUpperCase(Locale.ROOT)));
 			}
 		}
+	}
+
+	/**
+	 * update 2026-11-13 解析新&lt;like&gt;元素的mode/escape-mode/escape-percent
+	 */
+	private static void parseLikeAttributes(ParamFilterModel filterModel, Element filter) {
+		if (filter.hasAttribute("mode")) {
+			String mode = filter.getAttribute("mode").trim().toLowerCase(Locale.ROOT);
+			if ("contains".equals(mode)) {
+				mode = "both";
+			} else if ("suffix".equals(mode)) {
+				mode = "left";
+			} else if ("prefix".equals(mode)) {
+				mode = "right";
+			}
+			if (!"both".equals(mode) && !"left".equals(mode) && !"right".equals(mode)) {
+				throw new IllegalArgumentException(
+						"the <like> filter mode must be one of [both,left,right,contains,prefix,suffix], but was ["
+								+ filter.getAttribute("mode") + "]!");
+			}
+			filterModel.setLikeMode(mode);
+		}
+		if (filter.hasAttribute("escape-mode")) {
+			String escapeMode = filter.getAttribute("escape-mode").trim().toLowerCase(Locale.ROOT);
+			if (!"raw".equals(escapeMode) && !"legacy".equals(escapeMode)) {
+				throw new IllegalArgumentException(
+						"the <like> filter escape-mode must be one of [raw,legacy], but was ["
+								+ filter.getAttribute("escape-mode") + "]!");
+			}
+			filterModel.setLikeEscapeMode(escapeMode);
+		}
+		if (filter.hasAttribute("escape-percent")) {
+			String escapePercent = filter.getAttribute("escape-percent").trim().toLowerCase(Locale.ROOT);
+			if (!"true".equals(escapePercent) && !"false".equals(escapePercent)) {
+				throw new IllegalArgumentException(
+						"the <like> filter escape-percent must be [true] or [false], but was ["
+								+ filter.getAttribute("escape-percent") + "]!");
+			}
+			filterModel.setLikeEscapePercent(Boolean.parseBoolean(escapePercent));
+		}
+	}
+
+	private static boolean isLikeWildcardParams(String[] params) {
+		for (String param : params) {
+			if ("*".equals(param)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static boolean hasBlankLikeParam(String[] params) {
+		for (String param : params) {
+			if (StringUtil.isBlank(param)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

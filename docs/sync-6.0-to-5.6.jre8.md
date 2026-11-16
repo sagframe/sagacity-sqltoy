@@ -19,6 +19,19 @@
 > (消除首轮适配引入的断言换行漂移,差异收敛为 9 处纯文本块转换)。审计后差异全景:main 11 文件
 > (7 个纯语法适配+BeanUtil/JsonProviders/HttpClientUtils/ElasticEndpoint 四个登记适配)、test 14 文件
 > (纯语法适配)、排除 8+原生 2,无任何业务逻辑分歧。
+>
+> **第三轮同步完成(2026-11-16,6.0.11 开发内容)**:6.0.11 的 20 条变更(反斜杠方言体系/like过滤元素/
+> hasOrderBy深度复核/健壮性收口/主键生成器与insert缓存的多上下文隔离/JVM级静态配置首占/翻译缓存
+> 与FIFO动态缓存去JVM共享/ClassValue体系化/类名缓存TCCL/JWT token缓存治理/@virtualTable前置from)
+> 整体进入。main 24 文件纯拷贝+11 个登记适配文件复刻适配(BeanUtil 整体重放 record 剥离+switch
+> 表达式/pattern instanceof/canAccess 转换);test 全量对齐 6.0 后统一转换(文本块 15 处、repeat 28 处、
+> var 7 处、Map.of/List.of、readAllBytes 3 处、FileWriter(File,Charset) 2 处);TranslateCacheCheckersTest
+> 随第 12 条删除其反射目标而移除;模块侧 spring/starter TranslateCaffeineManager 实例化(第 11 条)、
+> solon DbManager 切换清空+告警与 SqlToyDbInjector 静态字段移除(第 13 条)、starter 补 junit 测试依赖、
+> solon surefire 启用。门禁:core 323 类 2481 例全绿(82 例环境性跳过)+ starter 3 例 + solon 1 例 +
+> spring 编译通过。发版时记得:bump 版本至 5.6.98.jre8、写 changelog、更新 README(本机无 JDK8,
+> 本轮门禁以 `mvn -Dmaven.compiler.release=8` 在 JDK17 上完成,并对本地仓库安装了同步后的
+> 5.6.97.jre8 供模块验证)。
 
 ## 同步流程(每个 6.0 release tag 执行一轮)
 
@@ -54,6 +67,12 @@
 | `plugins/nosql/HttpClientUtils.java` | rest5-client + hc5 | 保留 hc4 ES 提交 + hc5 rest通用提交(FQN共存);ES方法的JSON已切JsonProviders(2026-11-13),doPostBody/doPostEntity与6.0同构,rest路径改wrapPath相对路径(修多地址url拼接),仅HTTP执行层为hc4 |
 | BeanUtil | switch 表达式/pattern instanceof/canAccess | if-else 链/传统 cast/isAccessible(全量同步后仅余 getClassFieldMap 的 ClassValue 化,语法适配点已随剥离消除) |
 | 测试文件(StringUtil/NumberUtil等) | `.repeat()`/`.toList()`/`var`/`List.of()`/`Map.of()`/`readAllBytes()`/文本块 | nCopies/collect/显式类型/HashMap/循环读取/字符串拼接 |
+| `ClassValueCacheStructureTest` | 断言 BeanUtil 的 `recordProperties` 为 ClassValue(6.0.11 新增) | 剔除该字段断言——本侧 BeanUtil 无 record 分支 |
+| `HttpClientUtilsUriTest.staleConnectionClassification` | 传入 hc5 异常类(`org.apache.hc.core5.http.*`) | 改 import hc4 异常类(`org.apache.http.*`),与本侧 isStaleConnection 实现一致 |
+| `BeanUtilGlobalCacheBoundLogicTest` | `record TestRecord` 映射用例(6.0.11 新增) | 剔除 record fixture 与 recordMappingRepeatedStable 用例 |
+| `BeanUtilEnumClassReloadTest` | `ClassLoader.getPlatformClassLoader()`(JDK9+) | `getSystemClassLoader().getParent()`(扩展类加载器,同样看不到测试 classpath) |
+| `LambdaCompositionH2Test` | 6.0(H2 2.5.252)已移除链式 CTE 版本守卫 | 恢复 `@DisabledIf`+H2LegacyChainedCteParamBug 守卫(H2≤2.2.224 引擎限制) |
+| solon `DbManager.getService` | `crudService.setLightDao(...)`(6.0 服务类签名) | 保持本模块 `setSqlToyLazyDao(...)` 形态(第 13 条的切换清空逻辑照常移植) |
 
 ## pom 差异基线(5.6 侧 jre8 化规则)
 
@@ -74,8 +93,10 @@
 ## 测试门禁
 
 - 全量测试(2196例):`mvn test`(pom已设surefire skip=false)
+- 全量测试(第三轮后 2481 例/323 类):`mvn test`(pom已设surefire skip=false);本机无 JDK8 时以 `-Dmaven.compiler.release=8` 于 JDK17 上等价执行(语法+API 双校验,勿用 source/target 8——jdk17 下 java.beans 会误报 PropertyInfo 不可访问)
 - 链式CTE用例(testCteRefsCteExecution):H2≤2.2.224按版本守卫跳过(引擎限制,非框架缺陷)
 - fat jar集成测试(EntityScannerFatJarTest):需pom拷贝boot-loader(JDK17生态),jre8下跳过
 - docker真库冒烟:复用6.0的容器矩阵,测试代码jre8语法化
 - 移植测试的已知改写规则:文本块→拼接、record fixture→剔除、`var`→显式类型、`Map.of`→HashMap、`.repeat`→nCopies、`readAllBytes`→循环读取
-- spring/spring-starter/solon 模块:编译验证通过(API兼容,无需改动)
+- 删除过源码的测试务必 `mvn clean`(陈旧 class 会被 surefire 捡起误报,如 TranslateCacheCheckersTest/record 系排除用例)
+- spring/spring-starter/solon 模块:编译验证通过;starter/solon 自第三轮起有真实单测(caffeine 双上下文 3 例/DbManager 作用域 1 例),构建前需先 `mvn install` 同步后的 core

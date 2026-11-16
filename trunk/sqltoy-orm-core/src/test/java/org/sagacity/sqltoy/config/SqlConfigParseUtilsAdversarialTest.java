@@ -35,7 +35,6 @@ public class SqlConfigParseUtilsAdversarialTest {
 	public void oversizedMixedWhitespaceFallsBackToFullScan() throws Exception {
 		Method matchIndexAtEnd = method("matchIndexAtEnd", String.class, Pattern.class, char.class);
 		// 300个混合空白字符(空格/制表/换行/CR)跨出256窗口,回退全串后必须仍命中
-		// (jre8同步适配:repeat改nCopies)
 		String blanks = String.join("", java.util.Collections.nCopies(80, " \t\r\n"));
 		for (Object[] caseSpec : new Object[][] { { "select * from t where" + blanks, WHERE_END, 'e' },
 				{ "select * from t where" + blanks + "1=1", WHERE_ONE, '1' },

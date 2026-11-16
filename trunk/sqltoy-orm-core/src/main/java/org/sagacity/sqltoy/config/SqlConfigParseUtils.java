@@ -80,6 +80,8 @@ import org.slf4j.LoggerFactory;
  * @modify Date:2026-10-13 增加虚表宏@virtualTable()(兼容别名@dual/@dummyTable,忽略大小写),
  *         select常量行伪表按方言展开(oracle系→from dual、db2→from sysibm.sysdummy1、
  *         hana→from dummy、其余库剔除),免除手写/删除from dual的两难
+ * @modify Date:2026-11-16 虚表宏兼容前置from写法(select 1 from @virtualTable()):伪表族复用
+ *         前置from只保留一个from,无from族连from一并剔除,不产生from from dual或悬空from
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class SqlConfigParseUtils {
@@ -129,8 +131,15 @@ public class SqlConfigParseUtils {
 	// sysibm.sysdummy1、支持无from select的库→剔除宏),实现"select 常量行 union 真实查询"类sql跨库;
 	// 正式名@virtualTable(与各Dialect的VIRTUAL_TABLE常量同词),@dual/@dummyTable为兼容别名
 	// (Oracle方言直觉/官方dummy table术语直觉),三名共用同一展开逻辑且均忽略大小写
-	public final static String VIRTUAL_TABLE_REGEX = "(?i)\\@(virtualTable|dual|dummyTable)\\s*\\(\\s*\\)";
+	// update 2026-11-16 兼容前置from写法(select 1 from @virtualTable()):前置from作为可选组与宏
+	// 一起匹配、一起替换——伪表族只保留一个from(不再产生from from dual),无from族连from一并剔除
+	// (不再残留悬空from);宏前无from的既有写法(group(1)为null)展开结果完全不变
+	private final static String VIRTUAL_TABLE_MACRO_REGEX = "\\@(virtualTable|dual|dummyTable)\\s*\\(\\s*\\)";
+	public final static String VIRTUAL_TABLE_REGEX = "(?i)" + VIRTUAL_TABLE_MACRO_REGEX;
 	public final static Pattern VIRTUAL_TABLE_PATTERN = Pattern.compile(VIRTUAL_TABLE_REGEX);
+	// group(1)为"from+空白",仅用于让前置from随宏被同一replaceAll消费,展开内容仍由方言虚表决定
+	public final static String VIRTUAL_TABLE_FROM_REGEX = "(?i)(\\bfrom\\b\\s*)?" + VIRTUAL_TABLE_MACRO_REGEX;
+	public final static Pattern VIRTUAL_TABLE_FROM_PATTERN = Pattern.compile(VIRTUAL_TABLE_FROM_REGEX);
 	public final static Pattern IF_PATTERN = Pattern.compile("(?i)\\@if\\s*\\(");
 	public final static Pattern START_IF_PATTERN = Pattern.compile("(?i)^\\s*\\@if\\s*\\(");
 	public final static Pattern ELSEIF_PATTERN = Pattern.compile("(?i)\\@elseif\\s*\\(");
@@ -2135,6 +2144,16 @@ public class SqlConfigParseUtils {
 	 * t, 由本方法按解析方言展开,不再需要手写from dual(在pg/sqlserver上报语法错)或删掉dual
 	 * (在oracle上报ORA-00923)二选一。
 	 * <p>
+	 * update 2026-11-16 兼容前置from写法(更贴近标准sql直觉):select 1 v from @virtualTable()
+	 * 也按同一规则展开——伪表族复用前置from(如select 1 v from dual,不会出现from from
+	 * dual),无from族将from与宏一并剔除(如select 1 v,不会残留悬空from);from与宏之间允许
+	 * 空白/换行且不区分大小写,前置from仅在"from+空白+宏"直接相邻时被消费。from必须是完整
+	 * 关键字(词边界匹配),address_from/from_x/transform等标识符内的from不触发前缀;匹配前
+	 * 按方言转义规则将单引号字面量内容掩为等长空白,字面量内的from/@virtualTable()不参与
+	 * 展开,字面量内容原样保留。宏前不写from的既有写法(@virtualTable()自动补from)行为
+	 * 不变。入参应为已剔除注释的sql(parseSqlToyConfig在clearMark/clearMistyChars后调用),
+	 * 别名@dual()/@dummyTable()与正式名等价。
+	 * <p>
 	 * 伪表映射对齐各Dialect实现自身生成merge语句所用伪表(OracleDialect/DB2Dialect/HanaDialect
 	 * 的VIRTUAL_TABLE常量):oracle系(oracle/oracle11/dm/oceanbase)→dual;db2→sysibm.sysdummy1;
 	 * hana→dummy。其余方言(mysql/mysql57/tidb/doris/starrocks、postgresql/postgresql14/gaussdb/
@@ -2153,18 +2172,31 @@ public class SqlConfigParseUtils {
 		if (StringUtil.isBlank(sql) || !sql.contains("@")) {
 			return sql;
 		}
-		Matcher matcher = VIRTUAL_TABLE_PATTERN.matcher(sql);
+		// update 2026-11-16 from判定基于真实sql结构:有单引号字面量时先按方言转义规则掩为
+		// 等长空白再定位,字面量内的from/@virtualTable()不参与展开;无单引号时直接用原串;
+		// 掩码串等长,匹配下标可直接回写原串,字面量内容保持原样
+		String matchSql = sql.indexOf('\'') == -1 ? sql : maskLiterals(sql, isBackslashEscape(dialect));
+		// 匹配范围含可选的前置from(+空白),from与宏作为整体一次替换:
+		// 剔除型不会留下悬空from,伪表族也不会叠加出from from dual
+		Matcher matcher = VIRTUAL_TABLE_FROM_PATTERN.matcher(matchSql);
 		if (!matcher.find()) {
 			return sql;
 		}
 		// update 2026-10-13 虚表判定收敛到DataSourceUtils.getVirtualTable单一事实源,
 		// DBProfile.getVirtualTable为本方法的档案持有者快速通道(零重复映射)
 		String virtualTable = DataSourceUtils.getVirtualTable(DataSourceUtils.getDBType(dialect));
-		// 无虚表的方言返回空串,展开为空白(剔除宏);有虚表的展开为" from xxx "
-		if (StringUtil.isBlank(virtualTable)) {
-			return matcher.replaceAll(BLANK);
-		}
-		return matcher.replaceAll(" from " + virtualTable + " ");
+		// 无虚表的方言返回空串,展开为空白(宏连同可能的前置from一并剔除);
+		// 有虚表的展开为" from xxx "(前置from已被匹配范围消费,只保留一个from)
+		String replacement = StringUtil.isBlank(virtualTable) ? BLANK : " from " + virtualTable + " ";
+		StringBuilder result = new StringBuilder(sql.length() + 16);
+		int lastEnd = 0;
+		do {
+			result.append(sql, lastEnd, matcher.start());
+			result.append(replacement);
+			lastEnd = matcher.end();
+		} while (matcher.find());
+		result.append(sql, lastEnd, sql.length());
+		return result.toString();
 	}
 
 	/**
@@ -2181,7 +2213,8 @@ public class SqlConfigParseUtils {
 			return;
 		}
 		// 提取with as 和fast部分的sql，用于分页或取随机记录查询记录数量提供最简sql
-		SqlWithAnalysis sqlWith = new SqlWithAnalysis(sqlToyConfig.getSql(dialect));
+		SqlWithAnalysis sqlWith = new SqlWithAnalysis(sqlToyConfig.getSql(dialect),
+				DataSourceUtils.getDBType(dialect));
 		// 存在with xxx as () 形式的查询
 		if (null != sqlWith.getWithSqlSet()) {
 			String[] aliasTableAs;

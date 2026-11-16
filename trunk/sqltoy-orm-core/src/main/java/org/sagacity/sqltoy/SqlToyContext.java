@@ -329,6 +329,18 @@ public class SqlToyContext {
 	 */
 	private String reservedWords;
 
+	/**
+	 * update 2026-11-15 跨数据库函数转换器配置:仅记录,initialize阶段经claimStaticState首占生效
+	 * (原setter即时写FunctionUtils的JVM全局,多上下文时后配置者会静默覆盖先初始化上下文的语义)
+	 */
+	private Object functionConverts;
+
+	/**
+	 * update 2026-11-15 关键字字段的引用符号:仅记录,initialize阶段经claimStaticState首占生效
+	 * (原setter即时写SqlToyConstants.keywordSign的JVM全局)
+	 */
+	private String keywordSign;
+
 	// 如果是文件存储则使用classpath:开头
 	/**
 	 * 安全私钥
@@ -515,6 +527,41 @@ public class SqlToyContext {
 		return false;
 	}
 
+	/**
+	 * update 2026-11-15 应用JVM级静态配置:functionConverts与keywordSign走"首个初始化的context生效",
+	 * 后者携带不同配置时告警并忽略。原实现由setter即时写FunctionUtils/SqlToyConstants的全局值,
+	 * last-wins且无告警,多上下文(多Spring上下文/测试上下文/热部署)下会静默改变先初始化上下文的语义
+	 */
+	void applyJvmStaticConfig() {
+		if (functionConverts != null && claimStaticState("functionConverts", true)) {
+			applyFunctionConverts();
+		}
+		if (StringUtil.isNotBlank(keywordSign) && claimStaticState("keywordSign", true)) {
+			SqlToyConstants.keywordSign = keywordSign;
+		}
+	}
+
+	/**
+	 * 解析并应用跨数据库函数转换器配置(List/String[]/String三种入参形态,
+	 * default/defaults展开内置默认集,close表示关闭即不注册任何转换器)
+	 */
+	@SuppressWarnings("unchecked")
+	private void applyFunctionConverts() {
+		if (functionConverts instanceof List) {
+			FunctionUtils.setFunctionConverts((List<String>) functionConverts);
+		} else if (functionConverts instanceof String[]) {
+			FunctionUtils.setFunctionConverts(Arrays.asList((String[]) functionConverts));
+		} else if (functionConverts instanceof String) {
+			String converts = (String) functionConverts;
+			if (StringUtil.isBlank(converts) || "default".equals(converts) || "defaults".equals(converts)) {
+				FunctionUtils.setFunctionConverts(Arrays.asList("default"));
+			} // close 标记表示关闭转换,无需注册
+			else if (!"close".equalsIgnoreCase(converts)) {
+				FunctionUtils.setFunctionConverts(Arrays.asList(converts.split("\\,")));
+			}
+		}
+	}
+
 	public void initialize() throws Exception {
 		// JSON provider: attempt initialization at startup (explicit config wins over
 		// classpath detection; a missing JSON library only warns, it does not block
@@ -526,6 +573,9 @@ public class SqlToyContext {
 		if (claimStaticState("dialectConfig", dialectConfig != null && !dialectConfig.isEmpty())) {
 			SqlToyConstants.loadProperties(dialectConfig);
 		}
+		// update 2026-11-15 JVM级静态配置(functionConverts/keywordSign)延迟到initialize阶段首占生效,
+		// 与dialectConfig等其它JVM级配置同一口径;原先在setter中即时写全局,后配置的上下文会静默覆盖前者
+		applyJvmStaticConfig();
 		// 设置分布式id缓存时效天数
 		if (distributeIdCacheExpireDays != null && claimStaticState("distributeIdCacheExpireDays", true)) {
 			SqlToyConstants.distributeIdCacheExpireDays = distributeIdCacheExpireDays;
@@ -1121,26 +1171,15 @@ public class SqlToyContext {
 
 	/**
 	 * functionConverts=close表示关闭
+	 * <p>
+	 * update 2026-11-15 仅记录配置,由initialize阶段经claimStaticState首占生效(见applyJvmStaticConfig),
+	 * 避免setter即时写JVM全局导致后配置者覆盖先初始化上下文的语义
+	 * </p>
 	 * 
 	 * @param functionConverts the functionConverts to set
 	 */
 	public void setFunctionConverts(Object functionConverts) {
-		if (functionConverts == null) {
-			return;
-		}
-		if (functionConverts instanceof List) {
-			FunctionUtils.setFunctionConverts((List<String>) functionConverts);
-		} else if (functionConverts instanceof String[]) {
-			FunctionUtils.setFunctionConverts(Arrays.asList((String[]) functionConverts));
-		} else if (functionConverts instanceof String) {
-			String converts = (String) functionConverts;
-			if (StringUtil.isBlank(converts) || "default".equals(converts) || "defaults".equals(converts)) {
-				FunctionUtils.setFunctionConverts(Arrays.asList("default"));
-			} // close 标记已经没有必要
-			else if (!"close".equalsIgnoreCase(converts)) {
-				FunctionUtils.setFunctionConverts(Arrays.asList(converts.split("\\,")));
-			}
-		}
+		this.functionConverts = functionConverts;
 	}
 
 	/**
@@ -1213,10 +1252,12 @@ public class SqlToyContext {
 	}
 
 	/**
+	 * update 2026-11-15 仅记录配置,由initialize阶段经claimStaticState首占生效(见applyJvmStaticConfig)
+	 * 
 	 * @param keywordSign the keywordSign to set
 	 */
 	public void setKeywordSign(String keywordSign) {
-		SqlToyConstants.keywordSign = keywordSign;
+		this.keywordSign = keywordSign;
 	}
 
 	/**

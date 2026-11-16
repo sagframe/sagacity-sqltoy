@@ -202,6 +202,21 @@ public class ParamFilterModel implements Serializable {
 	 */
 	private String appendStr;
 
+	/**
+	 * update 2026-11-13 新&lt;like&gt;元素的补%方向:both/left/right
+	 */
+	private String likeMode = "both";
+
+	/**
+	 * update 2026-11-13 新&lt;like&gt;元素的转义模式:raw(单遍)/legacy(旧幂等)
+	 */
+	private String likeEscapeMode = "raw";
+
+	/**
+	 * update 2026-11-13 新&lt;like&gt;元素是否将%作为字面量转义
+	 */
+	private boolean likeEscapePercent = true;
+
 	public String getFilterType() {
 		return filterType;
 	}
@@ -622,6 +637,30 @@ public class ParamFilterModel implements Serializable {
 
 	public void setAppendStr(String appendStr) {
 		this.appendStr = appendStr;
+	}
+
+	public String getLikeMode() {
+		return likeMode;
+	}
+
+	public void setLikeMode(String likeMode) {
+		this.likeMode = likeMode;
+	}
+
+	public String getLikeEscapeMode() {
+		return likeEscapeMode;
+	}
+
+	public void setLikeEscapeMode(String likeEscapeMode) {
+		this.likeEscapeMode = likeEscapeMode;
+	}
+
+	public boolean isLikeEscapePercent() {
+		return likeEscapePercent;
+	}
+
+	public void setLikeEscapePercent(boolean likeEscapePercent) {
+		this.likeEscapePercent = likeEscapePercent;
 	}
 
 }

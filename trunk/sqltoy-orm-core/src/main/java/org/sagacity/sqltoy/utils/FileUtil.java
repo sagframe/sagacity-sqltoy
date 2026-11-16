@@ -946,7 +946,6 @@ public class FileUtil {
 				appendFile.createNewFile();
 			}
 			// 显式UTF-8,避免平台默认字符集导致中文乱码
-			// (jre8同步适配:FileWriter(File,Charset,boolean)为JDK11+,改OutputStreamWriter显式UTF-8)
 			writer = new java.io.OutputStreamWriter(new java.io.FileOutputStream(appendFile, true),
 					StandardCharsets.UTF_8);
 			writer.write(content);

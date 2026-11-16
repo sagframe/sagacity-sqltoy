@@ -133,8 +133,8 @@ public final class JsonProviders {
 			}
 		}
 		throw new IllegalStateException(
-				"JSON column support needs a usable JSON library on the classpath: add com.alibaba.fastjson2:fastjson2"
-						+ " (or com.fasterxml.jackson.core:jackson-databind), or point"
+				"JSON column support needs a usable JSON library on the classpath: add com.fasterxml.jackson.core:jackson-databind"
+						+ " (or com.alibaba.fastjson2:fastjson2), or point"
 						+ " spring.sqltoy.jsonProvider at a custom org.sagacity.sqltoy.plugins.json.JsonProvider"
 						+ " implementation. If a JSON library is already present, see the warnings above for why"
 						+ " it was rejected.");

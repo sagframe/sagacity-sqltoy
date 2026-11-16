@@ -8,6 +8,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import java.sql.Timestamp;
 
 import org.junit.jupiter.api.AfterAll;
@@ -34,11 +35,11 @@ public class FunctionDialectFullMatrixTest {
 	public static void init() throws Exception {
 		FunctionUtils.setFunctionConverts(java.util.Arrays.asList("default"));
 		h2 = DriverManager.getConnection("jdbc:h2:mem:funcfull;DB_CLOSE_DELAY=-1", "sa", "");
-		try (java.sql.Statement st = h2.createStatement()) {
+		try (Statement st = h2.createStatement()) {
 			st.execute("drop table if exists t_func");
 			st.execute("create table t_func (id int, name varchar(100), score decimal(10,2), "
 					+ "create_time timestamp, remark varchar(100))");
-			try (java.sql.PreparedStatement ps = h2.prepareStatement("insert into t_func values (?,?,?,?,?)")) {
+			try (PreparedStatement ps = h2.prepareStatement("insert into t_func values (?,?,?,?,?)")) {
 				ps.setInt(1, 1);
 				ps.setString(2, "admin");
 				ps.setBigDecimal(3, new java.math.BigDecimal("88.5"));
@@ -54,12 +55,12 @@ public class FunctionDialectFullMatrixTest {
 			}
 		}
 		sqlite = DriverManager.getConnection("jdbc:sqlite::memory:");
-		try (java.sql.Statement st = sqlite.createStatement()) {
+		try (Statement st = sqlite.createStatement()) {
 			st.execute("drop table if exists t_func");
 			st.execute("create table t_func (id int, name varchar(100), score decimal(10,2), "
 					+ "create_time timestamp, remark varchar(100))");
 			// sqlite的JDBC setTimestamp存毫秒Long,与生产绑定形态一致(date函数族依赖该形态)
-			try (java.sql.PreparedStatement ps = sqlite.prepareStatement("insert into t_func values (?,?,?,?,?)")) {
+			try (PreparedStatement ps = sqlite.prepareStatement("insert into t_func values (?,?,?,?,?)")) {
 				ps.setInt(1, 1);
 				ps.setString(2, "admin");
 				ps.setDouble(3, 88.5);

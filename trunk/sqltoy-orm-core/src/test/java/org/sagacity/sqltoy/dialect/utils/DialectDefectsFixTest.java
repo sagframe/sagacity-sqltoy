@@ -6,6 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,6 +37,57 @@ public class DialectDefectsFixTest {
 	@Test
 	public void kingbaseDbTypeMapsToDialect() {
 		assertEquals(Dialect.KINGBASE, DataSourceUtils.getDialect(DBType.KINGBASE));
+	}
+
+	/**
+	 * update 2026-11-13 连接探测路径须覆盖HANA/HIGHGO:私有getDialect(Connection)原独立switch
+	 * 遗漏两者,返回undefine并按DataSource缓存,导致方言变体sql失效;现统一委托getDialect(Integer)
+	 */
+	@Test
+	public void connectionDialectDetectCoversHanaAndHighgo() throws Exception {
+		assertEquals(Dialect.HANA, detectDialectByConnection("jdbc:sap://hdbhost:39015", "HDB", 2));
+		assertEquals(Dialect.HIGHGO, detectDialectByConnection("jdbc:highgo://hghost:5866/db", "HighGo", 12));
+	}
+
+	private String detectDialectByConnection(final String url, final String productName, final int majorVersion)
+			throws Exception {
+		DatabaseMetaData metaData = (DatabaseMetaData) Proxy.newProxyInstance(getClass().getClassLoader(),
+				new Class[] { DatabaseMetaData.class }, (proxy, method, args) -> {
+					switch (method.getName()) {
+					case "getURL":
+						return url;
+					case "getDatabaseProductName":
+						return productName;
+					case "getDatabaseMajorVersion":
+						return majorVersion;
+					case "toString":
+						return "meta-" + productName;
+					case "hashCode":
+						return System.identityHashCode(proxy);
+					case "equals":
+						return proxy == args[0];
+					default:
+						return null;
+					}
+				});
+		Connection conn = (Connection) Proxy.newProxyInstance(getClass().getClassLoader(),
+				new Class[] { Connection.class }, (proxy, method, args) -> {
+					switch (method.getName()) {
+					case "getMetaData":
+						return metaData;
+					case "toString":
+						return "conn-" + productName;
+					case "hashCode":
+						return System.identityHashCode(proxy);
+					case "equals":
+						return proxy == args[0];
+					default:
+						return null;
+					}
+				});
+		Method method = DataSourceUtils.class.getDeclaredMethod("getDialect", Connection.class);
+		method.setAccessible(true);
+		return (String) method.invoke(null, conn);
 	}
 
 	/**

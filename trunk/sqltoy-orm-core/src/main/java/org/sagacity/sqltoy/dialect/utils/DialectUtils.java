@@ -501,7 +501,7 @@ public class DialectUtils {
 			String withSql = "";
 			// with as分析器(避免每次做with 检测,提升效率)
 			if (sqlToyConfig != null && sqlToyConfig.isHasWith()) {
-				SqlWithAnalysis sqlWith = new SqlWithAnalysis(sql);
+				SqlWithAnalysis sqlWith = new SqlWithAnalysis(sql, dbType);
 				// 判断with as是否在开始位置，如果在内部不做优化处理
 				if (StringUtil.isBlank(sqlWith.getPreSql())) {
 					query_tmp = sqlWith.getRejectWithSql();
@@ -1368,7 +1368,9 @@ public class DialectUtils {
 					isAssignPK, realTable);
 		}
 		// sql 缓存，避免每次重复产生
-		String sqlCacheKey = DialectExtUtils.getCacheKey(entityMeta, tableName, dbType, pkStrategy);
+		// update 2026-11-15 key同步纳入unifyFieldsHandler与DBProfile维度(与insert/insertIgnore一致)
+		String sqlCacheKey = DialectExtUtils.getCacheKey(entityMeta, tableName, profile, pkStrategy,
+				unifyFieldsHandler);
 		String mergeIgnoreSql = mergeIgnoreSqlCache.get(sqlCacheKey);
 		if (null != mergeIgnoreSql) {
 			return mergeIgnoreSql;
@@ -1993,7 +1995,7 @@ public class DialectUtils {
 						Pattern pattern;
 						Matcher matcher;
 						String group;
-						// (jre8同步适配:Matcher.appendReplacement/appendTail在JDK8仅接受StringBuffer)
+						// jre8: Matcher.appendReplacement 仅接受 StringBuffer,不能用 StringBuilder
 						StringBuffer result = new StringBuffer();
 						boolean hasMatched = false;
 						// 替换in (:id)笔名为?

@@ -192,6 +192,30 @@ public class SqlLiteralBlindSpotFixTest {
 		assertFalse(SqlUtil.hasOrderBy("select a from t1", true), "无order by应正确判定");
 	}
 
+	/**
+	 * update 2026-11-13 order by表达式自带收括号(nvl/case/coalesce/upper/标量子查询)时,
+	 * 不能把表达式内的")"当作外层查询结束;同时子查询、over(...)、整串括号包裹仍须判false。
+	 */
+	@Test
+	public void hasOrderByExpressionBracket() {
+		assertTrue(SqlUtil.hasOrderBy("select a from t1 order by nvl(a,0)", true), "nvl表达式应判为最外层排序");
+		assertTrue(SqlUtil.hasOrderBy("select a from t1 order by (case when a>0 then 1 else 2 end)", true),
+				"括号包裹的case表达式应判为最外层排序");
+		assertTrue(SqlUtil.hasOrderBy("select a from t1 order by coalesce(a,0), b", true),
+				"coalesce多列排序应判为最外层排序");
+		assertTrue(SqlUtil.hasOrderBy("select a from t1 order by upper(a)", true), "upper函数排序应判为最外层排序");
+		assertTrue(SqlUtil.hasOrderBy("select a from t1 order by (select max(b) from t2)", true),
+				"排序表达式内的标量子查询不应否定最外层排序");
+		assertFalse(SqlUtil.hasOrderBy("select x.b from (select b from t2 order by nvl(b,0)) x", true),
+				"子查询内的order by不应判为最外层排序");
+		assertFalse(SqlUtil.hasOrderBy("select row_number() over (order by a) rn from t1", true),
+				"窗口函数over内的order by不应判为最外层排序");
+		assertFalse(SqlUtil.hasOrderBy("(select a from t1 order by nvl(a,0))", true),
+				"整条sql被括号包裹时维持历史判定false");
+		assertFalse(SqlUtil.hasOrderBy("select a from t1 ORder by nvl(a,0)", true),
+				"ORder标记位于排序表达式括号之前时仍须强制不包裹");
+	}
+
 	// ---------------- 5.getSqlParamsName ----------------
 
 	@Test

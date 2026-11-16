@@ -10,6 +10,7 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 
+// (jre8同步适配:本侧ES栈为httpclient4,isStaleConnection判定的异常类为hc4包名)
 import org.apache.http.ConnectionClosedException;
 import org.apache.http.NoHttpResponseException;
 import org.junit.jupiter.api.Test;
@@ -17,9 +18,8 @@ import org.sagacity.sqltoy.config.model.ElasticEndpoint;
 import org.sagacity.sqltoy.config.model.NoSqlConfigModel;
 
 /**
- * rest请求路径/base path解析、超时与字符集优先级、入参契约的回归。
- * 全量收口后单/多地址统一走rest客户端,此处只验证相对路径与pathPrefix的拆分规则
- * (jre8同步适配:stale判定的异常类型为httpclient4包名)
+ * rest5请求路径/base path解析、超时与字符集优先级、入参契约的回归。
+ * 全量收口后单/多地址统一走rest5客户端,此处只验证相对路径与pathPrefix的拆分规则
  */
 public class HttpClientUtilsUriTest {
 

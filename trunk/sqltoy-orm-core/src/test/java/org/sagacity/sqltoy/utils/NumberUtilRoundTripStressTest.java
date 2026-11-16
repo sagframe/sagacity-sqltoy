@@ -112,8 +112,7 @@ public class NumberUtilRoundTripStressTest {
 		for (int m = 1; m <= 63; m++) {
 			BigDecimal base = new BigDecimal("1" + String.join("", java.util.Collections.nCopies(m, "0")));
 			for (BigDecimal x : new BigDecimal[] { base.add(BigDecimal.ONE), base.subtract(BigDecimal.ONE),
-					base.add(new BigDecimal(
-							"1" + String.join("", java.util.Collections.nCopies(Math.max(0, m - 1), "0")))) }) {
+					base.add(new BigDecimal("1" + String.join("", java.util.Collections.nCopies(Math.max(0, m - 1), "0")))) }) {
 				String capital = NumberUtil.toCapitalMoney(x);
 				verify("零密集大写", capital, NumberUtil.capitalMoneyToNum(capital), x);
 				cnt++;

@@ -53,7 +53,22 @@ public class MapperUtils {
 		}
 	};
 
-	private static ConcurrentHashMap<String, HashMap<String, String>> classHasAliasMap = new ConcurrentHashMap<>();
+	// update 2026-11-15 原静态Map<"class=类名;direct=方向",别名映射>:热部署/多classloader下同名类
+	// 重新加载后仍命中旧类注解推导出的别名映射(字段别名变更不生效),且类名键常驻;
+	// 改为ClassValue按Class承载,from/target两个方向各一个ClassValue,类卸载条目随之回收
+	private static final ClassValue<HashMap<String, String>> classFieldAliasFromMap = new ClassValue<HashMap<String, String>>() {
+		@Override
+		protected HashMap<String, String> computeValue(Class<?> targetClass) {
+			return buildClassAliasMap(targetClass, true);
+		}
+	};
+
+	private static final ClassValue<HashMap<String, String>> classFieldAliasTargetMap = new ClassValue<HashMap<String, String>>() {
+		@Override
+		protected HashMap<String, String> computeValue(Class<?> targetClass) {
+			return buildClassAliasMap(targetClass, false);
+		}
+	};
 
 	// 递归最大层级
 	private static int MAX_RECURSION = 3;
@@ -825,29 +840,33 @@ public class MapperUtils {
 	 * @return
 	 */
 	private static HashMap<String, String> getClassAliasMap(Class targetClass, boolean doFrom) {
-		String typeName = targetClass.getTypeName();
-		String direction = doFrom ? "from" : "target";
-		String mapKey = "class=" + typeName + ";direct=" + direction;
-		HashMap<String, String> aliasMap = classHasAliasMap.get(mapKey);
-		if (aliasMap == null) {
-			aliasMap = new HashMap<String, String>();
-			Class parentClass = targetClass;
-			SqlToyFieldAlias alias;
-			while (!parentClass.equals(Object.class)) {
-				for (Field field : parentClass.getDeclaredFields()) {
-					// 不同对象，检查是否有别名
-					alias = field.getAnnotation(SqlToyFieldAlias.class);
-					if (alias != null) {
-						if (doFrom) {
-							aliasMap.put(field.getName(), alias.value());
-						} else {
-							aliasMap.put(alias.value(), field.getName());
-						}
+		return doFrom ? classFieldAliasFromMap.get(targetClass) : classFieldAliasTargetMap.get(targetClass);
+	}
+
+	/**
+	 * 解析类(含父类)字段上的@SqlToyFieldAlias注解生成别名映射
+	 * 
+	 * @param targetClass
+	 * @param doFrom      true:字段名->别名; false:别名->字段名
+	 * @return
+	 */
+	private static HashMap<String, String> buildClassAliasMap(Class targetClass, boolean doFrom) {
+		HashMap<String, String> aliasMap = new HashMap<String, String>();
+		Class parentClass = targetClass;
+		SqlToyFieldAlias alias;
+		while (!parentClass.equals(Object.class)) {
+			for (Field field : parentClass.getDeclaredFields()) {
+				// 不同对象，检查是否有别名
+				alias = field.getAnnotation(SqlToyFieldAlias.class);
+				if (alias != null) {
+					if (doFrom) {
+						aliasMap.put(field.getName(), alias.value());
+					} else {
+						aliasMap.put(alias.value(), field.getName());
 					}
 				}
-				parentClass = parentClass.getSuperclass();
 			}
-			classHasAliasMap.putIfAbsent(mapKey, aliasMap);
+			parentClass = parentClass.getSuperclass();
 		}
 		return aliasMap;
 	}
