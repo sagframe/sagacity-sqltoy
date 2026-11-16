@@ -1,5 +1,7 @@
 package org.sagacity.sqltoy.solon.integration;
 
+import java.util.concurrent.Executor;
+
 import org.noear.solon.core.AppContext;
 import org.noear.solon.core.Plugin;
 import org.sagacity.sqltoy.SqlToyContext;
@@ -29,6 +31,12 @@ public class SqlToyPluginImpl implements Plugin {
 
 		if (sqlToyContext != null) {
 			sqlToyContext.destroy();
+			// 关闭插件按taskExecutor参数自建的默认线程池(经SolonTaskExecutor类型识别所有权,
+			// targetPoolName指向的外部线程池bean不受影响;线程为非守护线程,不关闭会阻滞JVM退出)
+			Executor taskExecutor = sqlToyContext.getTaskExecutor();
+			if (taskExecutor instanceof SolonTaskExecutor) {
+				((SolonTaskExecutor) taskExecutor).shutdown();
+			}
 		}
 	}
 }

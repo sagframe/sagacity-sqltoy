@@ -32,6 +32,21 @@
 > spring 编译通过。发版时记得:bump 版本至 5.6.98.jre8、写 changelog、更新 README(本机无 JDK8,
 > 本轮门禁以 `mvn -Dmaven.compiler.release=8` 在 JDK17 上完成,并对本地仓库安装了同步后的
 > 5.6.97.jre8 供模块验证)。
+>
+> **第三轮复核完成(2026-11-16,仅 Java 代码)**:4 个结构适配文件签名 1:1(差异全部=登记适配);
+> HttpClientUtils(409行)/ElasticEndpoint(342行)差异 hunk 级全量审阅=全部登记适配、无 11-13 后逻辑;
+> 模块侧 40 个差异 Java 文件签名比对:36 个完全一致(javax/jakarta 基线),发现并回移 1 个存量缺口——
+> starter 的 sqlInjectionRegexes 属性绑定(6.0 于 2025-5-15 增加,core 侧 setter 一直存在而 starter 漏移,
+> Boot2 用户此前无法经 yml 配置 sql 注入表达式);其余差异为 6.0-only 的 AOT/lambda 资产(按基线不移植)。
+>
+> **第三轮增量补同步(2026-11-16 晚,solon 线程池参数补齐批次)**:复核期间 6.0 仓库又前进(15:15 pull+
+> 16:14 提交,教训:每轮同步/复核前必须重新枚举树差异)——solon 侧"参数补齐"批次进入:新增 SolonTaskExecutor
+> (默认线程池包装,TTL 上下文传播/关闭语义对齐 spring 的 ThreadPoolTaskExecutor)、Builder 在 targetPoolName
+> 为 none/空时按 taskExecutor 参数构建默认线程池(**修复此前仅 targetPoolName 生效、threadNamePrefix/
+> corePoolSize 等 8 项参数配置无效的缺陷**,对齐 spring starter 行为)、PluginImpl.stop 经类型识别关闭自建池、
+> jsonProvider 装配补 null 守卫、SqlToyContextBuilderParityTest(5 例锁定测试)。已全部移植并验证:
+> solon 模块 6 例全绿。TaskPoolProperties 字段两侧本就一致无需动;AOT 分支(strSplitTrim/scanResources/
+> nativeimage 判定)按基线不移植。
 
 ## 同步流程(每个 6.0 release tag 执行一轮)
 

@@ -287,7 +287,12 @@ public class SqlToyContextProperties implements Serializable {
 	 * 动态获取缓存的实现(一般基于redis)
 	 */
 	private String dynamicCacheFetch;
-	
+
+	/**
+	 * sql注入表达式
+	 */
+	private String sqlInjectionRegexes[];
+
 	/**
 	 * 分布式id key的缓存天数(一般基于redis，避免长期储存占用空间)，多少天失效
 	 */
@@ -849,6 +854,15 @@ public class SqlToyContextProperties implements Serializable {
 	 */
 	public void setDynamicCacheFetch(String dynamicCacheFetch) {
 		this.dynamicCacheFetch = dynamicCacheFetch;
+	}
+
+	// (jre8同步适配:回移6.0于2025-5-15增加的starter属性绑定,core侧setter一直存在)
+	public String[] getSqlInjectionRegexes() {
+		return sqlInjectionRegexes;
+	}
+
+	public void setSqlInjectionRegexes(String[] sqlInjectionRegexes) {
+		this.sqlInjectionRegexes = sqlInjectionRegexes;
 	}
 
 	public String getDdlLowerOrUpper() {

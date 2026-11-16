@@ -169,6 +169,8 @@ public class SqltoyAutoConfiguration {
 		if (properties.getHumpMapResultTypeLabel() != null) {
 			sqlToyContext.setHumpMapResultTypeLabel(properties.getHumpMapResultTypeLabel());
 		}
+		// (jre8同步适配:回移sql注入表达式属性绑定,6.0侧于2025-5-15增加而本侧starter漏移,core侧能力已有)
+		sqlToyContext.setSqlInjectionRegexes(properties.getSqlInjectionRegexes());
 		// sql 文件资源路径
 		List<String> resList = new ArrayList<String>();
 		String sqlResourcesDir = properties.getSqlResourcesDir();
