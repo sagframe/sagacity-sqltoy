@@ -317,21 +317,21 @@ public class SqlUtilTest {
 
 	@Test
 	public void testUniformMarks() {
-		String sql = "select *\nfrom sqltoy_order_info soi\nwhere 1=1\n-- @fast_start\n(\n\tselect * from table1\n)\n-- @fast_end\nand status=1";
+		String sql = "select *\nfrom sqltoy_order_info soi\nwhere 1=1\n-- @fast_start\n(\n\tselect * from table1\n)\n-- @fast_end\nand status=1\n";
 		sql = SqlUtil.uniformFastMarks(sql);
 		System.err.println(sql);
 	}
 
 	@Test
 	public void testUniformMarks1() {
-		String sql = "select *\nfrom sqltoy_order_info soi\nwhere 1=1\n/*@fast_start*/(\n\tselect * from table1\n)/*@fast_end*/\nand status=1";
+		String sql = "select *\nfrom sqltoy_order_info soi\nwhere 1=1\n/*@fast_start*/(\n\tselect * from table1\n)/*@fast_end*/\nand status=1\n";
 		sql = SqlUtil.uniformFastMarks(sql);
 		System.err.println(sql);
 	}
 
 	@Test
 	public void testUniformMarksql2() {
-		String sql = "select *\nfrom sqltoy_order_info soi\nwhere 1=1\n-- @fast_start\n(\n\tselect * from table1\n)/*@fast_end*/\nand status=1";
+		String sql = "select *\nfrom sqltoy_order_info soi\nwhere 1=1\n-- @fast_start\n(\n\tselect * from table1\n)/*@fast_end*/\nand status=1\n";
 		sql = SqlUtil.uniformFastMarks(sql);
 		System.err.println(sql);
 	}
@@ -454,7 +454,7 @@ public class SqlUtilTest {
 	public void testClearDefaultValue() {
 		String[] tests = { "3.14::real", "3.14::double precision", "name::varchar(50)", "price::numeric(10,2)", // 带逗号
 				"age::int", "col::char(10)", "create_time::timestamp(6)", "now()::text", // 不会误删函数括号
-				"id::bigint", "3.14::double precision(10,2)", "3.14::double precision(10,2) as ", "\t\tCASE order_status\n   WHEN 0 THEN '待支付'::text\n   WHEN 1 THEN '已支付'::text\n   WHEN 2 THEN '已完成'::text\n   ELSE '取消'::text\nEND", "(a+b)::numberic(10,2)", "NULL::text" };
+				"id::bigint", "3.14::double precision(10,2)", "3.14::double precision(10,2) as ", "\t\tCASE order_status\n   WHEN 0 THEN '待支付'::text\n   WHEN 1 THEN '已支付'::text\n   WHEN 2 THEN '已完成'::text\n   ELSE '取消'::text\nEND\n", "(a+b)::numberic(10,2)", "NULL::text" };
 		for (String t : tests) {
 			System.out.println(t + "  ->  [" + SqlUtil.clearDefaultValue(t) + "]");
 		}

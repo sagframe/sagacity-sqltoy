@@ -97,6 +97,6 @@
 - 链式CTE用例(testCteRefsCteExecution):H2≤2.2.224按版本守卫跳过(引擎限制,非框架缺陷)
 - fat jar集成测试(EntityScannerFatJarTest):需pom拷贝boot-loader(JDK17生态),jre8下跳过
 - docker真库冒烟:复用6.0的容器矩阵,测试代码jre8语法化
-- 移植测试的已知改写规则:文本块→拼接、record fixture→剔除、`var`→显式类型、`Map.of`→HashMap、`.repeat`→nCopies、`readAllBytes`→循环读取
+- 移植测试的已知改写规则:文本块→拼接(**关键:收尾"""独占一行时内容以\n结尾,末段字面量必须补\n;定界符前还有空行则补\n\n——第三轮曾整体漏掉,经JDK17文本块求值对比器TBVerify逐对修复并验证15/15等价**)、record fixture→剔除、`var`→显式类型、`Map.of`→HashMap、`.repeat`→nCopies、`readAllBytes`→循环读取
 - 删除过源码的测试务必 `mvn clean`(陈旧 class 会被 surefire 捡起误报,如 TranslateCacheCheckersTest/record 系排除用例)
 - spring/spring-starter/solon 模块:编译验证通过;starter/solon 自第三轮起有真实单测(caffeine 双上下文 3 例/DbManager 作用域 1 例),构建前需先 `mvn install` 同步后的 core

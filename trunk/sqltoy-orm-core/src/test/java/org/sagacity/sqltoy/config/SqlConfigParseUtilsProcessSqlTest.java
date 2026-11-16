@@ -101,7 +101,7 @@ public class SqlConfigParseUtilsProcessSqlTest {
 
 	@Test
 	public void ifElseBranchesChooseOnlyOneBranch() throws Exception {
-		String sql = "select * from t_order where 1=1\n#[@if(:flag==1) #[and status=:status] #[and saleType is not :saleType] ]\n#[@elseif(:flag==2) and name like :name]\n#[@else and orderType=:orderType]";
+		String sql = "select * from t_order where 1=1\n#[@if(:flag==1) #[and status=:status] #[and saleType is not :saleType] ]\n#[@elseif(:flag==2) and name like :name]\n#[@else and orderType=:orderType]\n";
 		String[] names = { "flag", "status", "name", "orderType", "saleType" };
 
 		SqlToyResult first = SqlConfigParseUtils.processSql(sql, names,
@@ -135,7 +135,7 @@ public class SqlConfigParseUtilsProcessSqlTest {
 				+ "    #[@else and saleType is :saleType]\n"
 				+ "]\n"
 				+ "#[@elseif(:flag==2) and name like :name]\n"
-				+ "#[@else and orderType=:orderType]";
+				+ "#[@else and orderType=:orderType]\n";
 		String[] names = { "flag", "status", "name", "orderType", "saleType", "operateType" };
 		SqlToyResult inner1 = SqlConfigParseUtils.processSql(sql, names,
 				new Object[] { 1, 1, "张", "SALE", null, 1 }, "mysql");

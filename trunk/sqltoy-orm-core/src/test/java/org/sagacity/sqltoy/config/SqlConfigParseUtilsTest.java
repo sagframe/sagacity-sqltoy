@@ -214,7 +214,7 @@ public class SqlConfigParseUtilsTest {
 
 	@Test
 	public void testSecureLoopTsName() throws Exception {
-		String sql = "selet * from table t1\nwhere 1=1 #[(@secure-loop(:nameList ,' t1.name like :nameList[i] ',' or '))]";
+		String sql = "selet * from table t1\nwhere 1=1 #[(@secure-loop(:nameList ,' t1.name like :nameList[i] ',' or '))]\n";
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "nameList" },
 				new Object[] { new String[] { "张三", "李四", "王二" } });
 		System.err.println(result.getSql());
@@ -223,7 +223,7 @@ public class SqlConfigParseUtilsTest {
 
 	@Test
 	public void testSecureLoopTsName1() throws Exception {
-		String sql = "selet * from table t1\nwhere 1=1 #[@secure-loop(:nameList ,' t1.name like @value(:nameList[i]) and t.status=:status',' or ')]";
+		String sql = "selet * from table t1\nwhere 1=1 #[@secure-loop(:nameList ,' t1.name like @value(:nameList[i]) and t.status=:status',' or ')]\n";
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, new String[] { "nameList", "status" },
 				new Object[] { new String[] { "张三", "李四", "王二" }, 1 });
 		System.err.println(result.getSql());
@@ -423,7 +423,7 @@ public class SqlConfigParseUtilsTest {
 
 	@Test
 	public void testIfElse() throws Exception {
-		String sql = "select * from table where name=1\n#[@if(:flag==1) #[and status=:status] #[and saleType is not :saleType] ]\n#[@elseif(:flag==2) and name like :name]\n#[@else and orderType=:orderType]";
+		String sql = "select * from table where name=1\n#[@if(:flag==1) #[and status=:status] #[and saleType is not :saleType] ]\n#[@elseif(:flag==2) and name like :name]\n#[@else and orderType=:orderType]\n";
 		SqlToyResult result = SqlConfigParseUtils.processSql(SqlUtil.clearMark(sql),
 				new String[] { "flag", "status", "name", "orderType", "saleType" },
 				new Object[] { 2, 1, "陈", "SALE", null });
@@ -439,7 +439,7 @@ public class SqlConfigParseUtilsTest {
 				+ "    #[@else and saleType is :saleType]\n"
 				+ "]\n"
 				+ "#[@elseif(:flag==2) and name like :name]\n"
-				+ "#[@else and orderType=:orderType]";
+				+ "#[@else and orderType=:orderType]\n";
 		SqlToyResult result = SqlConfigParseUtils.processSql(SqlUtil.clearMark(sql),
 				new String[] { "flag", "status", "name", "orderType", "saleType", "operateType" },
 				new Object[] { 1, 1, "张", "SALE", null, 1 });
@@ -455,7 +455,7 @@ public class SqlConfigParseUtilsTest {
 				+ "    #[@else and saleType is :saleType]\n"
 				+ "]\n"
 				+ "#[@elseif(:flag==2) and name like :name]\n"
-				+ "#[@else and orderType=:orderType]";
+				+ "#[@else and orderType=:orderType]\n";
 		SqlToyResult result = SqlConfigParseUtils.processSql(SqlUtil.clearMark(sql),
 				new String[] { "flag", "status", "name", "orderType", "saleType", "operateType" },
 				new Object[] { 1, 1, "张", "SALE", null, 1 });
@@ -472,7 +472,7 @@ public class SqlConfigParseUtilsTest {
 				+ "#[@elseif(:flag==2) and name like :name]\n"
 				+ "#[@else and orderType=:orderType]\n"
 				+ "#[@if(:tenantId==4) and tenant=1]\n"
-				+ "#[@elseif(:tenantId==3) and tenant=3]";
+				+ "#[@elseif(:tenantId==3) and tenant=3]\n";
 		SqlToyResult result = SqlConfigParseUtils.processSql(SqlUtil.clearMark(sql),
 				new String[] { "flag", "status", "name", "orderType", "saleType", "operateType", "tenantId" },
 				new Object[] { 1, 1, "张", "SALE", null, 4, 3 });
@@ -490,7 +490,7 @@ public class SqlConfigParseUtilsTest {
 				+ "     AND t1.DEPEND_TYPE='Biz'\n"
 				+ "     #[@if(:refRuleApiId ==1) AND t1.REF_RULE_API_ID IN(:refRuleApiIds)]\n"
 				+ "     #[@else AND t1.REF_RULE_API_ID = :refRuleApiId]\n"
-				+ " )";
+				+ " )\n";
 		Map<String, Object> paramMap = new HashMap<String, Object>();
 		// paramMap.put("refRuleApiIds", new String[] {"1","2"});
 		SqlToyResult result = SqlConfigParseUtils.processSql(sql, paramMap);
@@ -511,7 +511,7 @@ public class SqlConfigParseUtilsTest {
 				+ "    #[@else and saleType=:saleType]\n"
 				+ "]\n"
 				+ "#[@elseif(:flag==2) and name like :name]\n"
-				+ "#[@else and orderType=:orderType]";
+				+ "#[@else and orderType=:orderType]\n";
 		sql = SqlUtil.clearMark(sql);
 		System.err.println("#[@if(:flag==1) index=" + sql.indexOf("#[@if(:flag==1)"));
 		System.err.println("A=" + sql.lastIndexOf("A"));
@@ -535,7 +535,8 @@ public class SqlConfigParseUtilsTest {
 				+ "-- 成立,因为and status=1 没有动态参数,直接拼接:  and status=1\n"
 				+ "#[@if(:flag==1) and status=1 ]\n"
 				+ "\n"
-				+ "#[@else and status in (1,2)]\n";
+				+ "#[@else and status in (1,2)]\n"
+				+ "\n";
 		SqlToyResult result = SqlConfigParseUtils.processSql(SqlUtil.clearMark(sql),
 				new String[] { "flag", "status", "type" }, new Object[] { 1, null, null });
 		System.err.println(JSON.toJSONString(result));
