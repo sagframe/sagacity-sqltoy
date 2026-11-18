@@ -47,6 +47,15 @@
 > jsonProvider 装配补 null 守卫、SqlToyContextBuilderParityTest(5 例锁定测试)。已全部移植并验证:
 > solon 模块 6 例全绿。TaskPoolProperties 字段两侧本就一致无需动;AOT 分支(strSplitTrim/scanResources/
 > nativeimage 判定)按基线不移植。
+>
+> **第四轮同步完成(2026-11-18,loop 宏边界批次)**:6.0 当日 4 提交(SqlConfigParseUtils 的改动已被自身
+> 后续提交回退,净变更为零)。实际进入:①SqlLoop 两处边界修复——`indexOf("#[")>0→>=0`(循环体首字符即#[ 时
+> 被误判无段致有效条件全灭)+ 全空迭代跳过(段剔除后内容全空不拼 linkSign,修复"#[..] or #[..]"中间段消失
+> 产生孤立 or/and 非法sql);②BeanUtil 的 Byte 转换归一(primitiveByteType/wrapByteType 两处,裸
+> Byte.valueOf 改 enumToString+toIntegerText 归一体系,空串返回0/null,越界显式抛);③4 个测试
+> (LoopDeepEdgeTest 15例/SecureSqlLoopFunctionalTest 更新19例/SqlLoopBlankRefResidueTest 3例/
+> SuspectVerificationTest 6例)全部 jre8-clean 直接拷贝。门禁:326 类 2511 例全绿(82 例环境性跳过,
+> 较上轮净增 30 例)。
 
 ## 同步流程(每个 6.0 release tag 执行一轮)
 
