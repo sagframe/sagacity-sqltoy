@@ -21,6 +21,11 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @description SqlLoop增强,采用参数非拼接模式，防止sql注入
  * @author zhongxuchen
  * @version v1.0,Date:2025-05-18
+ * @modify Date:2026-11-18 skipBlank语义贯穿完整:此前只对循环依据变量自身判空白跳过迭代,
+ *         循环体内引用的其他集合数据(:ids[i]、:items[i].prop)的null/空白元素未过滤,
+ *         空白值原样注册导致其在#[]动态段中的条件无法剔除、与循环外表现不一致;
+ *         现skipBlank=true时引用值存在空白的迭代整体跳过(与循环变量自身的跳过同构),
+ *         从源头不产生输出,#[...]段间的linkSign连接符零残留
  */
 public class SecureSqlLoop extends AbstractMacro {
 	/**
@@ -140,12 +145,43 @@ public class SecureSqlLoop extends AbstractMacro {
 		String realKeyNamePrefix = "sqlLoopKey" + (secureLoopCnt == 0 ? "" : secureLoopCnt) + "_S";
 		String realKey;
 		int paramCnt = 1;
+		// update 2026-11-18 属性形态值的迭代级缓存:skipBlank预判与替换两阶段共用,避免reflectBeanToAry重复反射
+		Object[][] iterPropValues = new Object[keys.size()][];
+		Object refVar;
+		boolean blankIter;
 		for (int i = start; i < end; i++) {
 			realLoopContent = loopContent;
 			// 当前循环的值
 			loopVar = loopValues[i];
 			// 循环值为null或空白默认被跳过
 			if (!skipBlank || StringUtil.isNotBlank(loopVar)) {
+				// update 2026-11-18 skipBlank语义贯穿到循环内引用的集合数据:本迭代引用值(裸形态与属性形态)
+				// 存在null/空白时跳过整个迭代(与循环变量自身的空白跳过同构)——从源头不产生输出,
+				// #[...]段间的linkSign连接符零残留;此前只过滤循环变量,引用集合的空白元素原样注册,
+				// 其所在#[]条件段无法剔除、与循环外的过滤预期不一致;@secure-loop-full(skipBlank=false)不做跳过
+				if (skipBlank) {
+					blankIter = false;
+					for (int j = 0; j < keys.size() && !blankIter; j++) {
+						refVar = regParamValues.get(j)[i];
+						if (StringUtil.isBlank(refVar)) {
+							blankIter = true;
+							break;
+						}
+						loopParamNames = loopParamNamesMap.get(keyNamePrefix + j + "A");
+						if (loopParamNames != null && loopParamNames.length > 0) {
+							iterPropValues[j] = BeanUtil.reflectBeanToAry(refVar, loopParamNames);
+							for (int k = 0; k < iterPropValues[j].length; k++) {
+								if (StringUtil.isBlank(iterPropValues[j][k])) {
+									blankIter = true;
+									break;
+								}
+							}
+						}
+					}
+					if (blankIter) {
+						continue;
+					}
+				}
 				if (index > 0) {
 					result.append(BLANK);
 					result.append(linkSign);
@@ -165,9 +201,10 @@ public class SecureSqlLoop extends AbstractMacro {
 						loopKeyValueMap.put(realKey, regParamValues.get(j)[i]);
 						paramCnt++;
 					}
-					// 属性形态:paramName[i].xxxx逐个属性取值
+					// 属性形态:paramName[i].xxxx逐个属性取值(skipBlank预判阶段已提取的直接复用)
 					if (loopParamNames != null && loopParamNames.length > 0) {
-						loopParamValues = BeanUtil.reflectBeanToAry(regParamValues.get(j)[i], loopParamNames);
+						loopParamValues = (skipBlank && iterPropValues[j] != null) ? iterPropValues[j]
+								: BeanUtil.reflectBeanToAry(regParamValues.get(j)[i], loopParamNames);
 						for (int k = 0; k < loopParamNames.length; k++) {
 							realKey = realKeyNamePrefix + paramCnt + "B";
 							realLoopContent = replaceParamRef(realLoopContent,

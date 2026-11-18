@@ -34,6 +34,9 @@ import org.sagacity.sqltoy.utils.StringUtil;
  *         数组输出
  * @modify Date:2023-08-31 优化@loop在update语句参数为null的场景,之前缺陷是值为null时被转为field is
  *         null，正确模式field=null
+ * @modify Date:2026-11-18 #[...]段被引用集合的null/空白值剔除后内容全空的迭代按跳过处理:
+ *         原实现在段剔除前拼linkSign,剔空迭代留下孤立or/and(#[..] or #[..]模式中间段
+ *         消失后产生"or or"非法sql),现全空迭代不拼连接符不输出,与@secure-loop的跳过语义对齐
  */
 public class SqlLoop extends AbstractMacro {
 	/**
@@ -144,7 +147,10 @@ public class SqlLoop extends AbstractMacro {
 			end = minRegLength;
 		}
 		// sql中是否存在条件判空
-		boolean hasNullFilter = (lowContent.indexOf(SqlConfigParseUtils.SQL_PSEUDO_START_MARK) > 0) ? true : false;
+		// update 2026-11-18 边界修复:原判定用indexOf("#[")>0,循环体首字符即#[时(如'#[ ...]'引号紧贴写法)
+		// indexOf==0被判false,段跳过宏内判空处理,值先行内联后全局管线将段视为无参片段整段剔除——
+		// 有效条件全灭;改为>=0覆盖首字符形态,段在宏内正常判空剔除(实测红→绿锁定)
+		boolean hasNullFilter = (lowContent.indexOf(SqlConfigParseUtils.SQL_PSEUDO_START_MARK) >= 0) ? true : false;
 		StringBuilder result = new StringBuilder();
 		result.append(" @blank(:" + loopParam + ") ");
 		String realLoopContent;
@@ -163,11 +169,6 @@ public class SqlLoop extends AbstractMacro {
 			// 循环值为null或空白默认被跳过
 			if (!skipBlank || StringUtil.isNotBlank(loopVar)) {
 				realLoopContent = loopContent;
-				if (index > 0) {
-					result.append(BLANK);
-					result.append(linkSign);
-				}
-				result.append(BLANK);
 				loopKeyValueMap.clear();
 				for (int j = 0; j < keys.size(); j++) {
 					key = keyNamePrefix + j + "A";
@@ -197,6 +198,17 @@ public class SqlLoop extends AbstractMacro {
 				}
 				// 只替换循环变量参数值
 				realLoopContent = replaceAllArgs(realLoopContent, loopKeyValueMap, preSql);
+				// update 2026-11-18 #[...]段被引用集合的null/空白值剔除后内容全空的迭代按跳过处理:
+				// 不拼linkSign不输出——原实现在段剔除前拼连接符,剔空迭代留下孤立的or/and
+				// ("#[..] or #[..]"模式中间段消失后产生"or or"非法sql);循环体含段外文本时剔段后非全空,正常输出
+				if (realLoopContent.trim().isEmpty()) {
+					continue;
+				}
+				if (index > 0) {
+					result.append(BLANK);
+					result.append(linkSign);
+				}
+				result.append(BLANK);
 				result.append(realLoopContent);
 				index++;
 			}

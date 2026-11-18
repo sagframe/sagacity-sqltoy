@@ -1274,7 +1274,14 @@ public class BeanUtil {
 		}
 		// 29
 		if (DataType.primitiveByteType == typeValue) {
-			return Byte.valueOf(paramValue.toString()).byteValue();
+			// update 2026-11-18 原裸Byte.valueOf(paramValue.toString())游离于文本归一体系之外:
+			// 空串/带空白/小数/千分位/枚举全部抛NumberFormatException,改为与Integer/Long/Short同口径
+			// (先由toIntegerText归一,空串返回0),越界显式抛NumberFormatException
+			String valueStr = enumToString(paramValue);
+			if ("".equals(valueStr.trim())) {
+				return 0;
+			}
+			return Byte.parseByte(toIntegerText(valueStr));
 		}
 		// 30
 		if (DataType.primitiveCharType == typeValue) {
@@ -1297,7 +1304,13 @@ public class BeanUtil {
 		}
 		// 32 增加Byte类型的处理
 		if (DataType.wrapByteType == typeValue) {
-			return Byte.valueOf(paramValue.toString());
+			// update 2026-11-18 与primitiveByteType同步归一:enumToString+空串转null+toIntegerText
+			// 归一(小数/科学计数向零截断、剥千分位),越界显式抛NumberFormatException
+			String valueStr = enumToString(paramValue);
+			if ("".equals(valueStr.trim())) {
+				return null;
+			}
+			return Byte.valueOf(toIntegerText(valueStr));
 		}
 		// update 2023-5-26 支持List 和Object[] 数组之间互转
 		// 33 数组类型
