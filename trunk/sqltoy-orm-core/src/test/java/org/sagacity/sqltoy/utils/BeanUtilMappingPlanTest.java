@@ -4,13 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -260,24 +258,18 @@ public class BeanUtilMappingPlanTest {
 		return rows;
 	}
 
-	private static ConcurrentHashMap<?, ?> planCache() throws Exception {
-		Field field = BeanUtil.class.getDeclaredField("mappingPlanCache");
-		field.setAccessible(true);
-		return (ConcurrentHashMap<?, ?>) field.get(null);
+	private static int planCacheSize() {
+		return BeanUtil.mappingPlanCacheSize(DemoVo.class);
 	}
 
-	private static int planCacheSize() throws Exception {
-		return planCache().size();
-	}
-
-	private static void clearPlanCache() throws Exception {
-		planCache().clear();
+	private static void clearPlanCache() {
+		BeanUtil.clearMappingPlanCache(DemoVo.class);
 	}
 
 	@Test
 	public void planObjectIsNotNull() throws Exception {
 		clearPlanCache();
 		BeanUtil.reflectListToBean(null, buildRows(2), INDEXES, COLUMNS, COLUMN_TYPES, DemoVo.class, true);
-		assertNotNull(planCache().values().iterator().next());
+		assertNotNull(BeanUtil.firstMappingPlan(DemoVo.class));
 	}
 }

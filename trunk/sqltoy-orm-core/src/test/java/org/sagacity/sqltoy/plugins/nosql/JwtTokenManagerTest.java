@@ -1,15 +1,22 @@
 package org.sagacity.sqltoy.plugins.nosql;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.StringReader;
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.Signature;
 import java.util.Base64;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -206,5 +213,124 @@ public class JwtTokenManagerTest {
 				.signAlgorithm(model.getSignAlgorithm()).authorization(model.getAuthorization());
 		assertTrue(authConfig.isJwt());
 		assertEquals("RS256", JwtTokenManager.resolveSignAlgorithm(authConfig));
+	}
+
+	@SuppressWarnings("unchecked")
+	private static Map<String, JwtTokenManager.TokenEntry> tokenCache() throws Exception {
+		Field field = JwtTokenManager.class.getDeclaredField("TOKEN_CACHE");
+		field.setAccessible(true);
+		return (Map<String, JwtTokenManager.TokenEntry>) field.get(null);
+	}
+
+	@Test
+	public void expiredTokenEntriesArePurgedOnRefresh() throws Exception {
+		Map<String, JwtTokenManager.TokenEntry> cache = tokenCache();
+		cache.clear();
+		long now = System.currentTimeMillis();
+		cache.put("expired-key", new JwtTokenManager.TokenEntry("expired-token", now - 1000L));
+		cache.put("live-key", new JwtTokenManager.TokenEntry("live-token", now + 3600000L));
+		// 自签名模式下新key的写入应触发过期清理
+		HttpAuthConfig authConfig = new HttpAuthConfig().authType("jwt").username("purge-user").tokenExpire(600)
+				.tokenSecureKey("purge-secret");
+		JwtTokenManager.resolveTokenValue(null, authConfig);
+		assertFalse(cache.containsKey("expired-key"), "过期token条目应在下次写入时清理");
+		assertTrue(cache.containsKey("live-key"), "未过期token条目应保留");
+		cache.clear();
+	}
+
+	@Test
+	public void tokenCacheIsBounded() throws Exception {
+		Map<String, JwtTokenManager.TokenEntry> cache = tokenCache();
+		cache.clear();
+		long farFuture = System.currentTimeMillis() + 3600000L;
+		for (int i = 0; i < 2200; i++) {
+			cache.put("bulk-" + i, new JwtTokenManager.TokenEntry("bulk-token-" + i, farFuture));
+		}
+		HttpAuthConfig authConfig = new HttpAuthConfig().authType("jwt").username("bounded-user").tokenExpire(600)
+				.tokenSecureKey("bounded-secret");
+		JwtTokenManager.resolveTokenValue(null, authConfig);
+		assertTrue(cache.size() <= 2000, "token缓存应有容量上限(2000),实际:" + cache.size());
+		cache.clear();
+	}
+
+	@Test
+	public void concurrentRefreshesStayBoundedAndValid() throws Exception {
+		Map<String, JwtTokenManager.TokenEntry> cache = tokenCache();
+		cache.clear();
+		int threads = 8;
+		int perThread = 300;
+		CountDownLatch startGate = new CountDownLatch(1);
+		CountDownLatch done = new CountDownLatch(threads);
+		AtomicInteger failures = new AtomicInteger();
+		for (int t = 0; t < threads; t++) {
+			final int threadId = t;
+			Thread thread = new Thread(() -> {
+				try {
+					startGate.await();
+					for (int i = 0; i < perThread; i++) {
+						HttpAuthConfig authConfig = new HttpAuthConfig().authType("jwt")
+								.username("user-" + threadId + "-" + i).tokenExpire(600)
+								.tokenSecureKey("secret-" + threadId);
+						String value = JwtTokenManager.resolveTokenValue(null, authConfig);
+						if (value == null || !value.startsWith("Bearer ")) {
+							failures.incrementAndGet();
+						}
+					}
+				} catch (Throwable e) {
+					failures.incrementAndGet();
+				} finally {
+					done.countDown();
+				}
+			});
+			thread.start();
+		}
+		startGate.countDown();
+		done.await(120, TimeUnit.SECONDS);
+		assertEquals(0, failures.get(), "并发刷新token不得出现异常/空token");
+		assertTrue(cache.size() <= 2000, "并发刷新后token缓存仍须有界(2000),实际:" + cache.size());
+		cache.clear();
+	}
+
+	@Test
+	public void refreshAheadWindowReplacesCachedEntry() throws Exception {
+		// update 2026-11-15 回归:提前刷新窗口内(未到期)的条目刷新后必须被新token覆盖。
+		// putBounded为putIfAbsent语义,若不先移除窗口内旧条目,新token入不了缓存——
+		// 窗口期内每次调用都重新获取token(原TOKEN_CACHE.put为覆盖语义)
+		HttpAuthConfig authConfig = new HttpAuthConfig().authType("jwt").username("refresh-window-user")
+				.tokenExpire(600).tokenSecureKey("my-secret");
+		Field cacheField = JwtTokenManager.class.getDeclaredField("TOKEN_CACHE");
+		cacheField.setAccessible(true);
+		@SuppressWarnings("unchecked")
+		java.util.concurrent.ConcurrentHashMap<String, JwtTokenManager.TokenEntry> cache = (java.util.concurrent.ConcurrentHashMap<String, JwtTokenManager.TokenEntry>) cacheField
+				.get(null);
+		try {
+			// 静态缓存可能被同套件其它用例/后台线程留有残留:先清空保证基线
+			cache.clear();
+			// 首次调用建立缓存(不断言全局size:TOKEN_CACHE是JVM级共享缓存,可能被其它线程写入)
+			String firstValue = JwtTokenManager.resolveTokenValue(null, authConfig);
+			String firstToken = firstValue.substring("Bearer ".length());
+			String key = null;
+			for (Map.Entry<String, JwtTokenManager.TokenEntry> entry : cache.entrySet()) {
+				if (firstToken.equals(entry.getValue().token)) {
+					key = entry.getKey();
+					break;
+				}
+			}
+			assertNotNull(key, "首次调用应建立本token的缓存条目");
+			JwtTokenManager.TokenEntry old = cache.get(key);
+			// 把有效期移入提前刷新窗口:now+30s(窗口60s,尚未到期,purge不会清理)
+			cache.put(key, new JwtTokenManager.TokenEntry(old.token, System.currentTimeMillis() + 30_000L));
+			// 触发刷新:新token应覆盖窗口内旧条目
+			JwtTokenManager.resolveTokenValue(null, authConfig);
+			JwtTokenManager.TokenEntry after = cache.get(key);
+			assertTrue(after.expireAtMillis > System.currentTimeMillis() + 300_000L,
+					"刷新后缓存必须被新条目覆盖(tokenExpire=600s),实际剩余:"
+							+ (after.expireAtMillis - System.currentTimeMillis()) / 1000 + "s");
+			// 二次调用命中新条目缓存,不再重新获取(token不变)
+			assertEquals("Bearer " + after.token, JwtTokenManager.resolveTokenValue(null, authConfig),
+					"刷新后应复用新缓存token");
+		} finally {
+			cache.clear();
+		}
 	}
 }

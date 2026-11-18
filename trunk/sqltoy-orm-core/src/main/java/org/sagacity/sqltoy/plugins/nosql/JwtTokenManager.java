@@ -17,6 +17,7 @@ import javax.crypto.spec.SecretKeySpec;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.plugins.json.JsonObject;
 import org.sagacity.sqltoy.plugins.json.JsonProviders;
+import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,6 +88,10 @@ public class JwtTokenManager {
 	 */
 	private final static ConcurrentHashMap<String, TokenEntry> TOKEN_CACHE = new ConcurrentHashMap<String, TokenEntry>();
 
+	// update 2026-11-15 缓存容量上限:token刷新属低频(按有效期),2000足以覆盖多端点/多账号/多租户场景;
+	// 超限由putBounded回收至约3/4水位,防止动态key(多租户/secureKey轮换)无限增长
+	private final static int TOKEN_CACHE_MAX_SIZE = 2000;
+
 	private JwtTokenManager() {
 	}
 
@@ -123,7 +128,7 @@ public class JwtTokenManager {
 					// token-url登录获取优先,其次token-secure-key本地自签
 					entry = StringUtil.isNotBlank(authConfig.getTokenUrl()) ? fetchToken(sqltoyContext, authConfig)
 							: createTokenBySecureKey(authConfig);
-					TOKEN_CACHE.put(cacheKey, entry);
+					cacheToken(cacheKey, entry);
 				}
 			}
 		}
@@ -174,6 +179,37 @@ public class JwtTokenManager {
 			return;
 		}
 		TOKEN_CACHE.remove(cacheKey(authConfig));
+	}
+
+	/**
+	 * update 2026-11-15 写入token缓存前清理已过期条目:原过期条目只有"同一tokenUrl|username再次请求"时
+	 * 被覆盖、或服务端401调用invalidate时才移除,永不主动清理——动态key场景(多租户/多账号username、
+	 * token-url带租户、自签名secureKey轮换导致key中的密钥摘要变化)长期运行会持续滞留已过期token及其字符串。
+	 * 本方法在token刷新互斥锁(JwtTokenManager.class)内调用,缓存条目数量与配置的端点/账号规模同阶
+	 * 
+	 * @param cacheKey
+	 * @param entry
+	 */
+	private static void cacheToken(String cacheKey, TokenEntry entry) {
+		purgeExpiredTokens();
+		// update 2026-11-15 putBounded为putIfAbsent语义:须先移除提前刷新窗口内的旧条目
+		// (尚未到期,purge不会清理),否则新token入不了缓存,窗口期内每次调用都重新获取;
+		// 本方法在刷新互斥锁(JwtTokenManager.class)内调用,remove+put无并发风险
+		TOKEN_CACHE.remove(cacheKey);
+		// 容量上限:回收至约3/4水位后写入(putBounded单飞门闩,并发写入不会过度淘汰)
+		CollectionUtil.putBounded(TOKEN_CACHE, cacheKey, entry, TOKEN_CACHE_MAX_SIZE);
+	}
+
+	/**
+	 * 清理已过期(含异常空值)的token缓存条目
+	 */
+	private static void purgeExpiredTokens() {
+		if (TOKEN_CACHE.isEmpty()) {
+			return;
+		}
+		long now = System.currentTimeMillis();
+		TOKEN_CACHE.entrySet()
+				.removeIf(tokenEntry -> tokenEntry.getValue() == null || tokenEntry.getValue().expireAtMillis <= now);
 	}
 
 	/**

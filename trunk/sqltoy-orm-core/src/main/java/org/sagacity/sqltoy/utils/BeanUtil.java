@@ -1,6 +1,7 @@
 package org.sagacity.sqltoy.utils;
 
 import java.io.Serializable;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -35,7 +36,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
 import org.sagacity.sqltoy.SqlToyConstants;
@@ -109,13 +112,31 @@ public class BeanUtil {
 
 	/**
 	 * 保存set方法
+	 * <p>
+	 * update 2026-11-15 原Map<ClassKey,...>改为ClassValue<...>:条目挂Class自身,热部署/多classloader
+	 * 下同名类重新加载后按新Class重新解析(不会命中旧加载器Method),类卸载时条目随Class回收
+	 * </p>
 	 */
-	private static ConcurrentHashMap<ClassKey, Method> setMethods = new ConcurrentHashMap<>();
+	private static final ClassValue<ConcurrentHashMap<String, Method>> setMethods = new ClassValue<ConcurrentHashMap<String, Method>>() {
+		@Override
+		protected ConcurrentHashMap<String, Method> computeValue(Class<?> beanClass) {
+			ConcurrentHashMap<String, Method> cache = new ConcurrentHashMap<>();
+			SET_METHODS_CACHE_BOUND.register(beanClass, cache);
+			return cache;
+		}
+	};
 
 	/**
-	 * 保存get方法
+	 * 保存get方法(同setMethods的ClassValue治理)
 	 */
-	private static ConcurrentHashMap<ClassKey, Method> getMethods = new ConcurrentHashMap<>();
+	private static final ClassValue<ConcurrentHashMap<String, Method>> getMethods = new ClassValue<ConcurrentHashMap<String, Method>>() {
+		@Override
+		protected ConcurrentHashMap<String, Method> computeValue(Class<?> beanClass) {
+			ConcurrentHashMap<String, Method> cache = new ConcurrentHashMap<>();
+			GET_METHODS_CACHE_BOUND.register(beanClass, cache);
+			return cache;
+		}
+	};
 
 	// 保存pojo的级联关系
 	// update 2026-11-10 改ClassValue:条目挂Class自身,类卸载即回收,静态Map不再强引用应用类
@@ -126,60 +147,78 @@ public class BeanUtil {
 		}
 	};
 
-	/**
-	 * update 2026-11-10 缓存键以Class对象为身份组件(而非类名):Spring Boot devtools重启/OSGi/多war等
-	 * 类重载场景下,同名新类不得命中旧加载器构建的Method缓存(Method.invoke严格校验声明类,
-	 * 旧Method对新实例抛IllegalArgumentException且JVM不重启无法自愈);
-	 * 与noArgConstructors/enumGetKeyMethods既有的Class键先例对齐
-	 */
-	private static final class ClassKey {
-		private final Class<?> type;
-		private final String name;
+	// update 2026-11-15 ClassKey(类+名称)静态缓存已全部改为ClassValue(条目按Class生命周期归属):
+	// 既保留"同名新类不命中旧加载器Method"的正确性,又避免静态Map强引用已卸载的应用类
 
-		ClassKey(Class<?> type, String name) {
-			this.type = type;
-			this.name = name;
-		}
-
+	// update 2026-11-15 枚举取key方法探测结果按ClassValue缓存(Method可能不存在,用holder承载以避免
+	// ClassValue对null不缓存导致的重复探测)
+	private static final ClassValue<EnumKeyAccessor> enumKeyAccessors = new ClassValue<EnumKeyAccessor>() {
 		@Override
-		public boolean equals(Object o) {
-			if (this == o) {
-				return true;
-			}
-			if (!(o instanceof ClassKey)) {
-				return false;
-			}
-			ClassKey other = (ClassKey) o;
-			return type.equals(other.type) && name.equals(other.name);
+		protected EnumKeyAccessor computeValue(Class<?> enumClass) {
+			return new EnumKeyAccessor(matchEnumKeyMethod(enumClass, enumKeys));
 		}
+	};
 
-		@Override
-		public int hashCode() {
-			return type.hashCode() * 31 + name.hashCode();
+	private static final class EnumKeyAccessor {
+		private final Method getKeyMethod;
+
+		private EnumKeyAccessor(Method getKeyMethod) {
+			this.getKeyMethod = getKeyMethod;
 		}
 	}
 
-	private static ConcurrentHashMap<Class, Method> enumGetKeyMethods = new ConcurrentHashMap<>();
-	private static ConcurrentHashMap<Class, Integer> enumGetKeyExists = new ConcurrentHashMap<>();
+	// update 2026-11-15 枚举类解析缓存改为"按类名缓存+装载器校验"(见resolveEnumClass):原只按类名
+	// 静态缓存且固定用框架类加载器解析,热部署/多classloader下同名类重新加载后会继续使用旧Class
+	// (枚举转换错误并钉住旧类);校验缓存Class的装载器不一致即重新解析并覆盖
 	private static ConcurrentHashMap<String, Class> enumClassMap = new ConcurrentHashMap<>();
 
 	// 枚举类型取key值的常用方法名称,枚举类中用getValue、getKey、getId等作为取值的都可自动完成映射
 	private static String[] enumKeys = { "value", "key", "code", "id", "status", "level", "type" };
 
-	private static ConcurrentHashMap<Class, PropertyType[]> recordProperties = new ConcurrentHashMap<>();
+	// update 2026-11-15 改为ClassValue:record组件元数据按Class归属,类卸载即回收
+	private static final ClassValue<PropertyType[]> recordProperties = new ClassValue<PropertyType[]>() {
+		@Override
+		protected PropertyType[] computeValue(Class<?> recordType) {
+			return parseRecordProperties(recordType);
+		}
+	};
 
 	/**
 	 * update 2026-9-14 属性匹配方法缓存:matchSetMethods/matchGetMethods按(类+有序属性表)缓存匹配结果,
 	 * 避免每次查询对voClass做getMethods()全量拷贝+逐属性toLowerCase匹配
 	 * (同一查询反复执行时属性表形态恒定,键空间与查询集同阶);调用方均只读返回数组,可共享
+	 * <p>
+	 * update 2026-11-15 改为ClassValue<ConcurrentHashMap<属性表签名,...>>:外层按Class归属(类卸载即回收),
+	 * 内层集合合计仍受全JVM总量上限约束
+	 * </p>
 	 */
-	private static ConcurrentHashMap<ClassKey, Method[]> matchSetMethodsCache = new ConcurrentHashMap<>();
-	private static ConcurrentHashMap<ClassKey, Method[]> matchGetMethodsCache = new ConcurrentHashMap<>();
+	private static final ClassValue<ConcurrentHashMap<String, Method[]>> matchSetMethodsCache = new ClassValue<ConcurrentHashMap<String, Method[]>>() {
+		@Override
+		protected ConcurrentHashMap<String, Method[]> computeValue(Class<?> voClass) {
+			ConcurrentHashMap<String, Method[]> cache = new ConcurrentHashMap<>();
+			MATCH_SET_CACHE_BOUND.register(voClass, cache);
+			return cache;
+		}
+	};
 
-	// update 2026-11-10 两缓存的key含结果集列标签序列(动态列场景基数不可控),设容量上限防止无界内存增长;
-	// 超限由CollectionUtil.putBounded回收约1/4后继续写入:既不像"超限即永久不缓存"那样让缓存永久失效,
-	// 也不像"超限整体clear"那样丢掉全部热键(保留约3/4既有条目,回收成本摊还后仍为O(1))
+	private static final ClassValue<ConcurrentHashMap<String, Method[]>> matchGetMethodsCache = new ClassValue<ConcurrentHashMap<String, Method[]>>() {
+		@Override
+		protected ConcurrentHashMap<String, Method[]> computeValue(Class<?> voClass) {
+			ConcurrentHashMap<String, Method[]> cache = new ConcurrentHashMap<>();
+			MATCH_GET_CACHE_BOUND.register(voClass, cache);
+			return cache;
+		}
+	};
+
+	// update 2026-11-15 恢复为全JVM总量上限(所有Class的内层Map合计),超限跨类回收约1/4;
+	// 外层ClassValue只负责按类归属和类卸载回收(不把Class钉在全局注册表上)
 	private static final int METHOD_CACHE_MAX_SIZE = 100000;
+
+	private static final GlobalCacheBound MATCH_SET_CACHE_BOUND = new GlobalCacheBound(METHOD_CACHE_MAX_SIZE);
+	private static final GlobalCacheBound MATCH_GET_CACHE_BOUND = new GlobalCacheBound(METHOD_CACHE_MAX_SIZE);
+	// update 2026-11-16 set/get方法缓存同样纳入全JVM总量上限(原先只按Class无上限)
+	private static final GlobalCacheBound SET_METHODS_CACHE_BOUND = new GlobalCacheBound(METHOD_CACHE_MAX_SIZE);
+	private static final GlobalCacheBound GET_METHODS_CACHE_BOUND = new GlobalCacheBound(METHOD_CACHE_MAX_SIZE);
 
 	/**
 	 * update 2026-9-14 无参构造器缓存:reflectRowToBean等为逐行调用(如ResultUtils.consumeResult),
@@ -188,25 +227,55 @@ public class BeanUtil {
 	 * 提升为public,结果集行循环内逐行反射构造的四处场景统一收编到此缓存
 	 * (SqlUtil.reflectResultRowToVOClass、ResultUtils.consumeResult/wrapQueryResult的自定义
 	 * Map子类、MapperUtils.reflectListToBean),此前均为逐行getDeclaredConstructor()
+	 * <p>
+	 * update 2026-11-15 改为ClassValue(holder承载解析异常):条目随Class卸载回收,热部署不再钉住旧类;
+	 * 解析失败的checked类型(NoSuchMethodException)仍原样由newBean抛出
+	 * </p>
 	 */
-	private static ConcurrentHashMap<Class, Constructor> noArgConstructors = new ConcurrentHashMap<>();
+	private static final ClassValue<NoArgConstructorHolder> noArgConstructors = new ClassValue<NoArgConstructorHolder>() {
+		@Override
+		protected NoArgConstructorHolder computeValue(Class<?> voClass) {
+			try {
+				Constructor<?> constructor = voClass.getDeclaredConstructor();
+				if (!constructor.canAccess(null)) {
+					constructor.setAccessible(true);
+				}
+				return new NoArgConstructorHolder(constructor, null);
+			} catch (NoSuchMethodException e) {
+				return new NoArgConstructorHolder(null, e);
+			}
+		}
+	};
+
+	private static final class NoArgConstructorHolder {
+		private final Constructor<?> constructor;
+		private final Exception error;
+
+		private NoArgConstructorHolder(Constructor<?> constructor, Exception error) {
+			this.constructor = constructor;
+			this.error = error;
+		}
+	}
 
 	/**
 	 * 经缓存的无参构造实例化(反射成员查找仅首次发生),供结果集逐行映射等热路径复用
 	 */
 	public static Object newBean(Class voClass) throws Exception {
-		Constructor constructor = noArgConstructors.get(voClass);
-		if (constructor == null) {
-			constructor = voClass.getDeclaredConstructor();
-			if (!constructor.canAccess(null)) {
-				constructor.setAccessible(true);
-			}
-			Constructor prior = noArgConstructors.putIfAbsent(voClass, constructor);
-			if (prior != null) {
-				constructor = prior;
-			}
+		NoArgConstructorHolder holder = noArgConstructors.get(voClass);
+		if (holder.error != null) {
+			throw holder.error;
 		}
-		return constructor.newInstance();
+		return holder.constructor.newInstance();
+	}
+
+	/**
+	 * 测试可见:取已缓存的无参构造器(避免测试反射ClassValue内部结构)
+	 * 
+	 * @param voClass
+	 * @return
+	 */
+	static Constructor<?> cachedNoArgConstructor(Class<?> voClass) {
+		return noArgConstructors.get(voClass).constructor;
 	}
 
 	private static final Set<Class<?>> BASE_TYPE = ConcurrentHashMap.newKeySet();
@@ -249,15 +318,8 @@ public class BeanUtil {
 			return null;
 		}
 		Class enumClass = enumValue.getClass();
-		// 使用computeIfAbsent保证原子性,matchEnumKeyMethod只执行一次
-		enumGetKeyExists.computeIfAbsent(enumClass, cls -> {
-			Method m = matchEnumKeyMethod(cls, enumKeys);
-			if (m != null) {
-				enumGetKeyMethods.put(cls, m);
-			}
-			return 1;
-		});
-		Method getKeyMethod = enumGetKeyMethods.get(enumClass);
+		// ClassValue按Class缓存探测结果(matchEnumKeyMethod对每个Class只执行一次)
+		Method getKeyMethod = enumKeyAccessors.get(enumClass).getKeyMethod;
 		if (getKeyMethod != null) {
 			try {
 				Object result = getKeyMethod.invoke(enumValue);
@@ -287,15 +349,8 @@ public class BeanUtil {
 			return null;
 		}
 		String keyStr = key.toString();
-		// 使用computeIfAbsent保证原子性,matchEnumKeyMethod只执行一次
-		enumGetKeyExists.computeIfAbsent(enumClass, cls -> {
-			Method m = matchEnumKeyMethod(cls, enumKeys);
-			if (m != null) {
-				enumGetKeyMethods.put(cls, m);
-			}
-			return 1;
-		});
-		Method getKeyMethod = enumGetKeyMethods.get(enumClass);
+		// ClassValue按Class缓存探测结果(matchEnumKeyMethod对每个Class只执行一次)
+		Method getKeyMethod = enumKeyAccessors.get(enumClass).getKeyMethod;
 		Object[] enums = enumClass.getEnumConstants();
 		if (getKeyMethod == null) {
 			for (Object enumConstant : enums) {
@@ -365,24 +420,25 @@ public class BeanUtil {
 	 * @return 与属性对应的set方法数组，未匹配到方法的位置为null
 	 */
 	public static Method[] matchSetMethods(Class voClass, String... props) {
-		ClassKey cacheKey = matchCacheKey(voClass, props);
-		Method[] cached = matchSetMethodsCache.get(cacheKey);
+		ConcurrentHashMap<String, Method[]> cache = matchSetMethodsCache.get(voClass);
+		String cacheKey = matchCacheKey(props);
+		Method[] cached = cache.get(cacheKey);
 		if (cached != null) {
 			return cached;
 		}
 		Method[] result = matchSetMethodsInternal(voClass, props);
-		// update 2026-11-10 超限回收约1/4而非"不再缓存"/整体clear:缓存始终生效且保留多数热键
-		CollectionUtil.putBounded(matchSetMethodsCache, cacheKey, result, METHOD_CACHE_MAX_SIZE);
+		// 全域总量上限:跨Class合计超限时回收约1/4(ClassValue只负责按类归属和卸载回收)
+		MATCH_SET_CACHE_BOUND.put(cache, cacheKey, result);
 		return result;
 	}
 
-	/** 缓存键:Class对象+有序属性表(props元素可为null,以NUL占位区分),Class为身份组件规避类重载场景旧缓存命中 */
-	private static ClassKey matchCacheKey(Class voClass, String... props) {
+	/** 缓存键:有序属性表签名(props元素可为null,以NUL占位区分),外层由ClassValue按Class归属 */
+	private static String matchCacheKey(String... props) {
 		StringBuilder key = new StringBuilder();
 		for (int i = 0; i < props.length; i++) {
 			key.append(props[i] == null ? "\u0000" : props[i]).append('\u0001');
 		}
-		return new ClassKey(voClass, key.toString());
+		return key.toString();
 	}
 
 	private static Method[] matchSetMethodsInternal(Class voClass, String... props) {
@@ -478,14 +534,15 @@ public class BeanUtil {
 	 * @return 与属性对应的get/is方法数组，未匹配到方法的位置为null
 	 */
 	public static Method[] matchGetMethods(Class voClass, String... props) {
-		ClassKey cacheKey = matchCacheKey(voClass, props);
-		Method[] cached = matchGetMethodsCache.get(cacheKey);
+		ConcurrentHashMap<String, Method[]> cache = matchGetMethodsCache.get(voClass);
+		String cacheKey = matchCacheKey(props);
+		Method[] cached = cache.get(cacheKey);
 		if (cached != null) {
 			return cached;
 		}
 		Method[] result = matchGetMethodsInternal(voClass, props);
 		// update 2026-11-10 同matchSetMethodsCache的超限回收策略
-		CollectionUtil.putBounded(matchGetMethodsCache, cacheKey, result, METHOD_CACHE_MAX_SIZE);
+		MATCH_GET_CACHE_BOUND.put(cache, cacheKey, result);
 		return result;
 	}
 
@@ -1247,7 +1304,14 @@ public class BeanUtil {
 		}
 		// 29
 		if (DataType.primitiveByteType == typeValue) {
-			return Byte.valueOf(paramValue.toString()).byteValue();
+			// update 2026-11-18 原裸Byte.valueOf(paramValue.toString())游离于文本归一体系之外:
+			// 空串/带空白/小数/千分位/枚举全部抛NumberFormatException,改为与Integer/Long/Short同口径
+			// (先由toIntegerText归一,空串返回0),越界显式抛NumberFormatException
+			String valueStr = enumToString(paramValue);
+			if ("".equals(valueStr.trim())) {
+				return 0;
+			}
+			return Byte.parseByte(toIntegerText(valueStr));
 		}
 		// 30
 		if (DataType.primitiveCharType == typeValue) {
@@ -1270,7 +1334,13 @@ public class BeanUtil {
 		}
 		// 32 增加Byte类型的处理
 		if (DataType.wrapByteType == typeValue) {
-			return Byte.valueOf(paramValue.toString());
+			// update 2026-11-18 与primitiveByteType同步归一:enumToString+空串转null+toIntegerText
+			// 归一(小数/科学计数向零截断、剥千分位),越界显式抛NumberFormatException
+			String valueStr = enumToString(paramValue);
+			if ("".equals(valueStr.trim())) {
+				return null;
+			}
+			return Byte.valueOf(toIntegerText(valueStr));
 		}
 		// update 2023-5-26 支持List 和Object[] 数组之间互转
 		// 33 数组类型
@@ -1359,17 +1429,65 @@ public class BeanUtil {
 		}
 		// 36 枚举类型
 		if (DataType.enumType == typeValue) {
-			// 原子性缓存,避免并发重复加载
-			Class enumClass = enumClassMap.computeIfAbsent(typeName, tn -> {
-				try {
-					return Class.forName(tn);
-				} catch (ClassNotFoundException e) {
-					throw new DataAccessException("failed to load enum class [" + tn + "]!", e);
-				}
-			});
-			return newEnumInstance(paramValue, enumClass);
+			return newEnumInstance(paramValue, resolveEnumClass(typeName));
 		}
 		return paramValue;
+	}
+
+	/**
+	 * update 2026-11-15 解析枚举类:优先线程上下文类加载器(TCCL)并校验缓存Class的装载器归属。
+	 * 原实现固定用框架类加载器Class.forName且按类名无校验缓存——热部署/多classloader场景下
+	 * 同名枚举类重新加载后仍返回旧Class(枚举转换错位)且静态缓存钉住旧类;现在装载器变化即
+	 * 重新解析并以新Class覆盖(旧Class随之释放),缓存规模仍受枚举类名数量约束
+	 * 
+	 * @param typeName
+	 * @return
+	 */
+	private static Class<?> resolveEnumClass(String typeName) {
+		ClassLoader tccl = Thread.currentThread().getContextClassLoader();
+		ClassLoader ownLoader = BeanUtil.class.getClassLoader();
+		ClassLoader loader = (tccl == null) ? ownLoader : tccl;
+		Class<?> enumClass = enumClassMap.get(typeName);
+		if (enumClass != null && isVisibleFrom(enumClass.getClassLoader(), loader)) {
+			return enumClass;
+		}
+		try {
+			enumClass = Class.forName(typeName, true, loader);
+		} catch (ClassNotFoundException e) {
+			// TCCL不可见但框架类加载器可见的场景(如自定义线程未设置TCCL)回退,保持历史兼容
+			try {
+				enumClass = Class.forName(typeName, true, ownLoader);
+			} catch (ClassNotFoundException ex) {
+				throw new DataAccessException("failed to load enum class [" + typeName + "]!", ex);
+			}
+		}
+		// 并发重复解析结果一致,直接覆盖:旧装载器的Class不再被本缓存持有
+		enumClassMap.put(typeName, enumClass);
+		return enumClass;
+	}
+
+	/**
+	 * update 2026-11-15 判断Class的装载器是否在给定装载器的双亲链上:命中时按TCCL委托解析仍会得到缓存的Class,
+	 * 避免"父装载器定义的枚举在子装载器TCCL下每次都被判为失效"导致反复Class.forName
+	 * 
+	 * @param classLoader
+	 * @param loader
+	 * @return
+	 */
+	private static boolean isVisibleFrom(ClassLoader classLoader, ClassLoader loader) {
+		// update 2026-11-15 bootstrap装载器(null)定义的类对任何装载器可见,
+		// 否则JDK内置枚举每次调用都被判失效而反复Class.forName
+		if (classLoader == null) {
+			return true;
+		}
+		ClassLoader current = loader;
+		while (current != null) {
+			if (current == classLoader) {
+				return true;
+			}
+			current = current.getParent();
+		}
+		return false;
 	}
 
 	/**
@@ -2106,25 +2224,164 @@ public class BeanUtil {
 		}
 	}
 
-	private static ConcurrentHashMap<ClassKey, BeanMappingPlan> mappingPlanCache = new ConcurrentHashMap<>();
+	// update 2026-11-15 改为ClassValue<内层属性签名/列类型签名Map>:外层按Class归属(类卸载即回收),
+	// 内层集合合计仍受全JVM总量上限约束
+	private static final ClassValue<ConcurrentHashMap<String, BeanMappingPlan>> mappingPlanCache = new ClassValue<ConcurrentHashMap<String, BeanMappingPlan>>() {
+		@Override
+		protected ConcurrentHashMap<String, BeanMappingPlan> computeValue(Class<?> voClass) {
+			ConcurrentHashMap<String, BeanMappingPlan> cache = new ConcurrentHashMap<>();
+			MAPPING_PLAN_CACHE_BOUND.register(voClass, cache);
+			return cache;
+		}
+	};
 
-	// 映射计划key含列类型序列,动态列场景基数不可控,同样设置容量上限
+	// 映射计划key含列类型序列,动态列场景基数不可控,同样设置全JVM总量上限
 	private static final int MAPPING_PLAN_CACHE_MAX_SIZE = 20000;
+
+	private static final GlobalCacheBound MAPPING_PLAN_CACHE_BOUND = new GlobalCacheBound(MAPPING_PLAN_CACHE_MAX_SIZE);
+
+	/**
+	 * update 2026-11-15 ClassValue按类归属(类卸载即回收) + 全JVM总量上限:
+	 * 内层Map仍挂在ClassValue上;注册表只持有Class弱键和内层Map的弱引用,
+	 * 不会把Class重新钉住;总量达到上限时跨Class回收约1/4,读写行为与原全局限额一致。
+	 */
+	private static final class GlobalCacheBound {
+		private final int maxSize;
+		private final AtomicInteger totalSize = new AtomicInteger();
+		private final WeakHashMap<Class<?>, WeakReference<ConcurrentHashMap<String, ?>>> registry = new WeakHashMap<>();
+
+		private GlobalCacheBound(int maxSize) {
+			this.maxSize = maxSize;
+		}
+
+		private void register(Class<?> type, ConcurrentHashMap<String, ?> cache) {
+			synchronized (registry) {
+				registry.put(type, new WeakReference<ConcurrentHashMap<String, ?>>(cache));
+			}
+		}
+
+		/**
+		 * 与原putBounded一致的写入语义:已存在不覆盖;超限先跨类回收至约3/4再写入。
+		 * 回收时优先当前Class(正在写入的形态通常仍在演进),不足时再回收其它Class
+		 */
+		private <V> void put(ConcurrentHashMap<String, V> cache, String key, V value) {
+			if (cache.containsKey(key)) {
+				return;
+			}
+			if (maxSize > 0 && totalSize.get() >= maxSize) {
+				evict(cache);
+			}
+			if (cache.putIfAbsent(key, value) == null && maxSize > 0 && totalSize.incrementAndGet() > maxSize) {
+				// 并发写入可能同时越过上限:最后一个越过者负责回收,保证写完收敛到上限内
+				evict(cache);
+			}
+		}
+
+		private void evict(ConcurrentHashMap<String, ?> preferredCache) {
+			synchronized (registry) {
+				int actual = refreshTotalSize();
+				if (actual < maxSize) {
+					return;
+				}
+				int keepLimit = maxSize - Math.max(1, maxSize >>> 2);
+				// 优先回收当前Class,不够再跨Class回收(弱注册表保证不钉住Class)
+				actual = evictFrom(preferredCache, actual, keepLimit);
+				if (actual > keepLimit) {
+					for (WeakReference<ConcurrentHashMap<String, ?>> ref : registry.values()) {
+						ConcurrentHashMap<String, ?> cache = ref.get();
+						if (cache == null || cache == preferredCache) {
+							continue;
+						}
+						actual = evictFrom(cache, actual, keepLimit);
+						if (actual <= keepLimit) {
+							break;
+						}
+					}
+				}
+				totalSize.set(actual);
+			}
+		}
+
+		private static int evictFrom(ConcurrentHashMap<String, ?> cache, int actual, int keepLimit) {
+			if (cache == null || cache.isEmpty()) {
+				return actual;
+			}
+			Iterator<String> keys = cache.keySet().iterator();
+			while (actual > keepLimit && keys.hasNext()) {
+				keys.next();
+				keys.remove();
+				actual--;
+			}
+			return actual;
+		}
+
+		/**
+		 * 按当前存活的内层Map重算总量:类卸载/外部clear后可修正计数漂移
+		 */
+		private int refreshTotalSize() {
+			synchronized (registry) {
+				int actual = 0;
+				for (WeakReference<ConcurrentHashMap<String, ?>> ref : registry.values()) {
+					ConcurrentHashMap<String, ?> cache = ref.get();
+					if (cache != null) {
+						actual += cache.size();
+					}
+				}
+				totalSize.set(actual);
+				return actual;
+			}
+		}
+
+		private int getTotalSize() {
+			return totalSize.get();
+		}
+	}
+
+	/**
+	 * 测试可见:映射计划缓存大小(按Class)
+	 */
+	static int mappingPlanCacheSize(Class<?> voClass) {
+		return mappingPlanCache.get(voClass).size();
+	}
+
+	/**
+	 * 测试可见:映射计划缓存全JVM总量(所有Class合计)
+	 */
+	static int mappingPlanCacheTotalSize() {
+		return MAPPING_PLAN_CACHE_BOUND.getTotalSize();
+	}
+
+	/**
+	 * 测试可见:清空某Class的映射计划缓存
+	 */
+	static void clearMappingPlanCache(Class<?> voClass) {
+		mappingPlanCache.get(voClass).clear();
+		// 同步修正全JVM总量计数
+		MAPPING_PLAN_CACHE_BOUND.refreshTotalSize();
+	}
+
+	/**
+	 * 测试可见:某Class的首个映射计划(无则null)
+	 */
+	static Object firstMappingPlan(Class<?> voClass) {
+		ConcurrentHashMap<String, BeanMappingPlan> cache = mappingPlanCache.get(voClass);
+		return cache.isEmpty() ? null : cache.values().iterator().next();
+	}
 
 	private static BeanMappingPlan getMappingPlan(Class voClass, String[] properties, String[] columnTypes,
 			boolean autoConvertType) {
-		ClassKey cacheKey = mappingPlanCacheKey(voClass, properties, columnTypes, autoConvertType);
-		BeanMappingPlan plan = mappingPlanCache.get(cacheKey);
+		ConcurrentHashMap<String, BeanMappingPlan> cache = mappingPlanCache.get(voClass);
+		String cacheKey = mappingPlanCacheKey(properties, columnTypes, autoConvertType);
+		BeanMappingPlan plan = cache.get(cacheKey);
 		if (plan != null) {
 			return plan;
 		}
 		plan = buildMappingPlan(voClass, properties, columnTypes, autoConvertType);
-		CollectionUtil.putBounded(mappingPlanCache, cacheKey, plan, MAPPING_PLAN_CACHE_MAX_SIZE);
+		MAPPING_PLAN_CACHE_BOUND.put(cache, cacheKey, plan);
 		return plan;
 	}
 
-	private static ClassKey mappingPlanCacheKey(Class voClass, String[] properties, String[] columnTypes,
-			boolean autoConvertType) {
+	private static String mappingPlanCacheKey(String[] properties, String[] columnTypes, boolean autoConvertType) {
 		StringBuilder key = new StringBuilder(autoConvertType ? "1" : "0");
 		for (int i = 0; i < properties.length; i++) {
 			key.append(properties[i] == null ? "\u0000" : properties[i]).append('\u0001');
@@ -2136,7 +2393,7 @@ public class BeanUtil {
 				key.append(columnTypes[i] == null ? "\u0000" : columnTypes[i]).append('\u0001');
 			}
 		}
-		return new ClassKey(voClass, key.toString());
+		return key.toString();
 	}
 
 	private static BeanMappingPlan buildMappingPlan(Class voClass, String[] properties, String[] columnTypes,
@@ -2324,9 +2581,10 @@ public class BeanUtil {
 	}
 
 	private static PropertyType[] getRecordFields(Class recordType) {
-		if (recordProperties.containsKey(recordType)) {
-			return recordProperties.get(recordType);
-		}
+		return recordProperties.get(recordType);
+	}
+
+	private static PropertyType[] parseRecordProperties(Class recordType) {
 		RecordComponent[] components = recordType.getRecordComponents();
 		PropertyType[] propTypes = new PropertyType[components.length];
 		int index = 0;
@@ -2348,7 +2606,6 @@ public class BeanUtil {
 			propTypes[index] = propertyType;
 			index++;
 		}
-		recordProperties.put(recordType, propTypes);
 		return propTypes;
 	}
 
@@ -2829,16 +3086,23 @@ public class BeanUtil {
 			setMapPropertyValue((Map) bean, property, value, jdbcType);
 			return;
 		}
-		ClassKey key = new ClassKey(bean.getClass(), ":set".concat(property));
-		// 利用缓存提升方法匹配效率
-		Method method = setMethods.computeIfAbsent(key, k -> {
-			Method m = matchSetMethods(bean.getClass(), new String[] { property })[0];
-			if (m == null) {
+		// update 2026-11-15 ClassValue按Class归属,内层按":set"+属性名缓存(利用缓存提升方法匹配效率)
+		String cacheKey = ":set".concat(property);
+		ConcurrentHashMap<String, Method> cache = setMethods.get(bean.getClass());
+		Method method = cache.get(cacheKey);
+		if (method == null) {
+			Method matched = matchSetMethods(bean.getClass(), new String[] { property })[0];
+			if (matched == null) {
 				throw new RuntimeException(
 						bean.getClass().getName() + " does not have the property [" + property + "]!");
 			}
-			return m;
-		});
+			SET_METHODS_CACHE_BOUND.put(cache, cacheKey, matched);
+			method = cache.get(cacheKey);
+			// 刚写入即被全局淘汰时仍使用本次匹配结果,保证正确性
+			if (method == null) {
+				method = matched;
+			}
+		}
 		// 将数据类型进行转换再赋值
 		String typeName = method.getParameterTypes()[0].getTypeName();
 		Type[] types = method.getGenericParameterTypes();
@@ -2905,15 +3169,17 @@ public class BeanUtil {
 		if (bean instanceof Map) {
 			return ((Map) bean).get(property);
 		}
-		ClassKey key = new ClassKey(bean.getClass(), ":get".concat(property));
-		// 利用缓存提升方法匹配效率
-		Method method = getMethods.get(key);
+		String cacheKey = ":get".concat(property);
+		// 利用缓存提升方法匹配效率(外层ClassValue按Class归属)
+		ConcurrentHashMap<String, Method> cache = getMethods.get(bean.getClass());
+		Method method = cache.get(cacheKey);
 		if (method == null) {
 			Method matched = matchGetMethods(bean.getClass(), new String[] { property })[0];
 			if (matched == null) {
 				return null;
 			}
-			method = getMethods.putIfAbsent(key, matched);
+			GET_METHODS_CACHE_BOUND.put(cache, cacheKey, matched);
+			method = cache.get(cacheKey);
 			if (method == null) {
 				method = matched;
 			}
@@ -2948,15 +3214,17 @@ public class BeanUtil {
 			}
 			return result;
 		}
-		ClassKey key = new ClassKey(bean.getClass(), ":get".concat(realProperty));
-		// 利用缓存提升方法匹配效率
-		Method method = getMethods.get(key);
+		String cacheKey = ":get".concat(realProperty);
+		// 利用缓存提升方法匹配效率(外层ClassValue按Class归属)
+		ConcurrentHashMap<String, Method> cache = getMethods.get(bean.getClass());
+		Method method = cache.get(cacheKey);
 		if (method == null) {
 			Method matched = matchGetMethods(bean.getClass(), new String[] { realProperty })[0];
 			if (matched == null) {
 				return null;
 			}
-			method = getMethods.putIfAbsent(key, matched);
+			GET_METHODS_CACHE_BOUND.put(cache, cacheKey, matched);
+			method = cache.get(cacheKey);
 			if (method == null) {
 				method = matched;
 			}

@@ -43,7 +43,11 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 		this.diskStorePath = diskStorePath;
 	}
 
-	protected static CacheManager cacheManager;
+	// update 2026-11-15 原为static:JVM内多个SqlToyContext共用同一个ehcache CacheManager,
+	// 后初始化context的diskStorePath等配置被静默忽略,且任一context的destroy会关闭共享manager
+	// 导致其它存活context的翻译缓存整体失效(读取返回null后退化为每次实时查库);
+	// 改为实例字段,缓存管理器随SqlToyContext生命周期隔离
+	protected CacheManager cacheManager;
 
 	@Override
 	public HashMap<String, Object[]> getCache(String cacheName, String cacheType) {
@@ -80,7 +84,9 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 		if (cacheManager == null) {
 			return;
 		}
-		synchronized (cacheName.intern()) {
+		// update 2026-11-15 原synchronized(cacheName.intern())是JVM级锁,且缓存名会常驻字符串常量池;
+		// manager已按context实例化,创建缓存属低频操作,实例锁即可保证同实例内不重复创建
+		synchronized (this) {
 			Cache<String, HashMap> cache = cacheManager.getCache(cacheName, String.class, HashMap.class);
 			// 缓存没有配置,自动创建缓存(不建议使用)
 			if (cache == null) {
@@ -131,7 +137,7 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 		if (cacheManager == null) {
 			return;
 		}
-		synchronized (cacheName.intern()) {
+		synchronized (this) {
 			Cache<String, HashMap> cache = cacheManager.getCache(cacheName, String.class, HashMap.class);
 			if (cache != null) {
 				if (StringUtil.isBlank(cacheType)) {
@@ -150,6 +156,8 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 	 */
 	@Override
 	public boolean init() {
+		// update 2026-11-15 每个SqlToyContext持有独立的CacheManager(原static共享):init只创建本实例,
+		// 未配置持久化路径时各自开辟内存级管理,配置了持久化路径时各自独立open
 		if (cacheManager != null) {
 			return true;
 		}
@@ -165,7 +173,10 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 					.with(CacheManagerBuilder.persistence(diskStorePath)).build(true);
 			return true;
 		} catch (Exception e) {
-			logger.error("cache file:{} is locked,create cacheManager failure,please stop running progress!",
+			// update 2026-11-15 manager按context实例化后,同JVM多context共用diskStorePath会在此冲突,
+			// 属可预期的回退分支(下方会改用唯一文件名),降为warn避免误导为启动失败
+			logger.warn(
+					"cache file:{} is locked(possibly used by another program or another SqlToyContext in the same JVM), will create a new unique cache file instead!",
 					diskStorePath);
 		}
 		if (cacheManager == null) {
@@ -190,6 +201,7 @@ public class TranslateEhcacheManager extends TranslateCacheManager {
 	 */
 	@Override
 	public void destroy() {
+		// update 2026-11-15 只关闭本实例持有的CacheManager:一个SqlToyContext销毁不得影响同JVM其它存活上下文
 		if (cacheManager != null) {
 			cacheManager.close();
 			cacheManager = null;

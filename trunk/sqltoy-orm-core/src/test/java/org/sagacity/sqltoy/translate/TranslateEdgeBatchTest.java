@@ -5,8 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.lang.reflect.Field;
-
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.translate.cache.impl.TranslateEhcacheManager;
@@ -20,19 +18,17 @@ import org.sagacity.sqltoy.translate.TranslateUtils;
 public class TranslateEdgeBatchTest {
 
 	@Test
-	public void hasCacheWithoutInitReturnsFalse() throws Exception {
+	public void hasCacheWithoutInitReturnsFalse() {
+		// update 2026-11-15 管理器改为按SqlToyContext实例化(不再JVM共享),无需反射置空静态字段
 		TranslateEhcacheManager manager = new TranslateEhcacheManager();
-		// 反射将static cacheManager置null模拟init前/destroy后
-		Field field = TranslateEhcacheManager.class.getDeclaredField("cacheManager");
-		field.setAccessible(true);
-		Object previous = field.get(null);
-		field.set(null, null);
-		try {
-			// 修复前:cacheManager.getCache(...)直接NPE
-			assertFalse(manager.hasCache("anyCache"));
-		} finally {
-			field.set(null, previous);
-		}
+		// init前:cacheManager为null,判空返回false(修复前直接NPE)
+		assertFalse(manager.hasCache("anyCache"));
+		assertTrue(manager.init());
+		// 已init但未创建该缓存
+		assertFalse(manager.hasCache("anyCache"));
+		// destroy后恢复无缓存状态
+		manager.destroy();
+		assertFalse(manager.hasCache("anyCache"));
 	}
 
 	@Test

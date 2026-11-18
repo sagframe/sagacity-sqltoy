@@ -1,62 +1,70 @@
 package org.sagacity.sqltoy.translate.cache.impl;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
 
 /**
- * 回归测试：检测线程为daemon且多实例只共享一个调度任务(状态Map为static,调度器同步static);
- * destroy后可重新initialize;clear同步清理cacheInitTime过期登记
+ * 回归:动态缓存管理器必须按SqlToyContext实例隔离。
+ * 修复前状态Map与检测线程调度器均为static:多上下文同名cache会串用数据/以首个创建者的keepAlive为准,
+ * 且任一上下文destroy会停掉全局过期检测线程并保留静态数据(context重建后沿用旧数据)
  */
 public class FIFODynamicFetchCacheManagerTest {
 
+	private final List<FIFODynamicFetchCacheManager> managers = new ArrayList<FIFODynamicFetchCacheManager>();
+
+	private FIFODynamicFetchCacheManager newManager() {
+		FIFODynamicFetchCacheManager manager = new FIFODynamicFetchCacheManager();
+		managers.add(manager);
+		return manager;
+	}
+
+	@AfterEach
+	public void tearDown() throws Exception {
+		for (FIFODynamicFetchCacheManager manager : managers) {
+			try {
+				manager.destroy();
+			} catch (Exception ignore) {
+			}
+		}
+		managers.clear();
+		waitForCheckerThreads(0);
+	}
+
 	@SuppressWarnings("unchecked")
-	private static ConcurrentHashMap<String, Long[]> cacheInitTime() throws Exception {
+	private static ConcurrentHashMap<String, Long[]> cacheInitTime(FIFODynamicFetchCacheManager manager)
+			throws Exception {
 		Field field = FIFODynamicFetchCacheManager.class.getDeclaredField("cacheInitTime");
 		field.setAccessible(true);
-		return (ConcurrentHashMap<String, Long[]>) field.get(null);
+		return (ConcurrentHashMap<String, Long[]>) field.get(manager);
 	}
 
-	// 状态Map为static,每个用例前清理避免跨用例残留
-	@BeforeEach
-	public void cleanStaticState() throws Exception {
-		for (String fieldName : new String[] { "dynamicFetchCacheMap", "cacheInitTime", "registCaches" }) {
-			Field field = FIFODynamicFetchCacheManager.class.getDeclaredField(fieldName);
-			field.setAccessible(true);
-			Object state = field.get(null);
-			if (state instanceof Map) {
-				((Map<?, ?>) state).clear();
-			} else if (state instanceof java.util.Set) {
-				((java.util.Set<?>) state).clear();
-			}
-		}
+	@SuppressWarnings("unchecked")
+	private static Map<String, ConcurrentHashMap<String, Object>> dynamicFetchCacheMap(
+			FIFODynamicFetchCacheManager manager) throws Exception {
+		Field field = FIFODynamicFetchCacheManager.class.getDeclaredField("dynamicFetchCacheMap");
+		field.setAccessible(true);
+		return (Map<String, ConcurrentHashMap<String, Object>>) field.get(manager);
 	}
 
-	// 调度器为static单例,destroy的shutdownNow存在线程退出窗口:用例后停止并等待检测线程退出,
-	// 避免"destroy→重建"用例与"检测线程计数"用例之间因残留线程计数抖动导致偶发失败
-	@AfterEach
-	public void stopScheduler() throws Exception {
-		Field started = FIFODynamicFetchCacheManager.class.getDeclaredField("schedulerStarted");
-		started.setAccessible(true);
-		if (Boolean.TRUE.equals(started.get(null))) {
-			new FIFODynamicFetchCacheManager().destroy();
-			for (int i = 0; i < 100 && countCheckerThreads() > 0; i++) {
-				Thread.sleep(20);
-			}
-		}
+	private static void invokeTimeoutCheck(FIFODynamicFetchCacheManager manager) throws Exception {
+		Method method = FIFODynamicFetchCacheManager.class.getDeclaredMethod("checkAndRemoveTimeoutData");
+		method.setAccessible(true);
+		method.invoke(manager);
 	}
 
 	private static TranslateConfigModel cacheModel(String cacheName, int keepAlive) {
@@ -71,105 +79,142 @@ public class FIFODynamicFetchCacheManagerTest {
 				.filter(t -> "sqltoy-fifo-dynamic-cache-checker".equals(t.getName())).count();
 	}
 
+	private static void waitForCheckerThreads(int expected) throws Exception {
+		for (int i = 0; i < 100 && countCheckerThreads() != expected; i++) {
+			Thread.sleep(20);
+		}
+	}
+
+	/* ==================== 上下文隔离 ==================== */
+
 	@Test
-	public void multiInstanceSharesSingleDaemonScheduler() throws Exception {
-		FIFODynamicFetchCacheManager first = new FIFODynamicFetchCacheManager();
-		FIFODynamicFetchCacheManager second = new FIFODynamicFetchCacheManager();
+	public void instancesDoNotShareCacheData() {
+		FIFODynamicFetchCacheManager first = newManager();
+		FIFODynamicFetchCacheManager second = newManager();
+		TranslateConfigModel model = cacheModel("scope_cache", 0);
+		Map<String, Object[]> firstCache = first.getDynamicCache(model, null);
+		firstCache.put("k1", new Object[] { "k1", "first" });
+		Map<String, Object[]> secondCache = second.getDynamicCache(model, null);
+		assertNotSame(firstCache, secondCache, "不同上下文不得共享同一个动态缓存实例");
+		assertTrue(secondCache.isEmpty(), "不同上下文不得读到对方的动态缓存数据");
+		secondCache.put("k1", new Object[] { "k1", "second" });
+		assertEquals("first", firstCache.get("k1")[1]);
+		assertEquals("second", secondCache.get("k1")[1]);
+	}
+
+	@Test
+	public void destroyClearsOwnStateOnly() {
+		FIFODynamicFetchCacheManager first = newManager();
+		FIFODynamicFetchCacheManager second = newManager();
+		TranslateConfigModel model = cacheModel("destroy_scope", 0);
+		first.getDynamicCache(model, null).put("k1", new Object[] { "k1", "first" });
+		second.getDynamicCache(model, null).put("k1", new Object[] { "k1", "second" });
+		second.destroy();
+		// 销毁自身:缓存登记与数据清空
+		assertFalse(second.hasCache("destroy_scope"));
+		// 不得影响其它上下文
+		assertTrue(first.hasCache("destroy_scope"));
+		assertEquals("first", first.getDynamicCache(model, null).get("k1")[1]);
+	}
+
+	@Test
+	public void eachInstanceOwnsDaemonSchedulerAndDestroyIsolated() throws Exception {
+		FIFODynamicFetchCacheManager first = newManager();
+		FIFODynamicFetchCacheManager second = newManager();
 		first.initialize();
 		second.initialize();
-		// 调度器为static,多实例只应有一个检测线程
-		long threads = 0;
-		for (int i = 0; i < 50 && threads == 0; i++) {
-			threads = countCheckerThreads();
-			if (threads == 0) {
-				Thread.sleep(20);
-			}
-		}
-		assertEquals(1, threads, "多实例应共享单个检测线程");
-		// 检测线程必须为daemon,destroy未调用时不阻止JVM退出
+		first.getDynamicCache(cacheModel("sched_a", 600), null);
+		second.getDynamicCache(cacheModel("sched_b", 600), null);
+		waitForCheckerThreads(2);
+		assertEquals(2, countCheckerThreads(), "每个使用动态缓存的上下文应各自持有过期检测线程");
 		Thread checker = Thread.getAllStackTraces().keySet().stream()
 				.filter(t -> "sqltoy-fifo-dynamic-cache-checker".equals(t.getName())).findFirst().orElse(null);
 		assertTrue(checker != null && checker.isDaemon(), "检测线程应为daemon");
+		first.destroy();
+		waitForCheckerThreads(1);
+		assertEquals(1, countCheckerThreads(), "销毁一个上下文不得停掉其它上下文的过期检测线程");
+		second.getDynamicCache(cacheModel("sched_b", 600), null).put("k1", new Object[] { "k1" });
+		assertTrue(second.hasCache("sched_b"));
 	}
 
 	@Test
-	public void destroyThenInitializeRecreatesScheduler() {
-		FIFODynamicFetchCacheManager manager = new FIFODynamicFetchCacheManager();
+	public void destroyThenInitializeRecreatesScheduler() throws Exception {
+		FIFODynamicFetchCacheManager manager = newManager();
 		manager.initialize();
+		manager.getDynamicCache(cacheModel("reinit_cache", 600), null);
+		waitForCheckerThreads(1);
+		assertEquals(1, countCheckerThreads());
 		manager.destroy();
+		waitForCheckerThreads(0);
 		// 重新初始化不应因executor已终止而抛RejectedExecutionException
 		assertDoesNotThrow(() -> manager.initialize());
+		manager.getDynamicCache(cacheModel("reinit_cache", 600), null);
+		waitForCheckerThreads(1);
+		assertEquals(1, countCheckerThreads());
 	}
+
+	/* ==================== 过期登记与清理 ==================== */
 
 	@Test
 	public void clearAllRemovesEveryExpireRegistration() throws Exception {
-		FIFODynamicFetchCacheManager manager = new FIFODynamicFetchCacheManager();
+		FIFODynamicFetchCacheManager manager = newManager();
 		manager.getDynamicCache(cacheModel("cacheA", 600), null);
 		manager.getDynamicCache(cacheModel("cacheA", 600), "t1");
 		manager.getDynamicCache(cacheModel("cacheA", 600), "t2");
-		// 修复前:clear不清cacheInitTime,3条过期登记常驻内存
-		assertEquals(3, cacheInitTime().size());
+		ConcurrentHashMap<String, Long[]> registry = cacheInitTime(manager);
+		assertEquals(3, registry.size());
 		manager.clear("cacheA", null);
-		assertEquals(0, cacheInitTime().size());
+		assertEquals(0, registry.size());
 		assertFalse(manager.getDynamicCache(cacheModel("cacheA", 600), null).size() > 0);
 	}
 
 	@Test
 	public void clearSingleTypeRemovesOnlyItsRegistration() throws Exception {
-		FIFODynamicFetchCacheManager manager = new FIFODynamicFetchCacheManager();
+		FIFODynamicFetchCacheManager manager = newManager();
 		manager.getDynamicCache(cacheModel("cacheB", 600), null);
 		manager.getDynamicCache(cacheModel("cacheB", 600), "t1");
 		manager.clear("cacheB", "t1");
-		assertEquals(1, cacheInitTime().size());
-		assertTrue(cacheInitTime().containsKey("cacheb"));
-	}
-
-	private static void invokeTimeoutCheck() throws Exception {
-		Method method = FIFODynamicFetchCacheManager.class.getDeclaredMethod("checkAndRemoveTimeoutData");
-		method.setAccessible(true);
-		method.invoke(null);
+		ConcurrentHashMap<String, Long[]> registry = cacheInitTime(manager);
+		assertEquals(1, registry.size());
+		assertTrue(registry.containsKey("cacheb"));
 	}
 
 	@Test
 	public void timeoutCheckToleratesMissingOuterEntry() throws Exception {
-		// 构造:过期登记存在、外层缓存条目不存在(原实现 dynamicFetchCacheMap.get(...).remove(...) 直接NPE;
-		// 而scheduleAtFixedRate任务一旦抛出未捕获异常,后续执行会被永久取消→keepAlive检测全部失效)
-		cacheInitTime().put("missingcache", new Long[] { System.currentTimeMillis() - 10000, 1L });
-		assertDoesNotThrow(FIFODynamicFetchCacheManagerTest::invokeTimeoutCheck);
-		// 外层条目不存在时仍需清理过期登记
-		assertFalse(cacheInitTime().containsKey("missingcache"));
+		// 构造"过期登记存在、外层缓存条目不存在"的场景:不得NPE,且仍清理过期登记
+		FIFODynamicFetchCacheManager manager = newManager();
+		cacheInitTime(manager).put("missingcache", new Long[] { System.currentTimeMillis() - 10000, 1L });
+		assertDoesNotThrow(() -> invokeTimeoutCheck(manager));
+		assertFalse(cacheInitTime(manager).containsKey("missingcache"));
 	}
 
 	@Test
 	public void timeoutCheckIsolatesCorruptEntryFromOthers() throws Exception {
-		// 损坏登记(时间戳缺失,旧实现在此处NPE并中断整轮清理)
-		cacheInitTime().put("badcache", new Long[] { null, 1L });
-		// 正常的过期登记:外层条目存在,应被清理
-		FIFODynamicFetchCacheManager manager = new FIFODynamicFetchCacheManager();
+		FIFODynamicFetchCacheManager manager = newManager();
+		// 损坏登记(时间戳缺失)不得中断整轮清理
+		cacheInitTime(manager).put("badcache", new Long[] { null, 1L });
 		manager.getDynamicCache(cacheModel("goodcache", 1), null);
-		cacheInitTime().put("goodcache", new Long[] { System.currentTimeMillis() - 10000, 1L });
-		assertDoesNotThrow(FIFODynamicFetchCacheManagerTest::invokeTimeoutCheck);
-		assertFalse(cacheInitTime().containsKey("goodcache"), "单条损坏数据不得阻断其它过期登记清理");
+		cacheInitTime(manager).put("goodcache", new Long[] { System.currentTimeMillis() - 10000, 1L });
+		assertDoesNotThrow(() -> invokeTimeoutCheck(manager));
+		assertFalse(cacheInitTime(manager).containsKey("goodcache"), "单条损坏数据不得阻断其它过期登记清理");
 	}
 
-	/* ==================== 取值/淘汰/过期/清除语义 ==================== */
+	/* ==================== 取值/淘汰/清除语义 ==================== */
 
 	@Test
 	public void getOrCreateRegistersAndIsCaseInsensitive() {
-		FIFODynamicFetchCacheManager manager = new FIFODynamicFetchCacheManager();
+		FIFODynamicFetchCacheManager manager = newManager();
 		assertFalse(manager.hasCache("audit_fifo_a"));
 		Map<String, Object[]> cache = manager.getDynamicCache(cacheModel("audit_fifo_a", 0), null);
-		org.junit.jupiter.api.Assertions.assertNotNull(cache);
 		cache.put("k1", new Object[] { "k1", "v1" });
 		assertEquals("v1", cache.get("k1")[1]);
-		// 登记后hasCache为true且忽略大小写
 		assertTrue(manager.hasCache("audit_fifo_a"));
 		assertTrue(manager.hasCache("AUDIT_FIFO_A"));
 	}
 
 	@Test
 	public void cacheNameAndTypeTwoLevelIsolation() {
-		FIFODynamicFetchCacheManager manager = new FIFODynamicFetchCacheManager();
+		FIFODynamicFetchCacheManager manager = newManager();
 		TranslateConfigModel model = cacheModel("audit_fifo_b", 0);
 		Map<String, Object[]> typeA = manager.getDynamicCache(model, "TYPE_A");
 		Map<String, Object[]> typeB = manager.getDynamicCache(model, "TYPE_B");
@@ -185,7 +230,7 @@ public class FIFODynamicFetchCacheManagerTest {
 
 	@Test
 	public void fifoCapacityEvictsLeastRecentlyUsed() {
-		FIFODynamicFetchCacheManager manager = new FIFODynamicFetchCacheManager();
+		FIFODynamicFetchCacheManager manager = newManager();
 		TranslateConfigModel model = new TranslateConfigModel();
 		model.setCache("audit_fifo_c");
 		model.setDynamicCacheInitSize(10);
@@ -196,46 +241,37 @@ public class FIFODynamicFetchCacheManagerTest {
 		cache.put("k1", new Object[] { "k1" });
 		cache.put("k2", new Object[] { "k2" });
 		cache.put("k3", new Object[] { "k3" });
-		// accessOrder=true:访问k1使其变为最近使用,再放入k4应挤掉最久未用的k2
 		cache.get("k1");
 		cache.put("k4", new Object[] { "k4" });
 		assertEquals(3, cache.size(), "容量应为3");
 		assertTrue(cache.containsKey("k1") && cache.containsKey("k3") && cache.containsKey("k4"),
-				"应挤掉最久未用的k2,实际:" + cache.keySet());
+				"应挤掉最久未使用的k2,实际:" + cache.keySet());
 		assertFalse(cache.containsKey("k2"));
 	}
 
 	@Test
 	public void keepAliveExpiryClearsEntryAndRegistration() throws Exception {
-		FIFODynamicFetchCacheManager manager = new FIFODynamicFetchCacheManager();
+		FIFODynamicFetchCacheManager manager = newManager();
 		String expired = "audit_fifo_d";
 		String alive = "audit_fifo_e";
 		manager.getDynamicCache(cacheModel(expired, 1), null).put("k1", new Object[] { "k1" });
 		manager.getDynamicCache(cacheModel(alive, 3600), null).put("k2", new Object[] { "k2" });
-		// 把expired的登记时间拨到keepAlive之前,确定性触发过期(避免真实等待调度周期)
-		Map<String, Long[]> registry = cacheInitTime();
+		// 把expired的登记时间拨到keepAlive之前,确定性触发过期
+		ConcurrentHashMap<String, Long[]> registry = cacheInitTime(manager);
 		Long[] registration = registry.get(expired);
 		org.junit.jupiter.api.Assertions.assertNotNull(registration, "keepAlive>0应有过期登记");
 		registry.put(expired, new Long[] { System.currentTimeMillis() - 5000L, registration[1] });
-		invokeTimeoutCheck();
-		// 过期缓存条目与登记均被清除,未过期的保留
-		Field outerField = FIFODynamicFetchCacheManager.class.getDeclaredField("dynamicFetchCacheMap");
-		outerField.setAccessible(true);
-		Map<String, ConcurrentHashMap<String, Object>> outer = castOuter(outerField.get(null));
+		invokeTimeoutCheck(manager);
+		Map<String, ConcurrentHashMap<String, Object>> outer = dynamicFetchCacheMap(manager);
 		assertTrue(outer.get(expired).isEmpty(), "过期缓存条目应被清除");
-		assertTrue(outer.get(alive).size() == 1, "未过期缓存应保留");
+		assertEquals(1, outer.get(alive).size(), "未过期缓存应保留");
 		assertFalse(registry.containsKey(expired), "过期登记应被清除");
 		assertTrue(registry.containsKey(alive), "未过期登记应保留");
 	}
 
-	@SuppressWarnings("unchecked")
-	private static Map<String, ConcurrentHashMap<String, Object>> castOuter(Object outer) {
-		return (Map<String, ConcurrentHashMap<String, Object>>) outer;
-	}
-
 	@Test
 	public void clearUnknownOrNullNameIsNoOp() {
-		FIFODynamicFetchCacheManager manager = new FIFODynamicFetchCacheManager();
+		FIFODynamicFetchCacheManager manager = newManager();
 		assertDoesNotThrow(() -> manager.clear("no_such_cache", null));
 		assertDoesNotThrow(() -> manager.clear(null, null));
 	}

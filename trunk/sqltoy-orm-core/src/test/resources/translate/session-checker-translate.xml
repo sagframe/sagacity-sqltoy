@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqltoy-translate>
+	<cache-translates/>
+	<cache-update-checkers>
+		<service-checker cache="sessionCache" service="com.example.DemoService" method="check"/>
+	</cache-update-checkers>
+</sqltoy-translate>

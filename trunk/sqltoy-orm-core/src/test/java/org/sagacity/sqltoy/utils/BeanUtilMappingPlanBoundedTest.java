@@ -3,12 +3,10 @@ package org.sagacity.sqltoy.utils;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -73,7 +71,7 @@ public class BeanUtilMappingPlanBoundedTest {
 
 	@Test
 	public void floodBeyondMaxKeepsCacheBoundedAndMappingsCorrect() throws Exception {
-		planCache().clear();
+		clearPlanCaches();
 		List<Object[]> rows = new ArrayList<Object[]>();
 		rows.add(new Object[] { 7, "name-7" });
 		// 洪泛2.5万个互异的列类型序列键(超过20000上限,触发putBounded回收)
@@ -82,7 +80,7 @@ public class BeanUtilMappingPlanBoundedTest {
 			List result = BeanUtil.reflectListToBean(null, rows, INDEXES, COLUMNS, columnTypes, VoA.class, true);
 			assertEquals(1, result.size());
 		}
-		int sizeAfterFlood = planCache().size();
+		int sizeAfterFlood = BeanUtil.mappingPlanCacheTotalSize();
 		assertTrue(sizeAfterFlood <= 20000, "洪泛后缓存不得超过上限20000,实际:" + sizeAfterFlood);
 		// 回收churn后既有形态的映射仍正确(重建或命中皆须正确)
 		for (int round = 0; round < 3; round++) {
@@ -96,7 +94,7 @@ public class BeanUtilMappingPlanBoundedTest {
 
 	@Test
 	public void sameShapeDifferentClassDoesNotSharePlan() throws Exception {
-		planCache().clear();
+		clearPlanCaches();
 		List<Object[]> rows = new ArrayList<Object[]>();
 		rows.add(new Object[] { 42, "x" });
 		VoA a = (VoA) BeanUtil.reflectListToBean(null, rows, INDEXES, COLUMNS,
@@ -107,12 +105,12 @@ public class BeanUtilMappingPlanBoundedTest {
 		assertEquals("42", b.getId(), "VoB的String id按文本映射,不得沿用VoA的计划");
 		assertEquals("x", a.getName());
 		assertEquals("x", b.getName());
-		assertTrue(planCache().size() >= 2, "两个类应各建计划");
+		assertTrue(BeanUtil.mappingPlanCacheTotalSize() >= 2, "两个类应各建计划");
 	}
 
 	@Test
 	public void concurrentMixedKeysAfterFloodStayConsistent() throws Exception {
-		planCache().clear();
+		clearPlanCaches();
 		int threads = 8;
 		int perThread = 3000;
 		// 每线程用互异键(洪泛)+共享键(命中)混合访问
@@ -149,12 +147,41 @@ public class BeanUtilMappingPlanBoundedTest {
 		}
 		latch.await();
 		assertEquals(0, failures.get(), "并发混合键访问不得出现错值");
-		assertTrue(planCache().size() <= 20000, "并发洪泛后缓存仍须有界");
+		assertTrue(BeanUtil.mappingPlanCacheTotalSize() <= 20000, "并发洪泛后全局总量仍须有界");
 	}
 
-	private static ConcurrentHashMap<?, ?> planCache() throws Exception {
-		Field field = BeanUtil.class.getDeclaredField("mappingPlanCache");
-		field.setAccessible(true);
-		return (ConcurrentHashMap<?, ?>) field.get(null);
+	@Test
+	public void totalAcrossClassesStaysGloballyBounded() throws Exception {
+		clearPlanCaches();
+		List<Object[]> rows = new ArrayList<Object[]>();
+		rows.add(new Object[] { 9, "x" });
+		for (int i = 0; i < 25000; i++) {
+			BeanUtil.reflectListToBean(null, rows, INDEXES, COLUMNS, new String[] { "GLOBAL" + i, "VARCHAR" },
+					VoA.class, true);
+		}
+		int afterVoA = BeanUtil.mappingPlanCacheTotalSize();
+		assertTrue(afterVoA <= 20000, "VoA洪泛后全局总量不得超过20000,实际:" + afterVoA);
+		for (int i = 0; i < 25000; i++) {
+			BeanUtil.reflectListToBean(null, rows, INDEXES, COLUMNS, new String[] { "GLOBAL" + i, "VARCHAR" },
+					VoB.class, true);
+		}
+		int total = BeanUtil.mappingPlanCacheTotalSize();
+		assertTrue(total <= 20000, "两个类合计的全局总量不得超过20000,实际:" + total);
+		// 淘汰只影响缓存命中率,不得影响映射结果:两个类在全局回收后都要重新计算正确
+		List<Object[]> checkRows = new ArrayList<Object[]>();
+		checkRows.add(new Object[] { 5, "y" });
+		VoA voA = (VoA) BeanUtil.reflectListToBean(null, checkRows, INDEXES, COLUMNS,
+				new String[] { "INTEGER", "VARCHAR" }, VoA.class, true).get(0);
+		assertEquals(5, voA.getId(), "VoA的int id按数值映射");
+		assertEquals("y", voA.getName());
+		VoB vo = (VoB) BeanUtil.reflectListToBean(null, checkRows, INDEXES, COLUMNS,
+				new String[] { "INTEGER", "VARCHAR" }, VoB.class, true).get(0);
+		assertEquals("5", vo.getId(), "VoB的String id按文本映射");
+		assertEquals("y", vo.getName());
+	}
+
+	private static void clearPlanCaches() {
+		BeanUtil.clearMappingPlanCache(VoA.class);
+		BeanUtil.clearMappingPlanCache(VoB.class);
 	}
 }

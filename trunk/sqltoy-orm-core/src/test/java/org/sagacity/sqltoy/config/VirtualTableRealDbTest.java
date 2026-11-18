@@ -19,8 +19,8 @@ import org.sagacity.sqltoy.config.model.SqlType;
 /**
  * @virtualTable()虚表宏的docker真库执行验证:经parseSqlToyConfig完整解析管线(宏展开→
  * 函数/保留字转换)后JDBC执行,覆盖两类方言(oracle/db2/hana/dm展开伪表族与
- * pg/mysql/sqlserver等剔除宏族)×三种形态(字面量行/union常量兜底行/别名@dual与@dummyTable)。
- * 沿用AllFunctionsAllDbsRealDbSmokeTest的PROBES连接矩阵(去掉gbase)
+ * pg/mysql/sqlserver等剔除宏族)×多种形态(字面量行/union常量兜底行/别名@dual与@dummyTable/
+ * where与exists条件/前置from写法)。沿用AllFunctionsAllDbsRealDbSmokeTest的PROBES连接矩阵(去掉gbase)
  */
 public class VirtualTableRealDbTest {
 
@@ -181,6 +181,39 @@ public class VirtualTableRealDbTest {
 		assertTrue(failures.isEmpty(), "union兜底行: " + failures);
 	}
 
+	/**
+	 * update 2026-11-16 形态2b:前置from + union兜底行(用户标准写法)——from与宏一次替换后
+	 * 仍是合法的单from(oracle/db2/hana系)或无from(pg/mysql/sqlserver等)查询,结果应与
+	 * 形态2一致(3行且含'0|全局'兜底行)
+	 */
+	@Test
+	public void fromPrefixedUnionFallbackRow() throws Exception {
+		List<String> failures = new ArrayList<String>();
+		for (String[] probe : PROBES) {
+			boolean ss = "sqlserver".equals(probe[0]);
+			String word = literal(probe[0], "全局", "global");
+			String n1 = ss ? "dev" : "研发";
+			String n2 = ss ? "test" : "测试";
+			String sql = "select '0' vid,'" + word + "' vname from @virtualTable() "
+					+ "union all select id,name from vt_probe_t order by vid";
+			try (Connection conn = open(probe); Statement st = conn.createStatement()) {
+				execQuiet(st, probe, "delete from vt_probe_t");
+				st.execute("insert into vt_probe_t values ('1','" + n1 + "')");
+				st.execute("insert into vt_probe_t values ('2','" + n2 + "')");
+			}
+			try {
+				List<String> rows = query(probe, sql);
+				if (rows.size() != 3 || !rows.contains("0|" + word) || !rows.contains("1|" + n1)
+						|| !rows.contains("2|" + n2)) {
+					failures.add(probe[0] + " => " + rows);
+				}
+			} catch (Exception e) {
+				failures.add(probe[0] + " 异常: " + e.getMessage());
+			}
+		}
+		assertTrue(failures.isEmpty(), "前置from+union兜底行: " + failures);
+	}
+
 	/** 形态3:别名@dual()/@dummyTable()与@virtualTable()三拼写等价(oracle/db2/pg三代表库) */
 	@Test
 	public void aliasesEquivalent() throws Exception {
@@ -239,6 +272,29 @@ public class VirtualTableRealDbTest {
 			}
 		}
 		assertTrue(failures.isEmpty(), "where/exists形态: " + failures);
+	}
+
+	/**
+	 * update 2026-11-16 形态5:标准from写法 select ... from @virtualTable() where ...——
+	 * 伪表族复用前置from(from dual),无from族把from与宏一并剔除;where条件同时证明剔除后
+	 * 不会残留悬空from
+	 */
+	@Test
+	public void fromPrefixedVirtualTable() throws Exception {
+		List<String> failures = new ArrayList<String>();
+		for (String[] probe : PROBES) {
+			String word = literal(probe[0], "全局", "global");
+			String sql = "select '0' as vid,'" + word + "' as vname from @virtualTable() where 1=1";
+			try {
+				List<String> rows = query(probe, sql);
+				if (rows.size() != 1 || !("0|" + word).equals(rows.get(0))) {
+					failures.add(probe[0] + " => " + rows);
+				}
+			} catch (Exception e) {
+				failures.add(probe[0] + " 异常: " + e.getMessage());
+			}
+		}
+		assertTrue(failures.isEmpty(), "前置from形态: " + failures);
 	}
 
 	/** 宏与函数转换共存:select uuid()族同语句,展开顺序不冲突(oracle为代表) */

@@ -1368,7 +1368,9 @@ public class DialectUtils {
 					isAssignPK, realTable);
 		}
 		// sql 缓存，避免每次重复产生
-		String sqlCacheKey = DialectExtUtils.getCacheKey(entityMeta, tableName, dbType, pkStrategy);
+		// update 2026-11-15 key同步纳入unifyFieldsHandler与DBProfile维度(与insert/insertIgnore一致)
+		String sqlCacheKey = DialectExtUtils.getCacheKey(entityMeta, tableName, profile, pkStrategy,
+				unifyFieldsHandler);
 		String mergeIgnoreSql = mergeIgnoreSqlCache.get(sqlCacheKey);
 		if (null != mergeIgnoreSql) {
 			return mergeIgnoreSql;

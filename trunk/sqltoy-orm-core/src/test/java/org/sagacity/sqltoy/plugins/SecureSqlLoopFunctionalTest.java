@@ -193,4 +193,84 @@ public class SecureSqlLoopFunctionalTest {
 				new String[] { "names", "status" }, new Object[] { new String[] { "a", "b" }, 1 });
 		assertEquals(2, countOccurrences(result.getSql(), "status="), "循环体外普通参数按原引用保留");
 	}
+
+	@Test
+	public void blankParallelValueInDynamicCondIsRemoved() {
+		// update 2026-11-18 skipBlank贯穿到循环内引用的集合数据:空白元素所在#[]条件段被剔除;
+		// 非字符串(数字0)不受影响
+		SqlToyResult result = parse(
+				"select * from t where 1=1 and (@secure-loop(:names, ' #[ t.name=:ids[i]] ', ' or '))",
+				new String[] { "names", "ids" },
+				new Object[] { new String[] { "a", "b", "c" }, new Object[] { "x", "", 0 } });
+		assertEquals(2, countOccurrences(result.getSql(), "t.name="),
+				"空白元素的条件段应剔除,x与0保留: " + result.getSql());
+		assertTrue(Arrays.asList(result.getParamsValue()).contains("x"), "应绑定x");
+		assertTrue(Arrays.asList(result.getParamsValue()).contains(0), "数字0不应被当空白剔除");
+		assertFalse(Arrays.asList(result.getParamsValue()).contains(""), "空白不应被绑定");
+	}
+
+	@Test
+	public void blankPropertyInDynamicCondIsRemoved() {
+		// 属性形态:元素属性的空白值同样触发其所在#[]条件段剔除
+		Object[] items = new Object[] { new PlainItem("S1", 20), new PlainItem("", 30) };
+		SqlToyResult result = parse(
+				"select * from t where 1=1 and (@secure-loop(:items, ' #[ s.name=:items[i].name] ', ' or '))",
+				new String[] { "items" }, new Object[] { items });
+		assertEquals(1, countOccurrences(result.getSql(), "s.name="),
+				"name空白的元素条件段应剔除: " + result.getSql());
+		assertTrue(Arrays.asList(result.getParamsValue()).contains("S1"), "应绑定S1");
+		assertFalse(Arrays.asList(result.getParamsValue()).contains(""), "空白不应被绑定");
+	}
+
+	@Test
+	public void fullFormKeepsBlankInDynamicCond() {
+		// @secure-loop-full(skipBlank=false)不做空白转null:空白条件段保留并绑定空串
+		SqlToyResult result = parse(
+				"select * from t where 1=1 and (@secure-loop-full(:names, ' #[ t.name=:ids[i]] ', ' or '))",
+				new String[] { "names", "ids" }, new Object[] { new String[] { "a", "b" }, new Object[] { "x", "" } });
+		assertEquals(2, countOccurrences(result.getSql(), "t.name="), "full形态空白条件段保留");
+		assertTrue(Arrays.asList(result.getParamsValue()).contains(""), "full形态空白按原值绑定");
+	}
+
+	@Test
+	public void skipBlankSkipsWholeIterationWithBlankRef() {
+		// 引用值空白的迭代整体跳过(与引用位置无关):#[]内条件段与#[]外裸引用一并消失,
+		// linkSign不参与拼接、连接符零残留(#[..] or #[..]模式无多余or)
+		SqlToyResult result = parse(
+				"select * from t where 1=1 and (@secure-loop(:names, ' t.flag=:ids[i] #[ and t.name=:ids[i]] ', ' or '))",
+				new String[] { "names", "ids" },
+				new Object[] { new String[] { "a", "b" }, new Object[] { "x", "" } });
+		assertEquals(1, countOccurrences(result.getSql(), "t.flag="), "空白迭代整体跳过,#[]外条件同样消失");
+		assertEquals(1, countOccurrences(result.getSql(), "t.name="), "空白迭代整体跳过: " + result.getSql());
+		assertFalse(Arrays.asList(result.getParamsValue()).contains(null), "跳过的迭代不产生null参数");
+		assertFalse(Arrays.asList(result.getParamsValue()).contains(""), "空白不应被绑定");
+		assertFalse(result.getSql().contains("or or"), "linkSign连接符不应残留");
+	}
+
+	@Test
+	public void fullFormPropertyValuesExtractedDirectly() {
+		// full形态(skipBlank=false)不走预判缓存,属性值即时提取的回退分支:全部属性原值绑定
+		Object[] items = new Object[] { new PlainItem("S1", 20), new PlainItem("", 30) };
+		SqlToyResult result = parse(
+				"select * from t where 1=1 and (@secure-loop-full(:items, ' s.name=:items[i].name and s.age=:items[i].age ', ' or '))",
+				new String[] { "items" }, new Object[] { items });
+		assertEquals(2, countOccurrences(result.getSql(), "s.name="), "full形态属性条件全部保留");
+		assertEquals(2, countOccurrences(result.getSql(), "s.age="), "full形态age条件全部保留");
+		assertTrue(Arrays.asList(result.getParamsValue()).contains(""), "full形态空白属性按原值绑定");
+		assertEquals(30, ((Number) Arrays.asList(result.getParamsValue()).get(Arrays.asList(result.getParamsValue())
+				.indexOf("") + 1)).intValue(), "空白name后的age按顺序绑定30");
+	}
+
+	@Test
+	public void mixedBlankPatternWithOrLinkSign() {
+		// 用户实际模式:#[..] or #[..] or #[..],中间迭代空白整段消失,无孤立or
+		SqlToyResult result = parse(
+				"select * from t where 1=1 and (@secure-loop(:names, ' #[ (t.name=:names[i] or t.alias=:ids[i])] ', ' or '))",
+				new String[] { "names", "ids" },
+				new Object[] { new String[] { "a", "b", "c" }, new Object[] { "x", "", "z" } });
+		assertEquals(2, countOccurrences(result.getSql(), "t.name="), "空白迭代消失,a与c保留: " + result.getSql());
+		assertFalse(result.getSql().contains("or or"), "不应有多余or: " + result.getSql());
+		assertFalse(result.getSql().contains("()"), "不应产生空括号组: " + result.getSql());
+		assertTrue(Arrays.asList(result.getParamsValue()).contains("z"), "应绑定z");
+	}
 }

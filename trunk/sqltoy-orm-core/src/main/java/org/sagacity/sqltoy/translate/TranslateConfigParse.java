@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -66,12 +65,20 @@ public class TranslateConfigParse {
 	private final static String[] TRANSLATE_CHECKER_TYPES = new String[] { "sql-increment", "sql", "service-increment",
 			"service", "rest", "rest-increment" };
 
-	// 存放类包含缓存翻译注解配置
-	private final static ConcurrentHashMap<String, HashMap<String, FieldTranslate>> classTranslateConfigMap = new ConcurrentHashMap<>();
+	// update 2026-11-15 原静态Map<String(类名),HashMap<String,FieldTranslate>>改为ClassValue:
+	// 条目挂Class自身,热部署/多classloader场景下同名类重新加载会按新Class重新解析注解配置,
+	// 不会串用旧类的缓存翻译定义;类卸载时条目随Class回收(与BeanUtil.cascadeModels、classFieldTypeCache同一治理口径)
+	private final static ClassValue<HashMap<String, FieldTranslate>> classTranslateConfigs = new ClassValue<HashMap<String, FieldTranslate>>() {
+		@Override
+		protected HashMap<String, FieldTranslate> computeValue(Class<?> classType) {
+			return parseClassTranslates(classType);
+		}
+	};
 
-	// 缓存更新检测器,用于辨别同一批配置文件内是否重复定义;
-	// 并发安全set,且每次parseTranslateConfig入口清空(按"本次解析会话"去重,二次上下文重新解析不误报)
-	private final static Set<String> cacheCheckers = java.util.concurrent.ConcurrentHashMap.newKeySet();
+	// update 2026-11-15 原静态cacheCheckers(用于辨别同一批配置文件内检测器是否重复定义)已移除:
+	// JVM级共享+每次解析入口clear的写法在两个SqlToyContext并发解析时,一方clear会抹掉另一方刚登记的
+	// 检测器,导致同一份合法配置偶发抛"duplicate update checker"启动失败(反向也会漏检同文件内的真重复);
+	// 现改为parseTranslateConfig方法内的会话局部集合,各上下文解析完全隔离
 
 	/**
 	 * 解析translate配置文件
@@ -91,8 +98,8 @@ public class TranslateConfigParse {
 			throws Exception {
 		// 获取全部缓存翻译定义文件
 		List translateFiles = getTranslateFiles(translateConfig);
-		// 检测器去重按本次解析会话计算,清除上一个上下文遗留的登记,避免二次初始化误报"已经存在"
-		cacheCheckers.clear();
+		// 检测器去重按本次解析会话计算:会话局部集合,避免多上下文并发解析时互相clear/登记
+		Set<String> sessionCheckers = new HashSet<String>();
 		Object translateFile;
 		DefaultConfig result = new DefaultConfig();
 		DefaultConfig defaultConfig = null;
@@ -126,7 +133,7 @@ public class TranslateConfigParse {
 					logger.debug("start parsing the cache config file:{}", translateFlieStr);
 					// 解析单个缓存翻译定义文件
 					defaultConfig = parseTranslate(sqlToyContext, translateMap, checker, index + 1, translateFile,
-							charset);
+							charset, sessionCheckers);
 					// 第一个作为默认全局配置
 					if (index == 0) {
 						result = defaultConfig;
@@ -158,13 +165,14 @@ public class TranslateConfigParse {
 	 * @param fileIndex       第几个缓存翻译配置文件,避免sqlId重复
 	 * @param translateConfig
 	 * @param charset
+	 * @param sessionCheckers 本次解析会话的检测器去重集合(会话局部,跨上下文并发解析互不干扰)
 	 * @return
 	 * @throws Exception
 	 */
 	private static DefaultConfig parseTranslate(final SqlToyContext sqlToyContext,
 			IgnoreKeyCaseMap<String, TranslateConfigModel> translateMap,
 			CopyOnWriteArrayList<CheckerConfigModel> checker, final int fileIndex, Object translateConfig,
-			String charset) throws Exception {
+			String charset, final Set<String> sessionCheckers) throws Exception {
 		return (DefaultConfig) XMLUtil.readXML(translateConfig, charset, false, new XMLCallbackHandler() {
 			@Override
 			public Object process(Document doc, Element root) throws Exception {
@@ -336,8 +344,8 @@ public class TranslateConfigParse {
 							}
 							checker.add(checherConfigModel);
 							if (StringUtil.isNotBlank(checherConfigModel.getCache())) {
-								// add原子性兼具存在性判断,消除contains+add两步之间的并发窗口
-								if (!cacheCheckers.add(checherConfigModel.getCache())) {
+								// 同一解析会话内重复定义检测(集合为会话局部,不同上下文解析互不影响)
+								if (!sessionCheckers.add(checherConfigModel.getCache())) {
 									throw new RuntimeException(
 											"duplicate update checker for cache:[" + checherConfigModel.getCache()
 													+ "] in cache translate configuration, please check the file:"
@@ -366,12 +374,17 @@ public class TranslateConfigParse {
 				|| BeanUtil.isBaseDataType(classType)) {
 			return null;
 		}
-		String className = classType.getName();
-		// 利用Map对类中的缓存翻译配置进行缓存，规避每次都解析
-		HashMap<String, FieldTranslate> cached = classTranslateConfigMap.get(className);
-		if (cached != null) {
-			return cached;
-		}
+		// 按Class生命周期缓存:同一Class重复获取命中缓存,同名类重新加载(热部署/多classloader)重新解析
+		return classTranslateConfigs.get(classType);
+	}
+
+	/**
+	 * 解析类(含父类)字段上的@Translate注解配置;由ClassValue在首次访问该Class时调用
+	 * 
+	 * @param classType
+	 * @return
+	 */
+	private static HashMap<String, FieldTranslate> parseClassTranslates(Class classType) {
 		HashMap<String, FieldTranslate> translateConfig = new HashMap<String, FieldTranslate>();
 		Class classVar = classType;
 		org.sagacity.sqltoy.config.annotation.Translate[] annotaTranslateAry;
@@ -403,9 +416,7 @@ public class TranslateConfigParse {
 			// 向父类递归
 			classVar = classVar.getSuperclass();
 		}
-		// putIfAbsent保证原子性，避免并发重复计算覆盖
-		HashMap<String, FieldTranslate> existing = classTranslateConfigMap.putIfAbsent(className, translateConfig);
-		return (existing != null) ? existing : translateConfig;
+		return translateConfig;
 	}
 
 	/**
