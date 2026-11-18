@@ -28,7 +28,10 @@ public class TranslateCaffeineManager extends TranslateCacheManager {
 	 */
 	protected final static Logger logger = LoggerFactory.getLogger(TranslateCaffeineManager.class);
 
-	protected static CaffeineCacheManager cacheManager;
+	// update 2026-11-15 原为static:JVM内多个SqlToyContext共用同一个CaffeineCacheManager,
+	// 而cacheNameSet/registerLock是实例字段,后初始化上下文会对同名cache二次registerCustomCache,
+	// 替换前一个上下文的缓存对象(规格以最后注册者为准、已缓存内容丢失);改为实例字段随context隔离
+	protected CaffeineCacheManager cacheManager;
 
 	// 用于判断是否创建过缓存(并发安全集合,避免不同cacheName并发put时结构被破坏)
 	private Set<String> cacheNameSet = ConcurrentHashMap.newKeySet();

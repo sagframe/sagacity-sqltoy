@@ -1,11 +1,11 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.sagframe</groupId>
-	<version>6.0.10</version>
+	<version>6.0.11-SNAPSHOT</version>
 
 	<artifactId>sagacity-sqltoy-solon-plugin</artifactId>
 	<name>sagacity-sqltoy-solon-plugin</name>
@@ -17,7 +17,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<solon.version>4.1.1</solon.version>
-		<sqltoy.version>6.0.10</sqltoy.version>
+		<sqltoy.version>6.0.11-SNAPSHOT</sqltoy.version>
 		<redisx.version>1.8.6</redisx.version>
 		<mongo.version>5.14.0</mongo.version>
 		<HikariCP.version>7.1.0</HikariCP.version>

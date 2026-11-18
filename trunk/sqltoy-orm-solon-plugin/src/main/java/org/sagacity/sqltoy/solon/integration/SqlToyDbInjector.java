@@ -1,8 +1,5 @@
 package org.sagacity.sqltoy.solon.integration;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import javax.sql.DataSource;
 
 import org.noear.solon.core.BeanInjector;
@@ -19,8 +16,8 @@ import org.sagacity.sqltoy.solon.annotation.Db;
  * @since 1.5
  */
 public class SqlToyDbInjector implements BeanInjector<Db> {
-	private static Map<DataSource, SqlToyLazyDao> daoMap = new ConcurrentHashMap<>();
-	private static Map<DataSource, SqlToyCRUDService> serviceMap = new ConcurrentHashMap<>();
+	// update 2026-11-15 移除原先未被使用的static daoMap/serviceMap字段(注入实际走DbManager,
+	// 静态化缓存会再次引入跨上下文共享问题)
 
 	@Override
 	public void doInject(VarHolder varH, Db anno) {

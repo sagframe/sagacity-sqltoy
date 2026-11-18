@@ -8,6 +8,9 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.noear.solon.core.util.ClassUtil;
@@ -185,6 +188,11 @@ public class SqlToyContextBuilder {
 		sqlToyContext.setBackslashEscaping(properties.getBackslashEscaping());
 		// 默认区域设置,影响日期、数字格式化解析(为null则使用JVM默认区域)
 		sqlToyContext.setDefaultLocale(properties.getDefaultLocale());
+		// JSON处理实现类(不配置则按classpath自动探测:fastjson2 -> jackson3 -> jackson2),
+		// 对齐spring.sqltoy.jsonProvider,修复solon侧此前无此配置入口的遗漏
+		if (properties.getJsonProvider() != null) {
+			sqlToyContext.setJsonProvider(properties.getJsonProvider());
+		}
 		// map 类型结果label是否自动转驼峰处理
 		if (properties.getHumpMapResultTypeLabel() != null) {
 			sqlToyContext.setHumpMapResultTypeLabel(properties.getHumpMapResultTypeLabel());
@@ -534,15 +542,57 @@ public class SqlToyContextBuilder {
 			}
 		}
 
-		// 自定义线程池
+		// 自定义线程池:targetPoolName指向容器内已有线程池bean时交由appContext按名称解析(core的getTaskExecutor);
+		// 为none/空时按taskExecutor参数构建默认线程池(对齐spring starter行为,修复此前仅targetPoolName生效、
+		// threadNamePrefix/corePoolSize等其余参数配置无效的缺陷),插件stop时经SolonTaskExecutor类型识别统一关闭
 		SqlToyContextTaskPoolProperties taskPoolProperties = properties.getTaskExecutor();
 		if (taskPoolProperties != null) {
 			String taskExecutorName = taskPoolProperties.getTargetPoolName();
-			if (StringUtil.isNotBlank(taskExecutorName)) {
+			if (StringUtil.isNotBlank(taskExecutorName) && !"none".equalsIgnoreCase(taskExecutorName)) {
 				sqlToyContext.setTaskExecutorName(taskExecutorName);
+			} else {
+				sqlToyContext.setTaskExecutor(buildTaskExecutor(taskPoolProperties));
 			}
 		}
 
 		return sqlToyContext;
+	}
+
+	/**
+	 * 按taskExecutor配置参数构建默认线程池,参数语义与spring starter的ThreadPoolTaskExecutor一一对应;
+	 * 各参数做null/非法值防御,异常配置回退属性类默认值
+	 *
+	 * @param poolProperties 线程池配置参数
+	 * @return 插件自建的线程池(经SolonTaskExecutor包装,含TTL上下文传播与关闭语义)
+	 */
+	private static SolonTaskExecutor buildTaskExecutor(SqlToyContextTaskPoolProperties poolProperties) {
+		int cpus = Runtime.getRuntime().availableProcessors();
+		int corePoolSize = (poolProperties.getCorePoolSize() != null && poolProperties.getCorePoolSize() > 0)
+				? poolProperties.getCorePoolSize()
+				: cpus / 2 + 1;
+		int maxPoolSize = (poolProperties.getMaxPoolSize() != null && poolProperties.getMaxPoolSize() >= corePoolSize)
+				? poolProperties.getMaxPoolSize()
+				: cpus * 3;
+		int keepAliveSeconds = (poolProperties.getKeepAliveSeconds() != null && poolProperties.getKeepAliveSeconds() >= 0)
+				? poolProperties.getKeepAliveSeconds()
+				: 60;
+		int queueCapacity = (poolProperties.getQueueCapacity() != null && poolProperties.getQueueCapacity() >= 0)
+				? poolProperties.getQueueCapacity()
+				: 200;
+		String threadNamePrefix = StringUtil.isNotBlank(poolProperties.getThreadNamePrefix())
+				? poolProperties.getThreadNamePrefix()
+				: "sqltoyThreadPool";
+		ThreadPoolExecutor delegate = new ThreadPoolExecutor(corePoolSize, maxPoolSize, keepAliveSeconds,
+				TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(queueCapacity),
+				new SolonTaskExecutor.NamedThreadFactory(threadNamePrefix),
+				poolProperties.getRejectedExecutionHandler() != null ? poolProperties.getRejectedExecutionHandler()
+						: new ThreadPoolExecutor.CallerRunsPolicy());
+		boolean waitForTasks = poolProperties.getWaitForTasksToCompleteOnShutdown() != null
+				? poolProperties.getWaitForTasksToCompleteOnShutdown()
+				: true;
+		int awaitTerminationSeconds = poolProperties.getAwaitTerminationSeconds() != null
+				? poolProperties.getAwaitTerminationSeconds()
+				: -1;
+		return new SolonTaskExecutor(delegate, waitForTasks, awaitTerminationSeconds);
 	}
 }

@@ -335,6 +335,12 @@ public class SqlToyContextProperties implements Serializable {
 	private String defaultLocale;
 
 	/**
+	 * JSON 处理实现类(org.sagacity.sqltoy.plugins.json.JsonProvider 的实现), 不配置则按
+	 * classpath 自动探测:fastjson2 -> jackson3 -> jackson2
+	 */
+	private String jsonProvider;
+
+	/**
 	 * @return the sqlResourcesDir
 	 */
 	public String getSqlResourcesDir() {
@@ -978,6 +984,14 @@ public class SqlToyContextProperties implements Serializable {
 	 */
 	public void setDefaultLocale(String defaultLocale) {
 		this.defaultLocale = defaultLocale;
+	}
+
+	public String getJsonProvider() {
+		return jsonProvider;
+	}
+
+	public void setJsonProvider(String jsonProvider) {
+		this.jsonProvider = jsonProvider;
 	}
 
 }
