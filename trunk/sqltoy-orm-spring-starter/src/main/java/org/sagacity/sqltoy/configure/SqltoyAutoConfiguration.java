@@ -567,7 +567,15 @@ public class SqltoyAutoConfiguration {
 	 * @throws IOException
 	 */
 	private void scanResources(List<String> resList, String dir, String suffix, String charset) throws IOException {
-		dir += (dir.endsWith("/") ? "" : "/") + "**/" + suffix;
+		// update 2024-11-9 (同步自6.0) 为后续路径直接支持匹配模式做铺垫:
+		// 已以suffix结尾(直接指定到具体文件)则保持原样,以"/**/"结尾则仅补suffix,避免重复拼接导致资源匹配失效
+		if (!dir.endsWith(suffix)) {
+			if (dir.endsWith("/**/")) {
+				dir += suffix;
+			} else {
+				dir += (dir.endsWith("/") ? "**/" : "/**/") + suffix;
+			}
+		}
 		Resource[] resources = resourcePatternResolver
 				.getResources(dir.replaceFirst("classpath:", ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX));
 		// 遍历资源目录树

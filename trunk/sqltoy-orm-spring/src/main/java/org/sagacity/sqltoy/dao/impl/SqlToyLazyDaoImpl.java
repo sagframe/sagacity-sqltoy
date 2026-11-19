@@ -398,7 +398,7 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 	@Override
 	public <T extends Serializable> T updateSaveFetch(T entity, EntityUpdateCallback<T> callback,
 			String... uniqueProps) {
-		return super.updateSaveFetch(entity, callback, -1, uniqueProps, dataSource);
+		return super.updateSaveFetch(entity, callback, -1, uniqueProps, null);
 	}
 
 	@Override
