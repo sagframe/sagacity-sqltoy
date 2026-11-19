@@ -10,7 +10,6 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 
-// (jre8同步适配:本侧ES栈为httpclient4,isStaleConnection判定的异常类为hc4包名)
 import org.apache.http.ConnectionClosedException;
 import org.apache.http.NoHttpResponseException;
 import org.junit.jupiter.api.Test;
@@ -58,6 +57,28 @@ public class HttpClientUtilsUriTest {
 	public void jsonRequestPathWithoutIndex() {
 		assertEquals("/_search",
 				HttpClientUtils.buildRequestPath(new ElasticEndpoint("http://127.0.0.1:9200"), jsonMode(null, null)));
+	}
+
+	@Test
+	public void jsonRequestPathSkipsIndexCarriedByPathPrefix() {
+		// url本身指向搜索端点时pathPrefix已含index,请求路径不应重复拼接(否则/idx/idx/_search)
+		assertEquals("/_search", HttpClientUtils.buildRequestPath(
+				new ElasticEndpoint("http://127.0.0.1:9200/idx/_search"), jsonMode("idx", null)));
+		// 大小写不敏感
+		assertEquals("/_search", HttpClientUtils.buildRequestPath(
+				new ElasticEndpoint("http://127.0.0.1:9200/IDX/_search"), jsonMode("idx", null)));
+		// type仍正常拼接
+		assertEquals("/doc/_search", HttpClientUtils.buildRequestPath(
+				new ElasticEndpoint("http://127.0.0.1:9200/idx/_search"), jsonMode("idx", "doc")));
+	}
+
+	@Test
+	public void jsonRequestPathAppendsDifferentIndex() {
+		// 与url中不同的index正常拼接;网关子路径(非搜索端点)不影响index拼接
+		assertEquals("/other/_search", HttpClientUtils.buildRequestPath(
+				new ElasticEndpoint("http://127.0.0.1:9200/idx/_search"), jsonMode("other", null)));
+		assertEquals("/idx/_search",
+				HttpClientUtils.buildRequestPath(new ElasticEndpoint("http://127.0.0.1:9200/es"), jsonMode("idx", null)));
 	}
 
 	@Test

@@ -20,9 +20,11 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.ParamFilterProcessor;
+import org.sagacity.sqltoy.config.SqlConfigParseUtils;
 import org.sagacity.sqltoy.config.SqlXMLConfigParse;
 import org.sagacity.sqltoy.config.model.ParamFilterModel;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
+import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.model.ParamsFilter;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 
@@ -231,5 +233,40 @@ public class LikeFilterElementTest {
 		Object[] result = ParamFilterProcessor.filterValue(null, new String[] { "keyword" }, new Object[] { value },
 				Collections.singletonList(filter));
 		return result[0];
+	}
+
+	/**
+	 * 端到端回归:like过滤器right模式对尾部\的值先转义为\\再补%,processLike须按反斜杠奇偶
+	 * 识别该%为未转义通配符;修复前replace("\%","")误剥离导致前缀匹配退化为字面量C:\%的全模糊
+	 */
+	@Test
+	public void rightModeTrailingBackslashKeepsPrefixSemantics() throws Exception {
+		String pattern = (String) process("C:\\", "right", "raw", true, null);
+		assertEquals("C:\\\\%", pattern);
+		SqlToyResult r = SqlConfigParseUtils.processSql("select v from t where v like ?", null,
+				new Object[] { pattern });
+		assertEquals("C:\\\\%", r.getParamsValue()[0], "right模式补的%应保留为通配符,不应被转义为字面量");
+		Class.forName("org.h2.Driver");
+		Connection conn = DriverManager.getConnection("jdbc:h2:mem:likeRightBackslash;MODE=Oracle", "sa", "");
+		try {
+			conn.createStatement().execute("create table t(v varchar(100))");
+			PreparedStatement insert = conn.prepareStatement("insert into t values(?)");
+			for (String value : new String[] { "C:\\Users", "C:\\Windows", "D:\\Users", "C:\\Users\\_x" }) {
+				insert.setString(1, value);
+				insert.execute();
+			}
+			PreparedStatement ps = conn.prepareStatement(r.getSql());
+			ps.setString(1, (String) r.getParamsValue()[0]);
+			ResultSet rs = ps.executeQuery();
+			List<String> hits = new ArrayList<String>();
+			while (rs.next()) {
+				hits.add(rs.getString(1));
+			}
+			Collections.sort(hits);
+			assertEquals(Arrays.asList("C:\\Users", "C:\\Users\\_x", "C:\\Windows"), hits,
+					"应前缀匹配C:\\开头的值,pattern=" + r.getParamsValue()[0] + " sql=" + r.getSql());
+		} finally {
+			conn.close();
+		}
 	}
 }

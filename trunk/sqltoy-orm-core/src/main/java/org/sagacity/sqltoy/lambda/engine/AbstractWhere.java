@@ -337,7 +337,8 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 		if (val instanceof OuterRef) {
 			throw new DataAccessException("likeExact does not support OuterRef values");
 		}
-		String str = String.valueOf(val).replace("%", "\\%");
+		// 先转义反斜杠再转义%:否则值中\%自带的反斜杠不被双写,转义后产生\\%被当作字面\+通配%
+		String str = String.valueOf(val).replace("\\", "\\\\").replace("%", "\\%");
 		StringBuilder sb = new StringBuilder(str.length() + 2);
 		if (left) {
 			sb.append('%');
@@ -368,6 +369,9 @@ public abstract class AbstractWhere<T, Self extends AbstractWhere<T, Self>>
 		if (str.indexOf('%') >= 0) {
 			return str;
 		}
+		// 先转义反斜杠再补%(与like过滤器"先转义值最后补%"同序):否则值尾部\会把补的%转义为字面量,
+		// 前缀/包含匹配退化为字面量匹配;_留给中央解析链processLike统一转义
+		str = str.replace("\\", "\\\\");
 		StringBuilder sb = new StringBuilder(str.length() + 2);
 		if (left) {
 			sb.append('%');

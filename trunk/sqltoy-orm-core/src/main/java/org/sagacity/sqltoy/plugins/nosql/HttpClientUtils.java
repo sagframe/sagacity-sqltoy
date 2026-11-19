@@ -354,7 +354,12 @@ public class HttpClientUtils {
 			return join(path, sqlPath);
 		}
 		if (StringUtil.isNotBlank(nosqlConfig.getIndex())) {
-			path = join(path, nosqlConfig.getIndex());
+			// url本身已指向搜索端点(如http://host:9200/idx/_search)时pathPrefix已含index,
+			// 跳过拼接避免/idx/idx/_search重复
+			String pathPrefix = esConfig.getPathPrefix().toLowerCase(Locale.ROOT);
+			if (!pathPrefix.endsWith("/" + nosqlConfig.getIndex().toLowerCase(Locale.ROOT))) {
+				path = join(path, nosqlConfig.getIndex());
+			}
 		}
 		// es6.x 支持，7开始废弃
 		if (StringUtil.isNotBlank(nosqlConfig.getType())) {
