@@ -1,4 +1,7 @@
-﻿# v5.6.97.jre8 2026-11-11
+﻿# v5.6.98.jre8 2026-11-19
+1、参照6.0分支(6.0.11)同步缺陷修复与新特性,详见sqltoy-orm-core/changelog.md的v5.6.98.jre8条目;本模块变更:TranslateCaffeineManager的cacheManager由static改实例字段(多上下文隔离)、destroy补cacheNameSet.clear()(重建后keepAlive/heap配置不丢失)
+
+# v5.6.97.jre8 2026-11-11
 1、参照6.0分支(6.0.9/6.0.10)回移缺陷修复,不改变5.6用户使用行为,不引入6.0新特性;详见sqltoy-orm-core/changelog.md的v5.6.97.jre8条目(事务与连接安全/线程安全与缓存/工具类缺陷/动态SQL解析/分页count与方言执行/DDL生成器/函数适配修正/锁语义降级/测试体系修复)
 
 # v5.2.9  2022-8-21
