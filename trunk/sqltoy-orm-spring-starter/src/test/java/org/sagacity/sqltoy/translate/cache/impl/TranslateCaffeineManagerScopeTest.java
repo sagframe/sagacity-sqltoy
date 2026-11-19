@@ -10,6 +10,7 @@ import java.util.HashMap;
 
 import org.junit.jupiter.api.Test;
 import org.sagacity.sqltoy.translate.model.TranslateConfigModel;
+import org.springframework.cache.caffeine.CaffeineCache;
 
 /**
  * 回归:caffeine翻译缓存管理器必须按SqlToyContext实例隔离。
@@ -58,5 +59,34 @@ public class TranslateCaffeineManagerScopeTest {
 		assertNotNull(cached, "其它上下文的翻译缓存不得被destroy连带失效");
 		assertEquals("first", cached.get("key")[0]);
 		first.destroy();
+	}
+
+	@Test
+	public void rebuildKeepsCustomCacheSpecs() {
+		TranslateCaffeineManager manager = new TranslateCaffeineManager();
+		assertTrue(manager.init());
+		TranslateConfigModel model = cacheModel();
+		model.setHeap(500);
+		model.setKeepAlive(60);
+		manager.put(model, "scope_cache", null, cacheValue("v1"));
+		assertCustomSpecs(manager);
+		manager.destroy();
+		assertTrue(manager.init());
+		manager.put(model, "scope_cache", null, cacheValue("v2"));
+		// 修复前destroy不清cacheNameSet,重建后put跳过registerCustomCache,
+		// getCache按默认规格动态建缓存(无容量上限/无过期),keepAlive/heap静默丢失
+		assertCustomSpecs(manager);
+		assertEquals("v2", manager.getCache("scope_cache", null).get("key")[0]);
+		manager.destroy();
+	}
+
+	private static void assertCustomSpecs(TranslateCaffeineManager manager) {
+		CaffeineCache cache = (CaffeineCache) manager.cacheManager.getCache("scope_cache");
+		assertNotNull(cache, "缓存应已注册");
+		com.github.benmanes.caffeine.cache.Cache<Object, Object> nativeCache = cache.getNativeCache();
+		assertTrue(nativeCache.policy().eviction().isPresent(), "heap配置应生效(容量受限)");
+		assertEquals(500, nativeCache.policy().eviction().get().getMaximum());
+		assertTrue(nativeCache.policy().expireAfterWrite().isPresent(), "keepAlive配置应生效(写后过期)");
+		assertEquals(60, nativeCache.policy().expireAfterWrite().get().getExpiresAfter(java.util.concurrent.TimeUnit.SECONDS));
 	}
 }

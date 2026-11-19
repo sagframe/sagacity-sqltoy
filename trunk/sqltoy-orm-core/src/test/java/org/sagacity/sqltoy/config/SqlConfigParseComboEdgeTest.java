@@ -52,6 +52,33 @@ public class SqlConfigParseComboEdgeTest {
 		assertEquals("5%0", r.getParamsValue()[0]);
 	}
 
+	// ---------------- like反斜杠奇偶判定 ----------------
+
+	/**
+	 * 回归测试:偶数个反斜杠后的%是未转义通配符(如like过滤器right模式对尾部\的值
+	 * 先转义为\\再补%的产物),不应被当作已转义的\%剥离,否则前缀匹配退化为字面量全模糊
+	 */
+	@Test
+	public void likeEvenBackslashRunBeforePercentKeepsWildcard() {
+		SqlToyResult r = positional("select * from t where name like ?", new Object[] { "C:\\\\%" });
+		assertEquals("C:\\\\%", r.getParamsValue()[0], "偶数反斜杠后的%应保留为通配符,不再补%或转义");
+	}
+
+	/**
+	 * 奇数个反斜杠后的%是已转义的字面量%(escapeLike过滤器产物),应前后补%作全模糊
+	 */
+	@Test
+	public void likeOddBackslashRunBeforePercentTreatedAsLiteral() {
+		SqlToyResult r = positional("select * from t where name like ?", new Object[] { "abc\\%" });
+		assertEquals("%abc\\%%", r.getParamsValue()[0]);
+	}
+
+	@Test
+	public void likeTrailingBackslashWithoutPercentGetsWrapped() {
+		SqlToyResult r = positional("select * from t where name like ?", new Object[] { "C:\\" });
+		assertEquals("%C:\\\\%", r.getParamsValue()[0], "尾部反斜杠应被转义并前后补%");
+	}
+
 	/**
 	 * 回归测试:字符串字面量中的?不参与like的参数计数(修复后与JDBC驱动语义对齐)。
 	 * '50?'中的?曾被ARG_NAME_PATTERN计数,like ?对位到不存在的第2个参数导致数组越界。

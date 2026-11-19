@@ -869,7 +869,10 @@ public class BeanUtil {
 		Object paramValue = value;
 		// 1
 		if (paramValue == null) {
-			// 1~5 原生数字类型
+			// 1~5 原生数字类型(short须返回Short:Integer装箱值无法经反射窄化赋给short形参)
+			if (DataType.primitiveShortType == typeValue) {
+				return (short) 0;
+			}
 			if (typeValue >= DataType.primitiveIntType && typeValue <= DataType.primitiveDoubleType) {
 				return 0;
 			}
@@ -1251,7 +1254,7 @@ public class BeanUtil {
 		if (DataType.primitiveShortType == typeValue) {
 			String valueStr = enumToString(paramValue);
 			if ("".equals(valueStr.trim())) {
-				return 0;
+				return (short) 0;
 			}
 			return Short.parseShort(toIntegerText(valueStr));
 		}
@@ -1309,7 +1312,7 @@ public class BeanUtil {
 			// (先由toIntegerText归一,空串返回0),越界显式抛NumberFormatException
 			String valueStr = enumToString(paramValue);
 			if ("".equals(valueStr.trim())) {
-				return 0;
+				return (byte) 0;
 			}
 			return Byte.parseByte(toIntegerText(valueStr));
 		}

@@ -61,14 +61,14 @@ public class SqlToyContextBuilderParityTest {
 	}
 
 	@Test
-	public void defaultTaskExecutorBuiltWhenTargetPoolNameIsNone() throws Exception {
+	public void defaultTaskExecutorBuiltWhenTargetPoolNameUnset() throws Exception {
 		SqlToyContextProperties properties = new SqlToyContextProperties();
 		SqlToyContextTaskPoolProperties pool = new SqlToyContextTaskPoolProperties();
 		pool.setThreadNamePrefix("demoPool");
 		properties.setTaskExecutor(pool);
 		SqlToyContext context = new SqlToyContextBuilder(properties, new EmptyAppContext()).build();
 		Executor executor = context.getTaskExecutor();
-		assertInstanceOf(SolonTaskExecutor.class, executor, "targetPoolName=none时应按参数构建默认线程池");
+		assertInstanceOf(SolonTaskExecutor.class, executor, "targetPoolName未配置时应按参数构建默认线程池(对齐spring未配置建池)");
 		// 参数生效冒烟:任务可执行且线程名带配置前缀
 		CountDownLatch latch = new CountDownLatch(1);
 		AtomicReference<String> threadName = new AtomicReference<>();
@@ -79,6 +79,18 @@ public class SqlToyContextBuilderParityTest {
 		assertTrue(latch.await(5, TimeUnit.SECONDS), "任务应在默认线程池中执行");
 		assertTrue(threadName.get().startsWith("demoPool-"), "threadNamePrefix应生效,实际:" + threadName.get());
 		((SolonTaskExecutor) executor).shutdown();
+	}
+
+	@Test
+	public void explicitNoneFallsBackWithoutBuildingPool() throws Exception {
+		SqlToyContextProperties properties = new SqlToyContextProperties();
+		SqlToyContextTaskPoolProperties pool = new SqlToyContextTaskPoolProperties();
+		pool.setTargetPoolName("none");
+		properties.setTaskExecutor(pool);
+		SqlToyContext context = new SqlToyContextBuilder(properties, new EmptyAppContext()).build();
+		// 显式none与spring starter语义一致:不建专属池,回落core的taskExecutor默认值(commonPool的TTL包装)
+		assertTrue(!(context.getTaskExecutor() instanceof SolonTaskExecutor),
+				"显式targetPoolName=none时不应自建池,实际:" + context.getTaskExecutor());
 	}
 
 	@Test

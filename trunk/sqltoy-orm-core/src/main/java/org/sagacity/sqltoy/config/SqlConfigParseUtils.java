@@ -1572,12 +1572,26 @@ public class SqlConfigParseUtils {
 			if (null == likeValStr) {
 				continue;
 			}
-			// 已被escapeLike过滤器转义的%(\%)排除，避免干扰后续判断
-			String stripped = likeValStr.replace("\\%", "");
+			// 已被escapeLike过滤器转义的%(\%)排除，避免干扰后续判断;按反斜杠奇偶判定:
+			// \\%中的%是未转义通配符(前导\\为字面反斜杠),简单replace("\%","")会误剥离,
+			// 导致like过滤器right模式补的%被当作字面量转义、前缀匹配退化为全模糊
+			boolean hasUnescapedPercent = false;
+			int backslashRun = 0;
+			for (int i = 0; i < likeValStr.length() && !hasUnescapedPercent; i++) {
+				char ch = likeValStr.charAt(i);
+				if (ch == '\\') {
+					backslashRun++;
+				} else {
+					if (ch == '%' && backslashRun % 2 == 0) {
+						hasUnescapedPercent = true;
+					}
+					backslashRun = 0;
+				}
+			}
 			// 判断转义后的值是否包含反斜杠,决定是否需要追加ESCAPE子句
 			boolean needEscape = false;
 			// 只要参数中已经有%符号，这种情况就不需要再加%符号了,否则会影响用户的查询意图
-			if (stripped.indexOf("%") != -1) {
+			if (hasUnescapedPercent) {
 				// 仅转义_等特殊字符,避免用户输入的_被当作通配符
 				String escaped = SqlUtil.escapeLikeValue(likeValStr, dbType, false);
 				sqlToyResult.getParamsValue()[paramCnt] = escaped;

@@ -11,9 +11,10 @@ import java.util.concurrent.ThreadPoolExecutor;
  */
 public class SqlToyContextTaskPoolProperties {
 	/**
-	 * 指定线程池名称，该属性指定后则以指定的线程池作为默认线程池
+	 * 指定线程池名称，该属性指定后则以指定的线程池作为默认线程池;
+	 * 未配置/空时按参数构建默认线程池,显式none时不建池、回落core的commonPool(与spring starter语义一致)
 	 */
-	private String targetPoolName = "none";
+	private String targetPoolName;
 
 	/**
 	 * 线程前缀
