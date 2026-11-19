@@ -56,6 +56,22 @@
 > (LoopDeepEdgeTest 15例/SecureSqlLoopFunctionalTest 更新19例/SqlLoopBlankRefResidueTest 3例/
 > SuspectVerificationTest 6例)全部 jre8-clean 直接拷贝。门禁:326 类 2511 例全绿(82 例环境性跳过,
 > 较上轮净增 30 例)。
+>
+> **第五轮同步完成(2026-11-19,6.0.11 正式发版日)**:6.0 侧 pom 定稿 6.0.11、changelog 扩写定稿。
+> 实际进入:①**SqlToyContext 的 initialize 失败回滚**——新增 claimedStaticStateKeys 记录本context认领的
+> JVM静态配置key,initialize 抛异常时经 STATIC_STATE_OWNERS.removeAll 释放首占权(否则失败的context永久
+> 锁死 functionConverts/keywordSign/dialectConfig 等含注入正则在内的配置,后续上下文携带正确配置也无法
+> 生效),原主体移入 doInitialize;②**FIFODynamicFetchCacheManager 清理顺序并发修复**——clear/remove 与
+> 过期检测路径统一"先删过期登记再清数据"(原顺序会把并发重建写入的新登记误清/误跳过数据删除);③**BeanUtil
+> 原生byte/short 空串/null 窄化修复**(3处)——null段新增 primitiveShortType 特判、case25/case29 空串
+> 返回 (short)0/(byte)0(原 Integer 装箱 0 无法经 Method.invoke 窄化赋给 byte/short 形参,
+> setProperty 抛 IllegalArgumentException);④**TranslateCaffeineManager.destroy 补 cacheNameSet.clear()**
+> (spring/starter 双份)——否则 init 重建 manager 后 put 跳过 registerCustomCache,keepAlive/heap 配置
+> 静默丢失;⑤**solon targetPoolName 三分支语义对齐 spring**——默认值 "none"→null,未配置/空时建默认池、
+> 显式 "none" 不建池回落 core 的 commonPool(原 none/空都建池,与 spring starter 语义不一致)。
+> 新测试:SqlToyContextInitFailureRollbackTest、BeanUtilPrimitiveBlankAssignTest、ScopeTest 增
+> rebuildKeepsCustomCacheSpecs、ParityTest 重构为 Unset/None/Blank 三态。门禁:core 全量+starter 4例+
+> solon 7例+spring 编译。
 
 ## 同步流程(每个 6.0 release tag 执行一轮)
 

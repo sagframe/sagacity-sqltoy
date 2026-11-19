@@ -145,5 +145,8 @@ public class TranslateCaffeineManager extends TranslateCacheManager {
 		if (cacheManager != null) {
 			cacheManager = null;
 		}
+		// 注册标记随同清除:否则init重建manager后put跳过registerCustomCache,
+		// getCache按默认规格动态建缓存,keepAlive/heap配置静默丢失
+		cacheNameSet.clear();
 	}
 }

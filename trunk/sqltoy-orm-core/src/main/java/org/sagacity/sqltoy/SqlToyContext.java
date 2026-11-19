@@ -510,6 +510,9 @@ public class SqlToyContext {
 	private static final java.util.Set<String> STATIC_STATE_OWNERS = java.util.concurrent.ConcurrentHashMap.newKeySet();
 	private static final Logger STATIC_LOGGER = LoggerFactory.getLogger(SqlToyContext.class);
 
+	// 本context认领的静态配置key:initialize失败时整体释放,避免首占权被失败的context永久锁死
+	private final java.util.Set<String> claimedStaticStateKeys = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
 	/**
 	 * 认领JVM级静态配置项:首个认领者生效,后来者被忽略并告警
 	 * 
@@ -528,15 +531,26 @@ public class SqlToyContext {
 	}
 
 	/**
+	 * 认领并记录到本context:initialize失败时据此释放首占权
+	 */
+	private boolean claimStaticStateOwned(String key, boolean hasNewValue) {
+		if (claimStaticState(key, hasNewValue)) {
+			claimedStaticStateKeys.add(key);
+			return true;
+		}
+		return false;
+	}
+
+	/**
 	 * update 2026-11-15 应用JVM级静态配置:functionConverts与keywordSign走"首个初始化的context生效",
 	 * 后者携带不同配置时告警并忽略。原实现由setter即时写FunctionUtils/SqlToyConstants的全局值,
 	 * last-wins且无告警,多上下文(多Spring上下文/测试上下文/热部署)下会静默改变先初始化上下文的语义
 	 */
 	void applyJvmStaticConfig() {
-		if (functionConverts != null && claimStaticState("functionConverts", true)) {
+		if (functionConverts != null && claimStaticStateOwned("functionConverts", true)) {
 			applyFunctionConverts();
 		}
-		if (StringUtil.isNotBlank(keywordSign) && claimStaticState("keywordSign", true)) {
+		if (StringUtil.isNotBlank(keywordSign) && claimStaticStateOwned("keywordSign", true)) {
 			SqlToyConstants.keywordSign = keywordSign;
 		}
 	}
@@ -563,6 +577,18 @@ public class SqlToyContext {
 	}
 
 	public void initialize() throws Exception {
+		try {
+			doInitialize();
+		} catch (Exception e) {
+			// 初始化失败时释放本次认领的JVM级静态配置首占权:否则失败的context永久锁死这些配置项,
+			// 同JVM后续上下文(测试套件/热部署重试)即使携带正确配置也无法生效(含安全攸关的注入正则)
+			STATIC_STATE_OWNERS.removeAll(claimedStaticStateKeys);
+			claimedStaticStateKeys.clear();
+			throw e;
+		}
+	}
+
+	private void doInitialize() throws Exception {
 		// JSON provider: attempt initialization at startup (explicit config wins over
 		// classpath detection; a missing JSON library only warns, it does not block
 		// startup)
@@ -570,34 +596,34 @@ public class SqlToyContext {
 		logger.debug("start init sqltoy ..............................");
 		// 加载sqltoy的各类参数,如db2是否要增加with
 		// ur等,详见org/sagacity/sqltoy/sqltoy-default.properties
-		if (claimStaticState("dialectConfig", dialectConfig != null && !dialectConfig.isEmpty())) {
+		if (claimStaticStateOwned("dialectConfig", dialectConfig != null && !dialectConfig.isEmpty())) {
 			SqlToyConstants.loadProperties(dialectConfig);
 		}
 		// update 2026-11-15 JVM级静态配置(functionConverts/keywordSign)延迟到initialize阶段首占生效,
 		// 与dialectConfig等其它JVM级配置同一口径;原先在setter中即时写全局,后配置的上下文会静默覆盖前者
 		applyJvmStaticConfig();
 		// 设置分布式id缓存时效天数
-		if (distributeIdCacheExpireDays != null && claimStaticState("distributeIdCacheExpireDays", true)) {
+		if (distributeIdCacheExpireDays != null && claimStaticStateOwned("distributeIdCacheExpireDays", true)) {
 			SqlToyConstants.distributeIdCacheExpireDays = distributeIdCacheExpireDays;
 		}
 		// 设置默认区域(影响日期、数字格式化解析的区域符号)
-		if (StringUtil.isNotBlank(defaultLocale) && claimStaticState("defaultLocale", true)) {
+		if (StringUtil.isNotBlank(defaultLocale) && claimStaticStateOwned("defaultLocale", true)) {
 			SqlToyConstants.defaultLocale = SqlToyConstants.convertLocale(defaultLocale);
 		}
 		// 设置保留字
-		if (claimStaticState("reservedWords", reservedWords != null && !reservedWords.isEmpty())) {
+		if (claimStaticStateOwned("reservedWords", reservedWords != null && !reservedWords.isEmpty())) {
 			ReservedWordsUtil.put(reservedWords);
 		}
 		// 初始化方言对应的类别代码，避免线程安全
 		DataSourceUtils.initialize();
-		if (firstBizCodeTrace != null && claimStaticState("firstBizCodeTrace", true)) {
+		if (firstBizCodeTrace != null && claimStaticStateOwned("firstBizCodeTrace", true)) {
 			SqlExecuteStat.firstBizCodeTrace = firstBizCodeTrace;
 		}
 		// 设置方言映射(默认OSCAR==>gaussdb)
-		if (dialectMap != null && !dialectMap.isEmpty() && claimStaticState("dialectMap", true)) {
+		if (dialectMap != null && !dialectMap.isEmpty() && claimStaticStateOwned("dialectMap", true)) {
 			DataSourceUtils.dialectMap = dialectMap;
 		}
-		if (dialectReturnPrimaryColumnCase != null && claimStaticState("dialectReturnPrimaryColumnCase", true)) {
+		if (dialectReturnPrimaryColumnCase != null && claimStaticStateOwned("dialectReturnPrimaryColumnCase", true)) {
 			SqlToyConstants.dialectReturnPrimaryColumnCase = dialectReturnPrimaryColumnCase;
 		}
 		if (dynamicFecthCacheManager == null) {
@@ -610,7 +636,7 @@ public class SqlToyContext {
 		}
 		// 设置sql注入关键词(不可被后初始化的context覆写削弱,安全攸关)
 		if (sqlInjectionRegexes != null && sqlInjectionRegexes.length > 0
-				&& claimStaticState("sqlInjectionRegexes", true)) {
+				&& claimStaticStateOwned("sqlInjectionRegexes", true)) {
 			Pattern[] patterns = new Pattern[sqlInjectionRegexes.length];
 			int index = 0;
 			for (String regex : sqlInjectionRegexes) {
@@ -622,7 +648,7 @@ public class SqlToyContext {
 		// 初始化默认dataSource
 		initDefaultDataSource();
 		// 设置workerId和dataCenterId,为使用snowflake主键ID产生算法服务(workerId被后续context覆写会导致ID重复,首个生效)
-		if (claimStaticState("workerAndDataCenterId", workerId != null || dataCenterId != null || serverId != null)) {
+		if (claimStaticStateOwned("workerAndDataCenterId", workerId != null || dataCenterId != null || serverId != null)) {
 			SqlToyConstants.setWorkerAndDataCenterId(workerId, dataCenterId, serverId);
 		}
 		// 初始化脚本加载器
@@ -641,7 +667,7 @@ public class SqlToyContext {
 		// 初始化实体对象管理器(此功能已经无实际意义,已经改为即用即加载而非提前加载)
 		entityManager.initialize(this);
 		// 以下JVM级运行参数整体首个生效,后续context覆写会破坏先初始化context的行为
-		if (claimStaticState("runtimeConstants", true)) {
+		if (claimStaticStateOwned("runtimeConstants", true)) {
 			// 设置默认fetchSize
 			SqlToyConstants.FETCH_SIZE = this.fetchSize;
 			SqlToyConstants.executeSqlBlankToNull = this.executeSqlBlankToNull;

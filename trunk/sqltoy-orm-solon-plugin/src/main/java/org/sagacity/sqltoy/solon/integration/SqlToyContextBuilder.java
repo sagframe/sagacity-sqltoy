@@ -455,14 +455,15 @@ public class SqlToyContextBuilder {
 		}
 
 		// 自定义线程池:targetPoolName指向容器内已有线程池bean时交由appContext按名称解析(core的getTaskExecutor);
-		// 为none/空时按taskExecutor参数构建默认线程池(对齐spring starter行为,修复此前仅targetPoolName生效、
-		// threadNamePrefix/corePoolSize等其余参数配置无效的缺陷),插件stop时经SolonTaskExecutor类型识别统一关闭
+		// 未配置/空时按taskExecutor参数构建默认线程池(对齐spring starter未配置时建池的行为,修复此前仅
+		// targetPoolName生效、threadNamePrefix/corePoolSize等其余参数配置无效的缺陷);显式none时不建池,
+		// 回落core的commonPool(与spring starter显式none不建池的语义一致);插件stop时经SolonTaskExecutor类型识别统一关闭
 		SqlToyContextTaskPoolProperties taskPoolProperties = properties.getTaskExecutor();
 		if (taskPoolProperties != null) {
 			String taskExecutorName = taskPoolProperties.getTargetPoolName();
 			if (StringUtil.isNotBlank(taskExecutorName) && !"none".equalsIgnoreCase(taskExecutorName)) {
 				sqlToyContext.setTaskExecutorName(taskExecutorName);
-			} else {
+			} else if (StringUtil.isBlank(taskExecutorName)) {
 				sqlToyContext.setTaskExecutor(buildTaskExecutor(taskPoolProperties));
 			}
 		}

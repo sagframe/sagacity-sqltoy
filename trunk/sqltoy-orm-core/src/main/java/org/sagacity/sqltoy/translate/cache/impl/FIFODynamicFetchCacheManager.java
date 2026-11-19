@@ -101,15 +101,15 @@ public class FIFODynamicFetchCacheManager implements DynamicFecthCacheManager {
 		if (dynamicFetchCacheMap.containsKey(cacheNameLower)) {
 			if (cacheType == null) {
 				logger.debug("cleared dynamic query data cache cacheName={}!", cacheName);
-				dynamicFetchCacheMap.get(cacheNameLower).clear();
-				// 同步清除该缓存全部cacheType的过期登记,避免不再使用的缓存条目常驻内存
+				// 先清过期登记再清数据:避免清数据后、清登记前并发重建写入的新登记被误删
 				cacheInitTime.keySet().removeIf(key -> key.equals(cacheNameLower)
 						|| key.startsWith(cacheNameLower.concat(CACHE_TYPE_JOIN_SIGN)));
+				dynamicFetchCacheMap.get(cacheNameLower).clear();
 			} else {
 				logger.debug("cleared dynamic query data cache cacheName={}, cacheType={}!", cacheName, cacheType);
-				dynamicFetchCacheMap.get(cacheNameLower).remove(cacheType.toLowerCase(Locale.ROOT));
 				cacheInitTime
 						.remove(cacheNameLower.concat(CACHE_TYPE_JOIN_SIGN).concat(cacheType.toLowerCase(Locale.ROOT)));
+				dynamicFetchCacheMap.get(cacheNameLower).remove(cacheType.toLowerCase(Locale.ROOT));
 			}
 		}
 	}
@@ -196,15 +196,18 @@ public class FIFODynamicFetchCacheManager implements DynamicFecthCacheManager {
 						&& System.currentTimeMillis() > initTimeAndKeepAlive[0] + initTimeAndKeepAlive[1] * 1000) {
 					ConcurrentHashMap<String, FIFOMap<String, Object[]>> cacheElements = dynamicFetchCacheMap
 							.get(cacheNameLower);
-					// 缓存可能已不存在(如clear后被清理),此时仅需清理过期登记
-					if (cacheElements != null) {
-						cacheElements.remove((cacheTypeLower == null) ? cacheNameLower : cacheTypeLower);
+					// 先条件删除过期登记再删数据:登记被并发重建(getDynamicCache写入新Long[]实例)时
+					// remove(key,value)按身份不命中,跳过数据删除;若先删数据后删登记,重建写入的新登记
+					// 会被误删导致该缓存永不过期
+					if (cacheInitTime.remove(cacheKey, initTimeAndKeepAlive)) {
+						// 缓存可能已不存在(如clear后被清理),此时仅需清理过期登记
+						if (cacheElements != null) {
+							cacheElements.remove((cacheTypeLower == null) ? cacheNameLower : cacheTypeLower);
+						}
+						logger.debug(
+								"cache:cacheName={}, cacheType={} data stored longer than keepAlive={} seconds is automatically cleared!",
+								cacheNameLower, cacheTypeLower, initTimeAndKeepAlive[1]);
 					}
-					// 清除过期缓存使用时间定义
-					cacheInitTime.remove(cacheKey);
-					logger.debug(
-							"cache:cacheName={}, cacheType={} data stored longer than keepAlive={} seconds is automatically cleared!",
-							cacheNameLower, cacheTypeLower, initTimeAndKeepAlive[1]);
 				}
 			} catch (Exception e) {
 				logger.error("failed to check the timeout data of the dynamic cache, cacheKey:{}", entry.getKey(), e);
