@@ -72,6 +72,17 @@
 > 新测试:SqlToyContextInitFailureRollbackTest、BeanUtilPrimitiveBlankAssignTest、ScopeTest 增
 > rebuildKeepsCustomCacheSpecs、ParityTest 重构为 Unset/None/Blank 三态。门禁:core 全量+starter 4例+
 > solon 7例+spring 编译。
+>
+> **第六轮同步完成(2026-11-19 晚,LIKE 转义顺序批次)**:中央解析链与 lambda like 族的转义顺序缺陷修复——
+> ①SqlConfigParseUtils.processLike 判定"值是否已含未转义%"由 replace("\\%","") 改为反斜杠奇偶扫描
+> (\\\\%中的%是未转义通配符,旧实现误剥离致 right 模式尾部\\值先转义再补%后被误判无通配符、前缀匹配退化
+> 为全模糊);②AbstractWhere 的 wrapLike/exactLike 对齐过滤器"先转义值最后补%"同序(修复 like/notLike/
+> likeRight/likeExact* 尾部\\把补的%转义为字面量,单表与join双通道共用同获修复);③HttpClientUtils 的
+> index 拼接防重复(url已指向/idx/_search时pathPrefix已含index,endsWith守卫跳过拼接,避免/idx/idx/
+> _search)——hunk级合并至hc4形态;④DataSourceUtils 配套。测试:LikeFilterChainParityTest(6例)与
+> LambdaLikeBackslashH2Test(10例)新增,**List.of→Arrays.asList 转换(10+13处)后进入适配清单**;
+> UriTest 拷贝6.0版后恢复hc4异常import(新增2例index防重复);ComboEdge增3例、LikeFilterElementTest增1例。
+> 门禁:core 330类 2541例全绿(82例环境性跳过,较上轮净增22例)。
 
 ## 同步流程(每个 6.0 release tag 执行一轮)
 
