@@ -722,7 +722,7 @@
 			<xsd:element name="l-like" minOccurs="0"
 				maxOccurs="unbounded">
 				<xsd:annotation>
-					<xsd:documentation><![CDATA[like查询时,当参数不为null或空白的情况下给参数右边补%]]></xsd:documentation>
+					<xsd:documentation><![CDATA[like查询时,当参数不为null或空白的情况下给参数左边补%]]></xsd:documentation>
 				</xsd:annotation>
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string"
@@ -733,7 +733,7 @@
 			<xsd:element name="r-like" minOccurs="0"
 				maxOccurs="unbounded">
 				<xsd:annotation>
-					<xsd:documentation><![CDATA[like查询时,当参数不为null或空白的情况下给参数左边补%]]></xsd:documentation>
+					<xsd:documentation><![CDATA[like查询时,当参数不为null或空白的情况下给参数右边补%]]></xsd:documentation>
 				</xsd:annotation>
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string"
