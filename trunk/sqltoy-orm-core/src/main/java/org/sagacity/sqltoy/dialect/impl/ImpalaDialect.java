@@ -363,6 +363,14 @@ public class ImpalaDialect implements Dialect {
 	}
 
 	@Override
+	public Serializable updateSaveFetch(SqlToyContext sqlToyContext, Serializable entity,
+			UpdateRowCallback updateRowCallback, int lockWaitTimeout, String[] uniqueProps, Connection conn,
+			DBProfile profile, String tableName, boolean insertIfAbsent) throws Exception {
+		// 不支持
+		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
+	}
+
+	@Override
 	public StoreResult executeStore(SqlToyContext sqlToyContext, final SqlToyConfig sqlToyConfig, final String sql,
 			final Object[] inParamsValue, final Integer[] outParamsType, final boolean moreResult,
 			final Connection conn, DBProfile profile, final int fetchSize, final Integer timeout) throws Exception {

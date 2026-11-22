@@ -406,6 +406,12 @@ public class SqlToyLazyDaoImpl extends SpringDaoSupport implements SqlToyLazyDao
 		return super.updateSaveFetch(entity, callback, lockWaitTimeout, uniqueProps, dataSource);
 	}
 
+	@Override
+	public <T extends Serializable> T updateFetch(final T entity, final EntityUpdateCallback<T> callback,
+			final String... uniqueProps) {
+		return super.updateFetch(entity, callback, -1, uniqueProps, dataSource);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 

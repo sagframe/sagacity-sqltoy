@@ -1059,6 +1059,10 @@ public class DialectUtils {
 					// convert(json,?)产物为json类型值,赋给GA服务器上的存量nvarchar承载列反报
 					// "Implicit conversion json to nvarchar not allowed"(服务器级探测无法区分列级承载形态,门控废弃)
 					sql.append("?");
+				} else if (extType == java.sql.Types.BOOLEAN && DBType.HANA == dbType) {
+					// update 2026-11-22 hana merge using select裸?被推断VARCHAR,与BOOLEAN列冲突
+					// ([266]inconsistent datatype VARCHAR incompatible BOOLEAN,真库实证);显式cast定型
+					sql.append("cast(? as BOOLEAN)");
 				} else {
 					sql.append("?");
 				}
@@ -1581,7 +1585,13 @@ public class DialectUtils {
 				sql.append("=");
 				// 判断强制修改
 				if (fupc.contains(columnName)) {
-					sql.append("?");
+					// update 2026-11-22 vastbase boolean强制更新须cast(? as boolean):裸?+setString/setNull
+					// 经驱动发varchar/smallint与boolean列拒收(真库实证U1/U2);cast定型后值与null均可行(U5/U7)
+					if (fieldMeta.getType() == java.sql.Types.BOOLEAN && dbType == DBType.VASTBASE) {
+						sql.append("cast(? as boolean)");
+					} else {
+						sql.append("?");
+					}
 				} else {
 					String defaultColName = columnName;
 					// update 2026-9-7 注意这里nvl的逻辑是数据弹性修改，请不要随意去除
@@ -1605,6 +1615,12 @@ public class DialectUtils {
 						// Invalid data type、
 						// case when同报merge array、cast(? as vector)语法不支持——唯一可行形态为直赋col=?(null将覆盖原值,
 						// ob vector更新的能力边界,与geometry/json的coalesce可行结论不同)
+						directAssign = true;
+					} else if (fieldMeta.getType() == java.sql.Types.BLOB && dbType == DBType.STARROCKS) {
+						// update 2026-11-22 starrocks VARBINARY列coalesce类型合并失败:setBytes的hex串被推断
+						// DECIMAL,coalesce(?,col)/coalesce(cast(? as VARBINARY),col)/内联X'..'均报Cannot cast
+						// DECIMAL to VARBINARY(真库A/B实证);直赋col=?+setBytes可行(同ob vector能力边界,
+						// null参数将覆盖原值,非null更新生效)
 						directAssign = true;
 					}
 					// 强调:这里必须要加类似nvl(?,col)模式，逻辑就是弹性修改(directAssign直赋形态除外)
@@ -1680,8 +1696,18 @@ public class DialectUtils {
 						if (convertBlob && "byte[]".equals(fieldMeta.getFieldType())) {
 							sql.append("cast(? as bytea)");
 						} else {
+							// starrocks VARBINARY经上方directAssign直赋col=?+setBytes(真库实证可行),
+							// 不可cast(? as VARBINARY):hex串被推断DECIMAL,cast DECIMAL→VARBINARY失败
 							sql.append("?");
 						}
+					} else if (fieldMeta.getType() == java.sql.Types.BOOLEAN
+							&& (dbType == DBType.VASTBASE || dbType == DBType.HANA)) {
+						// update 2026-11-22 vastbase boolean:驱动setBoolean发smallint拒收,绑定setObject(文本,OTHER)(见SqlUtil),
+						// update以cast(? as boolean)定型,nvl两端同型(varchar→boolean可cast,smallint→boolean非法,真库实证)
+						// update 2026-11-22 hana boolean:coalesce(?,flag)的裸?被推断VARCHAR,报
+						// [266]inconsistent datatype VARCHAR incompatible BOOLEAN(真库实证);cast(? as boolean)
+						// 后coalesce两端同型通过(merge路径的同类cast由DialectUtils merge分支承担)
+						sql.append("cast(? as boolean)");
 					} else {
 						// 解决sqlserver decimal 类型小数位丢失问题
 						if (isMSsql && fieldMeta.getType() == java.sql.Types.DECIMAL) {

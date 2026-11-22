@@ -11,6 +11,8 @@ import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.utils.BeanUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.SqlUtil;
+import org.sagacity.sqltoy.utils.DataSourceUtils;
+import org.sagacity.sqltoy.utils.NativeTypeUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
@@ -82,7 +84,14 @@ public class OpenGaussDialectUtils {
 	public static void wrapSelectFields(StringBuilder sql, String columnName, FieldMeta fieldMeta, DBProfile profile) {
 		Integer dbType = profile.getDbType();
 		int jdbcType = fieldMeta.getType();
-		if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NVARCHAR
+		// update 2026-11-21 特殊族nativeType跨方言翻译前置(同pg工具,目标取当前dbType)
+		int specialTarget = (dbType == null) ? DataSourceUtils.DBType.OPENGAUSS : dbType;
+		String specialCast = (fieldMeta.getSpecialFamily() == null) ? null
+				: NativeTypeUtils.specialCastType(specialTarget, fieldMeta.getSpecialFamily(),
+						fieldMeta.getNativeType());
+		if (StringUtil.isNotBlank(specialCast)) {
+			sql.append("cast(? as " + specialCast + ")");
+		} else if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NVARCHAR
 				|| jdbcType == java.sql.Types.LONGVARCHAR || jdbcType == java.sql.Types.LONGNVARCHAR) {
 			sql.append("?");
 		} else if (jdbcType == java.sql.Types.CHAR || jdbcType == java.sql.Types.NCHAR) {
@@ -100,6 +109,14 @@ public class OpenGaussDialectUtils {
 			sql.append("cast(? as integer)");
 		} else if (jdbcType == java.sql.Types.TIMESTAMP) {
 			sql.append("cast(? as timestamp)");
+		} else if (jdbcType == JdbcTypes.UUID) {
+			// update 2026-11-22 uuid列jdbcType分派(族parse期上调可达):pg内核系/h2原生列
+			// cast定型;其余方言uuid为varchar(36)承载列裸?即正确(else的nativeType原样cast
+			// 在dm/db2等目标非法,须在此拦截)
+			sql.append("cast(? as uuid)");
+		} else if (jdbcType == java.sql.Types.TIMESTAMP_WITH_TIMEZONE) {
+			// update 2026-11-22 2014此前落else以nativeType(timestamptz)原样cast,显式定型
+			sql.append("cast(? as timestamptz)");
 		} else if (jdbcType == java.sql.Types.DOUBLE) {
 			sql.append("cast(? as double precision)");
 		} else if (jdbcType == java.sql.Types.FLOAT) {
@@ -144,10 +161,21 @@ public class OpenGaussDialectUtils {
 			sql.append("cast(? as geometry)");
 		} else {
 			// 数组、json等特殊类型
-			if (StringUtil.isNotBlank(fieldMeta.getNativeType())) {
+			// update 2026-11-21 到达此处族为null(原样透传精确控制)或前置翻译null场景,
+			// 可翻译族已在前置分支处理(见方法头)
+			if (StringUtil.isNotBlank(fieldMeta.getNativeType()) && fieldMeta.getSpecialFamily() == null) {
 				sql.append("cast(? as " + fieldMeta.getNativeType() + ")");
 			} else {
-				sql.append("?");
+				// update 2026-11-21 数组列按组件类型cast定型(本else分支服务gaussdb/openGauss/mogdb/
+				// vastbase/stardb/oscar),与PostgreSqlDialectUtils同优先链(nativeType>组件cast>裸?),
+				// cast元素类型名与SqlUtil.setArray的createArrayOf口径对齐;未识别组件维持裸?
+				// 走@Column(nativeType=..)口子;oscar数组能力未实证,cast与否不影响裸?现状语义
+				String pgElementType = PostgreSqlDialectUtils.pgArrayElementTypeName(fieldMeta.getArrayComponentType());
+				if (pgElementType != null) {
+					sql.append("cast(? as " + pgElementType + "[])");
+				} else {
+					sql.append("?");
+				}
 			}
 		}
 		sql.append(" as ");

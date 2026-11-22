@@ -2027,21 +2027,42 @@ public class DialectFactory {
 	public Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
 			final UpdateRowCallback updateRowCallback, final int lockWaitTimeout, final String[] uniqueProps,
 			final DataSource dataSource) {
+		return updateSaveFetch(sqlToyContext, entity, updateRowCallback, lockWaitTimeout, uniqueProps, true, dataSource);
+	}
+
+	/**
+	 * 单实体对象化 updateFetch：按实体唯一属性锁查询，存在则修改并返回修改后的实体；不存在返回 null，不执行 insert。
+	 */
+	public Serializable updateFetch(final SqlToyContext sqlToyContext, final Serializable entity,
+			final UpdateRowCallback updateRowCallback, final int lockWaitTimeout, final String[] uniqueProps,
+			final DataSource dataSource) {
+		return updateSaveFetch(sqlToyContext, entity, updateRowCallback, lockWaitTimeout, uniqueProps, false,
+				dataSource);
+	}
+
+	/**
+	 * updateSaveFetch/updateFetch 共用的执行核：insertIfAbsent 决定记录不存在时是否补 insert。
+	 */
+	private Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
+			final UpdateRowCallback updateRowCallback, final int lockWaitTimeout, final String[] uniqueProps,
+			final boolean insertIfAbsent, final DataSource dataSource) {
 		if (entity == null || updateRowCallback == null) {
-			logger.warn("updateSaveFetch entity or updateRowCallback is null,please check!");
+			logger.warn((insertIfAbsent ? "updateSaveFetch" : "updateFetch")
+					+ " entity or updateRowCallback is null,please check!");
 			return null;
 		}
 		validEntity(sqlToyContext, entity.getClass(), false);
 		try {
 			SqlExecuteStat.start(BeanUtil.getEntityClass(entity.getClass()).getName(),
-					OperateDetailType.updateSaveFetch, entity.getClass(), sqlToyContext.isDebug());
+					insertIfAbsent ? OperateDetailType.updateSaveFetch : OperateDetailType.updateFetchSingleTable,
+					entity.getClass(), sqlToyContext.isDebug());
 			final ShardingModel shardingModel = ShardingUtils.getSharding(sqlToyContext, entity, false, dataSource);
 			Serializable result = (Serializable) inConnection(sqlToyContext, shardingModel.getDataSource(),
 					(conn, profile) -> {
 						DefaultDialectUtils.setSessionLockWait(profile, conn, LockMode.UPGRADE, lockWaitTimeout);
 						return getDialectSqlWrapper(profile.getDbType()).updateSaveFetch(sqlToyContext, entity,
 								updateRowCallback, lockWaitTimeout, uniqueProps, conn, profile,
-								shardingModel.getTableName());
+								shardingModel.getTableName(), insertIfAbsent);
 					});
 			return result;
 		} catch (Exception e) {

@@ -1,6 +1,7 @@
 package org.sagacity.sqltoy.link;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.sql.DataSource;
@@ -9,6 +10,7 @@ import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.config.model.DataType;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.config.model.SqlType;
+import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.dialect.CrossDbAdapter;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.JdbcTypes;
@@ -16,7 +18,9 @@ import org.sagacity.sqltoy.model.LockMode;
 import org.sagacity.sqltoy.model.Page;
 import org.sagacity.sqltoy.model.QueryExecutor;
 import org.sagacity.sqltoy.model.QueryResult;
+import org.sagacity.sqltoy.model.inner.TranslateExtend;
 import org.sagacity.sqltoy.utils.BeanUtil;
+import org.sagacity.sqltoy.utils.StringUtil;
 
 /**
  * @project sagacity-sqltoy
@@ -76,6 +80,11 @@ public class Query extends BaseLink {
 	private int lockWaitTimeout = -1;
 
 	private int queryTimeout = -1;
+
+	/**
+	 * 编程式缓存翻译定义(结果列原地翻译,列值即缓存key)
+	 */
+	private final List<Translate> translates = new ArrayList<>();
 
 	/**
 	 * @param sqlToyContext sqltoy全局上下文对象
@@ -165,6 +174,30 @@ public class Query extends BaseLink {
 		return this;
 	}
 
+	/**
+	 * @description 追加编程式缓存翻译:column为结果列别名,该列原始值作为缓存key并原地替换为翻译值
+	 *              (与QueryExecutor.translates同语义);count不产出结果列,不携带翻译
+	 * @param translates 翻译定义
+	 * @return 当前Query对象,支持链式调用
+	 */
+	public Query translates(Translate... translates) {
+		if (translates != null && translates.length > 0) {
+			TranslateExtend extend;
+			for (Translate translate : translates) {
+				if (translate == null) {
+					throw new IllegalArgumentException("Query translate must not be null");
+				}
+				extend = translate.getExtend();
+				if (StringUtil.isBlank(extend.cache) || StringUtil.isBlank(extend.column)) {
+					throw new IllegalArgumentException("Query translate is missing cacheName=[" + extend.cache
+							+ "] or column=[" + extend.column + "]!");
+				}
+				this.translates.add(translate.clone());
+			}
+		}
+		return this;
+	}
+
 	public Query dataSource(DataSource dataSource) {
 		this.dataSource = dataSource;
 		this.defaultDataSource = false;
@@ -195,6 +228,11 @@ public class Query extends BaseLink {
 	 */
 	public Object getValue() {
 		QueryExecutor queryExecute = new QueryExecutor(sql).names(names).values(values);
+		// update 2026-11-22 与getOne/find同口径携带编程式缓存翻译:此前getValue单独构造执行器绕过build(),
+		// 同列原地翻译在getValue上静默失效(同一条链路上getOne有翻译、getValue无)
+		if (!translates.isEmpty()) {
+			queryExecute.translates(translates.toArray(new Translate[0]));
+		}
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecute, SqlType.search, getDialect());
 		QueryResult result = dialectFactory.findByQuery(sqlToyContext, queryExecute, sqlToyConfig, null,
 				getDataSource(sqlToyConfig));
@@ -240,7 +278,7 @@ public class Query extends BaseLink {
 	 * @return 符合查询条件的记录总数
 	 */
 	public Long count() {
-		QueryExecutor queryExecute = build();
+		QueryExecutor queryExecute = build(false);
 		SqlToyConfig sqlToyConfig = sqlToyContext.getSqlToyConfig(queryExecute, SqlType.search, getDialect());
 		Long result = dialectFactory.getCountBySql(sqlToyContext, queryExecute, sqlToyConfig,
 				getDataSource(sqlToyConfig));
@@ -319,6 +357,10 @@ public class Query extends BaseLink {
 	}
 
 	private QueryExecutor build() {
+		return build(true);
+	}
+
+	private QueryExecutor build(boolean withTranslate) {
 		QueryExecutor queryExecutor = null;
 		if (params != null) {
 			queryExecutor = new QueryExecutor(sql, params);
@@ -334,6 +376,9 @@ public class Query extends BaseLink {
 		// QueryExecutor.maxRows(int)已废弃,直接写入内部模型
 		queryExecutor.getInnerModel().maxRows = maxRows;
 		queryExecutor.fetchSize(fetchSize);
+		if (withTranslate && !translates.isEmpty()) {
+			queryExecutor.translates(translates.toArray(new Translate[0]));
+		}
 		return queryExecutor;
 	}
 }

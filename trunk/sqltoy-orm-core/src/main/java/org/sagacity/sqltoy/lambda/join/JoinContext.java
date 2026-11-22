@@ -456,6 +456,36 @@ public class JoinContext {
 	}
 
 	/**
+	 * update 2026-11-22 判断翻译目标列是否在join投影中(同列翻译原地命中的前提):selectAll/无显式select视为全选;
+	 * 否则匹配plainSelectColumns属性名或selectColumns的别名/属性名(去下划线小写归一,与sameTranslateColumn同口径)。
+	 * 供validateJoinTranslates对未投影列的翻译快速失败(此前静默no-op,翻译落空且属性为null)
+	 */
+	public boolean isSelectColumnProjected(String column) {
+		if (StringUtil.isBlank(column)) {
+			return false;
+		}
+		if (selectAll || !selectAllClasses.isEmpty() || !hasSelectColumns()) {
+			return true;
+		}
+		String norm = column.replace("_", "").toLowerCase(java.util.Locale.ROOT);
+		for (String plain : plainSelectColumns) {
+			if (plain != null && plain.replace("_", "").toLowerCase(java.util.Locale.ROOT).equals(norm)) {
+				return true;
+			}
+		}
+		for (JoinCol selectColumn : selectColumns) {
+			String name = selectColumn.getAlias();
+			if (name == null && selectColumn.getColumn() != null) {
+				name = LambdaUtils.extractProperty(selectColumn.getColumn());
+			}
+			if (name != null && name.replace("_", "").toLowerCase(java.util.Locale.ROOT).equals(norm)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * @return 是否处于join通道(注册了join或select列定义)
 	 */
 	public boolean isJoinChannel() {

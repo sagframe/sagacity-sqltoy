@@ -919,6 +919,11 @@ public class BeanUtil {
 				return result;
 			}
 		}
+		// update 2026-11-22 uuid目标类型:读侧normalizeExtTypeValue已将驱动java.util.UUID归一为文本,
+		// 此处String→UUID还原声明为java.util.UUID的实体字段;值本为UUID时上方typeName一致分支已直接返回
+		if ("java.util.UUID".equals(typeName)) {
+			return SqlUtil.toUuidValue(paramValue);
+		}
 		// 4 非数组类型,但传递的参数值是数组类型且长度为1提取出数组中的单一值
 		if (paramValue.getClass().isArray() && typeValue < DataType.aryCharType) {
 			if (typeValue == DataType.stringType && (paramValue instanceof byte[])) {
@@ -1369,18 +1374,25 @@ public class BeanUtil {
 		// 34 List类型
 		if (DataType.listType == typeValue) {
 			if (paramValue instanceof Array) {
-				Object[] tmp = (Object[]) ((Array) paramValue).getArray();
+				// update 2026-11-21 getArray()结果经convertArray归一为装箱数组(Object[]直通、
+				// 原始类型数组装箱),替代原(Object[])强转:主流驱动getArray()均返回装箱数组,
+				// 此处为假想的原始数组返回驱动做稳健兜底(矩阵内驱动不会触达,行为无变化)
+				Object[] tmp = CollectionUtil.convertArray(((Array) paramValue).getArray());
 				// 存在泛型，转换数组类型
 				if (genericType != null) {
 					return CollectionUtil.arrayToList(convertArray(tmp, genericType.getName().concat("[]")));
 				}
 				return CollectionUtil.arrayToList(tmp);
-			} else if (paramValue instanceof Object[]) {
+			} else if (paramValue.getClass().isArray()) {
+				// update 2026-11-21 从instanceof Object[]放宽为isArray+convertArray归一:
+				// 归一化透传的原始类型数组(int[]等)同样装箱处理(此前直落底部返回原值,
+				// setter调用报argument type mismatch),装箱数组convertArray原样直通无行为变化
+				Object[] tmp = CollectionUtil.convertArray(paramValue);
 				// 存在泛型，转换数组类型
 				if (genericType != null) {
-					return CollectionUtil.arrayToList(convertArray(paramValue, genericType.getName().concat("[]")));
+					return CollectionUtil.arrayToList(convertArray(tmp, genericType.getName().concat("[]")));
 				}
-				return CollectionUtil.arrayToList((Object[]) paramValue);
+				return CollectionUtil.arrayToList(tmp);
 			} else if (paramValue instanceof Set) {
 				Object[] tmp = ((Set) paramValue).toArray();
 				if (genericType != null) {
@@ -1401,17 +1413,20 @@ public class BeanUtil {
 		// 35 Set类型
 		if (DataType.setType == typeValue) {
 			if (paramValue instanceof Array) {
-				Object[] tmp = (Object[]) ((Array) paramValue).getArray();
+				// update 2026-11-21 与List分支同款归一(替代(Object[])强转),见34分支注释
+				Object[] tmp = CollectionUtil.convertArray(((Array) paramValue).getArray());
 				// 存在泛型，转换数组类型
 				if (genericType != null) {
 					return arrayToSet((Object[]) convertArray(tmp, genericType.getName().concat("[]")));
 				}
 				return arrayToSet(tmp);
-			} else if (paramValue instanceof Object[]) {
+			} else if (paramValue.getClass().isArray()) {
+				// update 2026-11-21 与List分支同款放宽(isArray+convertArray归一)
+				Object[] tmp = CollectionUtil.convertArray(paramValue);
 				if (genericType != null) {
-					return arrayToSet((Object[]) convertArray(paramValue, genericType.getName().concat("[]")));
+					return arrayToSet((Object[]) convertArray(tmp, genericType.getName().concat("[]")));
 				}
-				return arrayToSet((Object[]) paramValue);
+				return arrayToSet(tmp);
 			} else if (paramValue instanceof Collection) {
 				Object[] tmp = ((Collection) paramValue).toArray();
 				// 存在泛型，转换数组类型

@@ -23,6 +23,16 @@ public final class LambdaConvert {
 	 * @param query 查询条件,须已完成assemble
 	 */
 	public static <T> EntityQuery toEntityQuery(LambdaQuery<T> query) {
+		return toEntityQuery(query, true);
+	}
+
+	/**
+	 * @description lambda查询条件转换为EntityQuery(仅单表通道),可显式控制是否透传编程式缓存翻译
+	 *              (count/exists等不产出翻译列的终端传false,避免无谓的配置克隆与distinct口径变化)
+	 * @param query         查询条件,须已完成assemble
+	 * @param withTranslate 是否透传编程式缓存翻译
+	 */
+	public static <T> EntityQuery toEntityQuery(LambdaQuery<T> query, boolean withTranslate) {
 		if (query.hasLastSql()) {
 			throw new DataAccessException(
 					"last() raw sql append is not supported in the single-table channel (EntityQuery where cannot carry trailing raw sql); use findTop/findPage or the join channel");
@@ -66,6 +76,11 @@ public final class LambdaConvert {
 		}
 		if (query.getPageOptimize() != null) {
 			entityQuery.pageOptimize(query.getPageOptimize());
+		}
+		// 编程式缓存翻译透传:单表通道由findEntityBase补充"key as column"查询列并翻译;
+		// 传clone,findEntityBase的同列翻译会改写column,不能污染构建器上的原始定义
+		if (withTranslate && !query.getTranslates().isEmpty()) {
+			entityQuery.translates(query.cloneTranslates());
 		}
 		return entityQuery;
 	}

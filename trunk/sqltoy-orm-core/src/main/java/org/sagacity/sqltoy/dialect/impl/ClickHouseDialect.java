@@ -194,6 +194,14 @@ public class ClickHouseDialect implements Dialect {
 	}
 
 	@Override
+	public Serializable updateSaveFetch(SqlToyContext sqlToyContext, Serializable entity,
+			UpdateRowCallback updateRowCallback, int lockWaitTimeout, String[] uniqueProps, Connection conn,
+			DBProfile profile, String tableName, boolean insertIfAbsent) throws Exception {
+		// 不支持
+		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
+	}
+
+	@Override
 	public Long saveAllIgnoreExist(SqlToyContext sqlToyContext, List<?> entities, int batchSize,
 			ReflectPropsHandler reflectPropsHandler, Connection conn, DBProfile profile, Boolean autoCommit,
 			String tableName) throws Exception {

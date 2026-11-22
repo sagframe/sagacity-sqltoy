@@ -183,6 +183,10 @@ public class DialectExtUtils {
 					} else {
 						values.append("?");
 					}
+				} else if (fieldMeta.getType() == java.sql.Types.BOOLEAN && dbType == DBType.VASTBASE) {
+					// update 2026-11-22 vastbase boolean列:驱动setBoolean发smallint拒收,绑定改setObject(文本,OTHER)(见SqlUtil),
+					// insert以cast(? as boolean)定型(unknown→boolean可cast,smallint→boolean非法,真库实证)
+					values.append("cast(? as boolean)");
 				} else if (isString) {
 					// kudu 中文会产生乱码
 					if (dbType == DBType.IMPALA) {

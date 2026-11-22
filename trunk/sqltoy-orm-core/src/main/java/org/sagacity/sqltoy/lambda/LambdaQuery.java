@@ -5,9 +5,12 @@ import java.beans.PropertyDescriptor;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 import javax.sql.DataSource;
@@ -15,6 +18,7 @@ import javax.sql.DataSource;
 import org.sagacity.sqltoy.config.model.EntityMeta;
 import org.sagacity.sqltoy.config.model.PageOptimize;
 import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
+import org.sagacity.sqltoy.config.model.Translate;
 import org.sagacity.sqltoy.dao.LambdaDao;
 import org.sagacity.sqltoy.dialect.utils.SqlServerDialectUtils;
 import org.sagacity.sqltoy.exception.DataAccessException;
@@ -30,8 +34,10 @@ import org.sagacity.sqltoy.link.Query;
 import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.Page;
 import org.sagacity.sqltoy.model.QueryExecutor;
+import org.sagacity.sqltoy.model.inner.TranslateExtend;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
+import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,6 +47,9 @@ import org.slf4j.LoggerFactory;
  *              无join(单表)走sqltoy实体查询通道(EntityQuery,继承分片/缓存翻译/加密脱敏等内核能力);
  *              有join拼装完整sql走原生sql通道(结果类型可与主表不同,select缺省查询主表全部字段);
  *              注意在单表查询上追加join会切换执行通道,实体级增强不再生效;
+ *              编程式缓存翻译(translate/translates)不受通道切换影响:单表自动补充"key as target"查询列
+ *              (同列翻译为原地替换,列已在投影中时不重复补列、不在投影中时补"key as column"),
+ *              join/SQL通道按结果列别名原地翻译(列值即缓存key);
  *              条件动态化推荐IfPresent语法糖(eqIfPresent/likeIfPresent/inIfPresent等),
  *              复杂动态场景请使用sqltoy的SQL模式(sqlId加#[...]动态段与@if宏,见包说明)
  *              <p>
@@ -77,6 +86,12 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	 * select指定的查询属性名列表(单表通道直接使用,join通道渲染为别名.列 AS 属性)
 	 */
 	private final List<String> selectFields = new ArrayList<>();
+
+	/**
+	 * 编程式缓存翻译定义(单表通道转EntityQuery.translates,join/SQL通道转QueryExecutor.translates);
+	 * 保存时即clone,避免调用方复用/修改Translate对象污染查询构建器
+	 */
+	private final List<Translate> translates = new ArrayList<>();
 
 	/**
 	 * distinct去重标记
@@ -287,6 +302,10 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		if (cteQuery == null) {
 			throw new DataAccessException("CTE [" + name + "] requires a non-null inner query");
 		}
+		if (!cteQuery.translates.isEmpty()) {
+			throw new DataAccessException(
+					"Lambda CTE inner query cannot define cache translate; set translates on the query that consumes the CTE");
+		}
 		if (cteQuery == this) {
 			throw new DataAccessException("CTE [" + name + "] cannot reference the query that declares it");
 		}
@@ -318,6 +337,10 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		requireIdentifier(name, "CTE name");
 		if (cteQuery == null) {
 			throw new DataAccessException("Recursive CTE [" + name + "] requires a non-null inner query");
+		}
+		if (!cteQuery.translates.isEmpty()) {
+			throw new DataAccessException(
+					"Lambda CTE inner query cannot define cache translate; set translates on the query that consumes the CTE");
 		}
 		if (cteQuery == this) {
 			throw new DataAccessException("Recursive CTE [" + name + "] cannot reference the query that declares it");
@@ -405,6 +428,10 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		if (inner == this) {
 			throw new DataAccessException("fromFast inner query cannot be the outer query itself");
 		}
+		if (!inner.translates.isEmpty()) {
+			throw new DataAccessException(
+					"Lambda fromFast inner query cannot define cache translate; set translates on the outer query");
+		}
 		requireIdentifier(alias, "fromFast alias");
 		// @fast内层必须是完整SELECT..FROM(被分页下推的子查询),强制走join/SQL通道
 		inner.joinContext.forceJoinChannel();
@@ -439,6 +466,10 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		}
 		if (other == this) {
 			throw new DataAccessException("union cannot combine a query with itself");
+		}
+		if (!other.translates.isEmpty()) {
+			throw new DataAccessException(
+					"Lambda union branch cannot define cache translate; set translates on the root query so the final result set is translated once");
 		}
 		// union两侧都必须是完整SELECT..FROM,否则组合后的SQL不合法
 		joinContext.forceJoinChannel();
@@ -871,13 +902,152 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	}
 
 	/**
+	 * @description 指定编程式缓存翻译,参数模型与EntityQuery/QueryExecutor的translates一致:
+	 *              <p>
+	 *              单表通道:keyColumn为实体属性名,框架自动追加"keyColumn as column"查询列,翻译结果写入column属性;
+	 *              </p>
+	 *              <p>
+	 *              join/SQL通道:仅支持结果列原地翻译,column须为select结果列别名(该列原始值即缓存key),
+	 *              keyColumn须省略或与column相同;需要key到column的映射时,请在select中用
+	 *              JoinCol.of(key属性).as(column)显式产出该列
+	 *              </p>
+	 *              <p>
+	 *              只作用于数据查询:count 不携带翻译;findColumns/聚合终端不支持;exists 走 top1
+	 *              数据查询故与 find 同口径
+	 *              </p>
+	 * @param translates 翻译定义
+	 * @return 自身
+	 */
+	public LambdaQuery<T> translates(Translate... translates) {
+		if (translates == null || translates.length == 0) {
+			return this;
+		}
+		TranslateExtend extend;
+		for (Translate translate : translates) {
+			if (translate == null) {
+				throw new DataAccessException("Lambda translates must not contain null elements");
+			}
+			extend = translate.getExtend();
+			if (StringUtil.isBlank(extend.cache) || StringUtil.isBlank(extend.column)) {
+				throw new DataAccessException("Lambda translate requires cacheName=[" + extend.cache + "] and column=["
+						+ extend.column + "]!");
+			}
+			this.translates.add(translate.clone());
+		}
+		return this;
+	}
+
+	/**
+	 * @description 字段引用形式的缓存翻译(单表最常用):key属性值翻译后写入target属性,
+	 *              框架自动补充"key as target"查询列
+	 * @param cacheName 缓存名称(须在translate配置中定义)
+	 * @param key       作为缓存key的属性引用
+	 * @param target    承接翻译结果的属性引用
+	 * @return 自身
+	 */
+	public LambdaQuery<T> translate(String cacheName, LambdaFn<T, ?> key, LambdaFn<T, ?> target) {
+		if (key == null || target == null) {
+			throw new DataAccessException("Lambda translate requires non-null key and target column references");
+		}
+		return translate(cacheName, LambdaUtils.extractProperty(key), LambdaUtils.extractProperty(target));
+	}
+
+	/**
+	 * @description 同列缓存翻译:该列原始值作为缓存key并原地替换为翻译值(不新增列);
+	 *              单表与join通道均可用,join通道要求该列已在select结果中
+	 * @param cacheName 缓存名称
+	 * @param column    待翻译的属性引用
+	 * @return 自身
+	 */
+	public LambdaQuery<T> translate(String cacheName, LambdaFn<T, ?> column) {
+		if (column == null) {
+			throw new DataAccessException("Lambda translate column reference must not be null");
+		}
+		String field = LambdaUtils.extractProperty(column);
+		return translate(cacheName, field, field);
+	}
+
+	private LambdaQuery<T> translate(String cacheName, String keyProperty, String targetProperty) {
+		if (StringUtil.isBlank(cacheName)) {
+			throw new DataAccessException("Lambda translate cacheName must not be blank");
+		}
+		if (StringUtil.isBlank(keyProperty) || StringUtil.isBlank(targetProperty)) {
+			throw new DataAccessException("Lambda translate key/target property must not be blank");
+		}
+		return translates(new Translate(cacheName).setKeyColumn(keyProperty).setColumn(targetProperty));
+	}
+
+	/**
+	 * @return 编程式缓存翻译定义(只读视图,修改请通过translates/translate)
+	 */
+	public List<Translate> getTranslates() {
+		// update 2026-11-22 返回不可变视图:此前直接暴露内部List,调用方可绕过translates()的
+		// clone/校验直接添加未校验对象,或clear()破坏union/CTE的"分支不得携带翻译"约束
+		return Collections.unmodifiableList(translates);
+	}
+
+	/**
+	 * @return 克隆后的翻译定义(供单表/join通道各自持有,避免执行期改写污染构建器)
+	 */
+	Translate[] cloneTranslates() {		Translate[] result = new Translate[translates.size()];
+		for (int i = 0; i < result.length; i++) {
+			result[i] = translates.get(i).clone();
+		}
+		return result;
+	}
+
+	private void validateJoinTranslates() {
+		TranslateExtend extend;
+		for (Translate translate : translates) {
+			extend = translate.getExtend();
+			if (StringUtil.isNotBlank(extend.keyColumn) && !sameTranslateColumn(extend.keyColumn, extend.column)) {
+				throw new DataAccessException("Lambda join channel cannot translate key column [" + extend.keyColumn
+						+ "] into [" + extend.column
+						+ "]: select the raw key with the target alias first (select(JoinCol.of(...).as(\""
+						+ extend.column + "\")), then use translates(new Translate(cache).setColumn(\"" + extend.column
+						+ "\"))");
+			}
+			// update 2026-11-22 同列翻译目标列须在join投影中,否则翻译静默no-op(结果集无该列,属性落空)→快速失败
+			if (!joinContext.isSelectColumnProjected(extend.column)) {
+				throw new DataAccessException("Lambda join channel translate column [" + extend.column
+						+ "] is not in the select projection; select it first (select(JoinCol.of(...).as(\""
+						+ extend.column + "\"))) so the in-place translate hits a result column");
+			}
+		}
+	}
+
+	private static boolean sameTranslateColumn(String keyColumn, String column) {
+		if (keyColumn.equalsIgnoreCase(column)) {
+			return true;
+		}
+		// 单表同列翻译执行后column可能已被改写为库列名(驼峰/下划线差异),按去除下划线的归一形态再判一次
+		return keyColumn.replace("_", "").equalsIgnoreCase(column.replace("_", ""));
+	}
+
+	/**
+	 * update 2026-11-22 判断翻译目标列是否在显式投影中(selectFields为属性名);空投影视为全选(同列翻译原地命中)。
+	 * 按去除下划线+小写归一匹配,与sameTranslateColumn同口径(驼峰/下划线差异)
+	 */
+	private boolean isProjectedField(String column) {
+		if (StringUtil.isBlank(column)) {
+			return false;
+		}
+		String norm = column.replace("_", "").toLowerCase(java.util.Locale.ROOT);
+		for (String field : selectFields) {
+			if (field != null && field.replace("_", "").toLowerCase(java.util.Locale.ROOT).equals(norm)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * @return 查询全部符合条件的记录
 	 */
 	public List<T> find() {
-		requireDao();
-		assemble(dao::getEntityMeta);
+		prepareExecution();
 		if (isJoinMode()) {
-			return (List<T>) joinQuery().find();
+			return (List<T>) joinQuery(true).find();
 		}
 		return dao.findEntity(getEntityClass(), LambdaConvert.toEntityQuery(this));
 	}
@@ -914,6 +1084,10 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	public <R> List<R> findColumns(LambdaFn<T, R> column) {
 		if (column == null) {
 			throw new DataAccessException("Lambda findColumns column must not be null");
+		}
+		if (!translates.isEmpty()) {
+			throw new DataAccessException(
+					"Lambda findColumns returns raw column values without VO property mapping and does not support cache translate; use find() with translate(...) instead");
 		}
 		if (isJoinMode()) {
 			throw new DataAccessException(
@@ -996,6 +1170,10 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	 */
 	private <R> R aggregate(JoinCol column, Class<R> resultType) {
 		requireDao();
+		if (!translates.isEmpty()) {
+			throw new DataAccessException(
+					"Lambda aggregate terminals (max/min/sum/avg) do not support cache translate; aggregate the raw values instead");
+		}
 		if (!selectFields.isEmpty() || joinContext.hasSelectColumns() || joinContext.isSelectAll()) {
 			throw new DataAccessException(
 					"Lambda aggregate cannot be combined with select(...) / select(JoinCol...) / selectAll(); call it on a fresh query");
@@ -1066,16 +1244,17 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		if (page == null) {
 			throw new DataAccessException("Lambda findPage page must not be null");
 		}
-		requireDao();
-		assemble(dao::getEntityMeta);
+		prepareExecution();
 		if (isJoinMode()) {
 			// join分页走findPageByQuery(QueryExecutor):QueryExecutor可同时携带dataSource与pageOptimize
 			// (link Query构建器无pageOptimize);pageOptimize为null时回退全局SqlToyConfig配置,行为与未设置一致
-			return (Page<T>) dao
-					.findPageByQuery(page,
-							new QueryExecutor(getSql(), getParams()).resultType(getEntityClass())
-									.dataSource(getDataSource()).pageOptimize(pageOptimize).countSql(countSql))
-					.getPageResult();
+			QueryExecutor queryExecutor = new QueryExecutor(getSql(), getParams()).resultType(getEntityClass())
+					.dataSource(getDataSource()).pageOptimize(pageOptimize).countSql(countSql);
+			if (!translates.isEmpty()) {
+				validateJoinTranslates();
+				queryExecutor.translates(cloneTranslates());
+			}
+			return (Page<T>) dao.findPageByQuery(page, queryExecutor).getPageResult();
 		}
 		if (countSql != null) {
 			throw new DataAccessException(
@@ -1094,10 +1273,9 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		if (topSize <= 0) {
 			throw new DataAccessException("Lambda findTop topSize must be greater than 0");
 		}
-		requireDao();
-		assemble(dao::getEntityMeta);
+		prepareExecution();
 		if (isJoinMode()) {
-			return (List<T>) joinQuery().findTop(topSize);
+			return (List<T>) joinQuery(true).findTop(topSize);
 		}
 		return dao.findEntity(getEntityClass(), LambdaConvert.toEntityQuery(this).top(topSize));
 	}
@@ -1111,10 +1289,9 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 		if (randomSize <= 0) {
 			throw new DataAccessException("Lambda findRandom randomSize must be greater than 0");
 		}
-		requireDao();
-		assemble(dao::getEntityMeta);
+		prepareExecution();
 		if (isJoinMode()) {
-			return (List<T>) joinQuery().findRandom(randomSize);
+			return (List<T>) joinQuery(true).findRandom(randomSize);
 		}
 		return dao.findEntity(getEntityClass(), LambdaConvert.toEntityQuery(this).random(randomSize));
 	}
@@ -1123,12 +1300,15 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	 * @return 符合条件的记录数
 	 */
 	public long count() {
-		requireDao();
-		assemble(dao::getEntityMeta);
+		prepareExecution();
 		if (isJoinMode()) {
-			return joinQuery().count();
+			// count不携带缓存翻译:count SQL不产出翻译列,附加translate只会增加配置合并开销
+			return joinQuery(false).count();
 		}
-		return dao.getCount(getEntityClass(), LambdaConvert.toEntityQuery(this));
+		// update 2026-11-22 单表通道count同样不携带翻译(与join通道口径一致):此前translates被
+		// 透传到EntityQuery,count的执行链仍走翻译处理(补列+按DISTINCT包裹),既增加配置克隆开销,
+		// 也会在distinct场景改变count口径
+		return dao.getCount(getEntityClass(), LambdaConvert.toEntityQuery(this, false));
 	}
 
 	/**
@@ -1137,10 +1317,16 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	 *              query()构建器内部即new
 	 *              QueryExecutor(sql,params).resultType(..),与既有find(sql,map,resultType)同源,
 	 *              故无需给LightDao新增任何方法即可支持find/findPage/findTop/findRandom/count全终端的数据源路由
+	 * @param withTranslate 是否携带编程式缓存翻译(count场景传false)
 	 */
-	private Query joinQuery() {
-		return dao.query().dataSource(getDataSource()).sql(getSql())
+	private Query joinQuery(boolean withTranslate) {
+		Query query = dao.query().dataSource(getDataSource()).sql(getSql())
 				.entity((Serializable) new IgnoreKeyCaseMap(getParams())).resultType(getEntityClass());
+		if (withTranslate && !translates.isEmpty()) {
+			validateJoinTranslates();
+			query.translates(cloneTranslates());
+		}
+		return query;
 	}
 
 	/**
@@ -1156,6 +1342,73 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 			throw new DataAccessException(
 					"LambdaQuery is not bound to a dao; create it via lightDao.lambdaQuery(entityClass) or bind a dao with bind(dao) before executing");
 		}
+	}
+
+	/**
+	 * update 2026-11-22 执行前置:绑定校验+装配+组合/翻译组合校验。终端方法统一走此处,使
+	 * "先组合(union/with/fromFast)再设置翻译"这类声明期校验覆盖不到的时序差异,也能在执行期被拦截
+	 */
+	private void prepareExecution() {
+		requireDao();
+		assemble(dao::getEntityMeta);
+		validateTranslateComposition();
+	}
+
+	/**
+	 * update 2026-11-22 翻译与组合的合法性校验(执行期):
+	 * <li>组合分支(union/CTE/@fast内层)不得携带缓存翻译:它们只贡献SQL,翻译只在外层最终结果集
+	 * 执行一次,声明期之后补设的翻译会被静默丢弃,故此处补齐执行期校验</li>
+	 * <li>单表通道的"补列式"翻译(同列翻译为原地替换、不补列,不受影响)与 distinct/groupBy 冲突:
+	 * 追加的查询列会改变 DISTINCT 的行口径,或在 groupBy 下成为非分组列</li>
+	 */
+	private void validateTranslateComposition() {
+		Set<LambdaQuery<?>> visited = new HashSet<>();
+		for (CteDef cte : ctes) {
+			checkBranchTranslates(cte.query, "CTE [" + cte.name + "]", visited);
+		}
+		for (Object[] union : unions) {
+			checkBranchTranslates((LambdaQuery<?>) union[1], "union branch", visited);
+		}
+		checkBranchTranslates(fastInner, "@fast inner query", visited);
+		if (!isJoinMode() && !translates.isEmpty()
+				&& (distinct || StringUtil.isNotBlank(getGroupByColumns()))) {
+			for (Translate translate : translates) {
+				TranslateExtend extend = translate.getExtend();
+				// update 2026-11-22 补列判定须含"同列翻译但目标未在投影中":findEntityBase的anti-no-op修复
+				// 会对未投影的同列翻译补"key as column"查询列,同样改变DISTINCT身份/groupBy列表(此前仅按
+				// key!=column判定漏掉该路径,select(id).distinct().translate(c,status)静默改变DISTINCT,审计实证)
+				boolean appendsColumn = (StringUtil.isNotBlank(extend.keyColumn)
+						&& !sameTranslateColumn(extend.keyColumn, extend.column))
+						|| (!selectFields.isEmpty() && !isProjectedField(extend.column));
+				if (appendsColumn) {
+					throw new DataAccessException("Lambda cache translate with key [" + extend.keyColumn + "] -> ["
+							+ extend.column + "] appends an extra query column and cannot be combined with "
+							+ (distinct ? "distinct()" : "groupBy()")
+							+ ": it changes the DISTINCT row identity / is not part of the group by list; "
+							+ "use in-place translate(cacheName,column) on a selected column instead");
+				}
+			}
+		}
+	}
+
+	/**
+	 * update 2026-11-22 递归校验组合分支及其嵌套组合不得携带缓存翻译
+	 */
+	private static void checkBranchTranslates(LambdaQuery<?> branch, String label, Set<LambdaQuery<?>> visited) {
+		if (branch == null || !visited.add(branch)) {
+			return;
+		}
+		if (!branch.translates.isEmpty()) {
+			throw new DataAccessException("Lambda " + label
+					+ " cannot define cache translate (translate set after composition is also rejected); set translates on the root query, they are applied once on the final result set");
+		}
+		for (CteDef cte : branch.ctes) {
+			checkBranchTranslates(cte.query, "CTE [" + cte.name + "]", visited);
+		}
+		for (Object[] union : branch.unions) {
+			checkBranchTranslates((LambdaQuery<?>) union[1], "union branch", visited);
+		}
+		checkBranchTranslates(branch.fastInner, "@fast inner query", visited);
 	}
 
 	/**

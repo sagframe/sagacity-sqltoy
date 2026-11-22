@@ -8,6 +8,7 @@ import java.util.List;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.callback.DecryptHandler;
 import org.sagacity.sqltoy.callback.ReflectPropsHandler;
+import org.sagacity.sqltoy.callback.UpdateRowCallback;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
 import org.sagacity.sqltoy.model.DBProfile;
@@ -174,6 +175,15 @@ public class TDengineDialect extends DefaultDialect {
 			UpdateRowHandler updateRowHandler, int lockWaitTimeout, String[] uniqueProps, Connection conn,
 			DBProfile profile, String tableName) throws Exception {
 		throw new UnsupportedOperationException("TDengine 无 UPDATE 语句且无行级锁,updateSaveFetch 不适用;更新请用相同时间戳重新 INSERT 覆盖!");
+	}
+
+	@Override
+	public Serializable updateSaveFetch(SqlToyContext sqlToyContext, Serializable entity,
+			UpdateRowCallback updateRowCallback, int lockWaitTimeout, String[] uniqueProps, Connection conn,
+			DBProfile profile, String tableName, boolean insertIfAbsent) throws Exception {
+		// update 2026-11-22 按实际调用方给出方法名(updateSaveFetch 也经本9参方法分派,原先一律报updateFetch)
+		throw new UnsupportedOperationException("TDengine 无 UPDATE 语句且无行级锁," + (insertIfAbsent ? "updateSaveFetch"
+				: "updateFetch") + " 不适用;更新请用相同时间戳重新 INSERT 覆盖!");
 	}
 
 	@Override

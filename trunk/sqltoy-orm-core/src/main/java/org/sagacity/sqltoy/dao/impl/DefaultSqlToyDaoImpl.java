@@ -333,6 +333,12 @@ public class DefaultSqlToyDaoImpl extends SqlToyDaoSupport implements SqlToyDao 
 	}
 
 	@Override
+	public <T extends Serializable> T updateFetch(final T entity, final EntityUpdateCallback<T> callback,
+			final String... uniqueProps) {
+		return super.updateFetch(entity, callback, -1, uniqueProps, dataSource);
+	}
+
+	@Override
 	public Long updateByQuery(Class entityClass, EntityUpdate entityUpdate) {
 		return super.updateByQuery(entityClass, entityUpdate);
 	}
