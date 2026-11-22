@@ -305,14 +305,33 @@ public class CrossDbDialectFixTest {
 	/** pg内核系geometry外部拼写DDL归一geometry(与specialCastType同口径),geometry/geography精度保留 */
 	@Test
 	public void pgGeometryExternalSpellingNormalized() {
-		assertEquals("geometry", DDLUtils.convertType(col(JdbcTypes.GEOMETRY, "ST_GEOMETRY"), DBType.POSTGRESQL),
-				"pg ST_GEOMETRY外部拼写归一geometry");
-		assertEquals("geometry", DDLUtils.convertType(col(JdbcTypes.GEOMETRY, "SDO_GEOMETRY"), DBType.POSTGRESQL),
-				"pg SDO_GEOMETRY外部拼写归一geometry");
+		assertEquals("GEOMETRY", DDLUtils.convertType(col(JdbcTypes.GEOMETRY, "ST_GEOMETRY"), DBType.POSTGRESQL),
+				"pg ST_GEOMETRY外部拼写归一GEOMETRY");
+		assertEquals("GEOMETRY", DDLUtils.convertType(col(JdbcTypes.GEOMETRY, "SDO_GEOMETRY"), DBType.POSTGRESQL),
+				"pg SDO_GEOMETRY外部拼写归一GEOMETRY");
 		assertEquals("geometry(Point,4326)",
 				DDLUtils.convertType(col(JdbcTypes.GEOMETRY, "geometry(Point,4326)"), DBType.POSTGRESQL),
 				"pg geometry精度拼写保留");
 		assertEquals("geography", DDLUtils.convertType(col(JdbcTypes.GEOMETRY, "geography"), DBType.POSTGRESQL),
 				"pg geography拼写保留");
+	}
+
+	/** geometry非pg目标匹配转化:外部拼写/精度形态转目标默认几何类型,本族拼写保留(作者原则) */
+	@Test
+	public void geometryNonPgMatchConvert() {
+		// mysql/h2:仅裸geometry支持,外部拼写与pg式精度转化GEOMETRY
+		assertEquals("geometry", DDLUtils.convertType(col(JdbcTypes.GEOMETRY, "geometry"), DBType.MYSQL), "mysql geometry匹配保留nativeType");
+		assertEquals("GEOMETRY", DDLUtils.convertType(col(JdbcTypes.GEOMETRY, "sdo_geometry"), DBType.MYSQL), "mysql外部拼写转化");
+		assertEquals("GEOMETRY", DDLUtils.convertType(col(JdbcTypes.GEOMETRY, "geometry(Point,4326)"), DBType.MYSQL), "mysql精度拼写转化");
+		assertEquals("GEOMETRY", DDLUtils.convertType(col(JdbcTypes.GEOMETRY, "st_geometry"), DBType.H2), "h2外部拼写转化");
+		// sqlserver:geometry/geography支持,pg式精度转化geometry
+		assertEquals("geography", DDLUtils.convertType(col(JdbcTypes.GEOMETRY, "geography"), DBType.SQLSERVER), "sqlserver geography匹配保留nativeType");
+		assertEquals("GEOMETRY", DDLUtils.convertType(col(JdbcTypes.GEOMETRY, "geometry(Point,4326)"), DBType.SQLSERVER), "sqlserver精度拼写转化");
+		assertEquals("GEOMETRY", DDLUtils.convertType(col(JdbcTypes.GEOMETRY, "sdo_geometry"), DBType.SQLSERVER), "sqlserver外部拼写转化");
+		// oracle:仅sdo_geometry支持,其余转SDO_GEOMETRY
+		assertEquals("sdo_geometry", DDLUtils.convertType(col(JdbcTypes.GEOMETRY, "sdo_geometry"), DBType.ORACLE), "oracle sdo_geometry匹配保留nativeType");
+		assertEquals("SDO_GEOMETRY", DDLUtils.convertType(col(JdbcTypes.GEOMETRY, "geography"), DBType.ORACLE), "oracle外部拼写转化");
+		// 未知拼写回落nativeType(精确控制)
+		assertEquals("my_custom_geom", DDLUtils.convertType(col(JdbcTypes.GEOMETRY, "my_custom_geom"), DBType.MYSQL), "未知拼写回落nativeType");
 	}
 }

@@ -253,4 +253,66 @@ public class NativeTypeUtils {
 			return nativeType;
 		}
 	}
+
+	/**
+	 * update 2026-11-22 geometry族DDL类型按目标库匹配转化(作者原则:nativeType与目标库几何类型匹配则用nativeType
+	 * 保精度;目标库完全不支持该拼写则尽可能转化为目标库默认几何类型;无法判断的未知拼写回落nativeType精确控制)。
+	 * pg内核系/sqlserver支持geometry/geography,oracle支持sdo_geometry,hana/db2支持st_geometry,mysql/h2支持geometry;
+	 * 已知几何外部拼写(geometry/geography/st_geometry/sdo_geometry,含typmod与schema前缀)在不支持的目标转化为默认几何类型。
+	 * DM由DDL层无条件ST_GEOMETRY白名单处理(不走本方法);db2几何需db2gse扩展(能力边界)。
+	 *
+	 * @param dbType     目标方言
+	 * @param nativeType 显式nativeType,可null/空
+	 * @return 目标库可建表的几何列类型
+	 */
+	public static String geometryDdlType(int dbType, String nativeType) {
+		String defaultType;
+		if (dbType == DBType.HANA) {
+			defaultType = "ST_GEOMETRY";
+		} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11) {
+			defaultType = "SDO_GEOMETRY";
+		} else if (dbType == DBType.DB2) {
+			defaultType = "db2gse.ST_GEOMETRY";
+		} else {
+			// pg内核系/sqlserver/mysql/h2等默认GEOMETRY(与历史else分支大小写一致,类型名大小写不敏感)
+			defaultType = "GEOMETRY";
+		}
+		if (nativeType == null || nativeType.trim().isEmpty()) {
+			return defaultType;
+		}
+		String nt = nativeType.trim();
+		String base = nt.toLowerCase(Locale.ROOT);
+		int paren = base.indexOf('(');
+		if (paren > 0) {
+			base = base.substring(0, paren);
+		}
+		int dot = base.lastIndexOf('.');
+		if (dot >= 0) {
+			base = base.substring(dot + 1);
+		}
+		boolean hasTypmod = paren > 0;
+		boolean supported;
+		if (isPgKernel(dbType)) {
+			// pg内核系支持geometry/geography精度形态(geometry(Point,4326)),保精度
+			supported = base.equals("geometry") || base.equals("geography");
+		} else if (dbType == DBType.SQLSERVER) {
+			// sqlserver支持geometry/geography,但不支持pg式精度拼写,带typmod视为不支持→转化
+			supported = !hasTypmod && (base.equals("geometry") || base.equals("geography"));
+		} else if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11) {
+			supported = base.equals("sdo_geometry");
+		} else if (dbType == DBType.HANA || dbType == DBType.DB2) {
+			supported = base.equals("st_geometry");
+		} else {
+			// mysql/h2仅支持裸geometry,pg式精度拼写不支持→转化
+			supported = !hasTypmod && base.equals("geometry");
+		}
+		if (supported) {
+			return nt;
+		}
+		if (base.equals("geometry") || base.equals("geography") || base.equals("st_geometry")
+				|| base.equals("sdo_geometry")) {
+			return defaultType;
+		}
+		return nt;
+	}
 }

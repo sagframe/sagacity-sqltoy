@@ -20,14 +20,14 @@ import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.ForeignModel;
 import org.sagacity.sqltoy.config.model.IndexModel;
 import org.sagacity.sqltoy.config.model.ReferentialAction;
+import org.sagacity.sqltoy.dialect.utils.H2DialectUtils;
+import org.sagacity.sqltoy.dialect.utils.PostgreSqlDialectUtils;
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 import org.sagacity.sqltoy.utils.NativeTypeUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
-import org.sagacity.sqltoy.dialect.utils.H2DialectUtils;
-import org.sagacity.sqltoy.dialect.utils.PostgreSqlDialectUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -673,25 +673,12 @@ public class DDLUtils {
 			// 受支持拼写只有 ST_GEOMETRY 一个且类型名大小写不敏感,故统一输出 ST_GEOMETRY
 			// (pg源nativeType="geometry"直通dm即-3719,此处亦覆盖跨库部署场景)
 			if (dbType == DBType.DM) {
-				typeName = "ST_GEOMETRY";
-			} else if (StringUtil.isNotBlank(colMeta.getNativeType())) {
-				// update 2026-11-22 pg内核系geometry外部拼写归一(与specialCastType同口径):仅geometry/geography
-				// 拼写原样保精度(geometry(Point,4326)),ST_GEOMETRY/SDO_GEOMETRY/db2gse.st_geometry等归一geometry
-				// (原样透传pg解析期报type "st_geometry" does not exist);非pg目标nativeType精确控制不变
-				String nt = colMeta.getNativeType().trim();
-				String ntLow = nt.toLowerCase(Locale.ROOT);
-				if (NativeTypeUtils.isPgKernel(dbType) && !ntLow.startsWith("geometry") && !ntLow.startsWith("geography")) {
-					typeName = "geometry";
-				} else {
-					typeName = nt;
-				}
-			} else if (isOracleFamily(dbType)) {
-				typeName = "SDO_GEOMETRY";
-			} else if (dbType == DBType.HANA) {
-				// hana空间类型为ST_GEOMETRY(构造函数ST_GeomFromText与mysql系同名同参)
+				// DM白名单:仅ST_GEOMETRY可建表(真库实证DM8+DMGEO),无条件收敛(含显式nativeType外部拼写)
 				typeName = "ST_GEOMETRY";
 			} else {
-				typeName = "GEOMETRY";
+				// update 2026-11-22 按目标库匹配转化(作者原则):nativeType匹配目标几何类型则用nativeType保精度,
+				// 目标完全不支持则尽可能转化为目标默认几何类型,无法判断的未知拼写回落nativeType精确控制
+				typeName = NativeTypeUtils.geometryDdlType(dbType, colMeta.getNativeType());
 			}
 			break;
 		}

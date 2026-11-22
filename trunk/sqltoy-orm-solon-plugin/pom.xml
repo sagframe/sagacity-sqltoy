@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.sagframe</groupId>
-	<version>6.0.11</version>
+	<version>6.0.12</version>
 
 	<artifactId>sagacity-sqltoy-solon-plugin</artifactId>
 	<name>sagacity-sqltoy-solon-plugin</name>
@@ -17,7 +17,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<solon.version>4.1.1</solon.version>
-		<sqltoy.version>6.0.11</sqltoy.version>
+		<sqltoy.version>6.0.12</sqltoy.version>
 		<redisx.version>1.8.6</redisx.version>
 		<mongo.version>5.14.0</mongo.version>
 		<HikariCP.version>7.1.0</HikariCP.version>
