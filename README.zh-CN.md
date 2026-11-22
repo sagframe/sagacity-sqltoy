@@ -2,7 +2,7 @@
 
 <p align="center">
     <a target="_blank" href="https://github.com/sagframe/sagacity-sqltoy/actions/workflows/ci.yml"><img src="https://github.com/sagframe/sagacity-sqltoy/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-    <img src="https://img.shields.io/badge/SqlToy-6.0.11-blue" alt="version">
+    <img src="https://img.shields.io/badge/SqlToy-6.0.12-blue" alt="version">
     <a target="_blank" href="LICENSE"><img src="https://img.shields.io/:license-Apache%202.0-blue.svg"></a>
     <a target="_blank" href="https://github.com/sagframe/sagacity-sqltoy"><img src="https://img.shields.io/github/stars/sagframe/sagacity-sqltoy.svg?style=social"/></a>
     <a target="_blank" href="https://gitee.com/sagacity/sagacity-sqltoy"><img src="https://gitee.com/sagacity/sagacity-sqltoy/badge/star.svg?theme=white" /></a>
@@ -36,7 +36,7 @@ SqlToy 是 JPA 式对象操作与 SQL 优先查询的融合体，是简单业务
 
 QQ交流群：**531812227** ｜ [Gitee](https://gitee.com/sagacity/sagacity-sqltoy) ｜ [GitHub](https://github.com/sagframe/sagacity-sqltoy) ｜ [GitCode](https://gitcode.com/sqltoy/sagacity-sqltoy)
 
-## 📦 最新版本 6.0.11
+## 📦 最新版本 6.0.12
 
 ```xml
 <dependency>
@@ -45,8 +45,8 @@ QQ交流群：**531812227** ｜ [Gitee](https://gitee.com/sagacity/sagacity-sqlt
 	<!-- solon 适配版本 <artifactId>sagacity-sqltoy-solon-plugin</artifactId> -->
 	<!-- 传统spring项目 <artifactId>sagacity-sqltoy-spring</artifactId> -->
 	<!-- 单纯sqltoy <artifactId>sagacity-sqltoy</artifactId> -->
-	<!-- jdk8 对应的版本号为：5.6.98.jre8（core 与 6.0.11 全量同步，同样支持 quickvo-maven-plugin 插件） -->
-	<version>6.0.11</version>
+	<!-- jdk8 对应的版本号为：5.6.98.jre8（core 与 6.0.12 全量同步，同样支持 quickvo-maven-plugin 插件） -->
+	<version>6.0.12</version>
 </dependency>
 ```
 

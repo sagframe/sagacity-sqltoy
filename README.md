@@ -1,7 +1,7 @@
 English | [简体中文](README.zh-CN.md)
 
 <p align="center">
-    <img src="https://img.shields.io/badge/SqlToy-6.0.11-blue" alt="version">
+    <img src="https://img.shields.io/badge/SqlToy-6.0.12-blue" alt="version">
     <a target="_blank" href="LICENSE"><img src="https://img.shields.io/:license-Apache%202.0-blue.svg"></a>
     <a target="_blank" href="https://github.com/sagframe/sagacity-sqltoy/releases"><img src="https://img.shields.io/github/v/release/sagframe/sagacity-sqltoy?logo=github"></a>
     <a href="https://mvnrepository.com/artifact/com.sagframe/sagacity-sqltoy">
@@ -56,7 +56,7 @@ List<StaffVO> staff = lightDao.find("staff_search",
 <dependency>
 	<groupId>com.sagframe</groupId>
 	<artifactId>sagacity-sqltoy-spring-starter</artifactId>
-	<version>6.0.11</version>
+	<version>6.0.12</version>
 </dependency>
 ```
 
@@ -67,7 +67,7 @@ List<StaffVO> staff = lightDao.find("staff_search",
 solon adapter        : sagacity-sqltoy-solon-plugin
 traditional Spring   : sagacity-sqltoy-spring
 plain sqltoy only    : sagacity-sqltoy
-jdk8 line (legacy)   : 5.6.98.jre8 (core synced with 6.0.11; works with quickvo-maven-plugin)
+jdk8 line (legacy)   : 5.6.98.jre8 (core synced with 6.0.12; works with quickvo-maven-plugin)
 ```
 
 > For 5.6.x → 6.0.x changes (the `parallQuery→parallelQuery` rename, the changed `DBProfile` signature of the connection callback, package structure adjustments), see the [6.0 Upgrade Guide](https://sagframe.github.io/sqltoy-docs/#/introduction/upgrade_6.0).
