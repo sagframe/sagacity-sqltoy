@@ -31,21 +31,21 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
- * @description 提供基于http请求的工具类(elastic查询统一走rest客户端:单地址/多地址、eql自定义url
- *              一致,base path由pathPrefix承载,请求路径由buildRequestPath组织)
+ * @description 提供基于http请求的工具类(elastic查询统一走rest客户端:单地址/多地址、eql自定义url 一致,base
+ *              path由pathPrefix承载,请求路径由buildRequestPath组织)
  * @author zhongxuchen
  * @version v1.0,Date:2018-01-07
  * @modified 2025-3-17 适配性优化，为切换httpclient5做准备
  * @modified 2026-11-12 jre8全量同步合并:ES提交路径保留httpclient4+elasticsearch-rest-client
- *             (rest5-client为JDK17生态,jre8不可用);rest翻译/JWT认证的通用提交方法
- *             移植自6.0的httpclient5实现(两代httpclient包名不同,通过FQN共存)
+ *           (rest5-client为JDK17生态,jre8不可用);rest翻译/JWT认证的通用提交方法
+ *           移植自6.0的httpclient5实现(两代httpclient包名不同,通过FQN共存)
  * @modified 2026-11-13 ES栈JSON切换为JsonProvider抽象(与6.0对齐,fastjson2/jackson2可选,
- *             不再硬绑fastjson2);rest路径改相对路径wrapPath(修复多地址url拼接非法uri)
+ *           不再硬绑fastjson2);rest路径改相对路径wrapPath(修复多地址url拼接非法uri)
  * @modified 2026-10-02 rest请求认证增加jwt token模式(配合HttpAuthConfig\JwtTokenManager),
- *             401时强制失效token并重试一次,兼容既有basic认证
+ *           401时强制失效token并重试一次,兼容既有basic认证
  * @modified 2026-11-13 elastic查询统一走rest客户端(单地址/多地址一致,直连httpclient路径移除);
- *             超时与字符集改为endpoint默认+语句级覆盖,池中连接被对端关闭时重试一次
- *             (自6.0于2026-11-13的改进批次合并,本侧为httpclient4+elasticsearch-rest-client形态)
+ *           超时与字符集改为endpoint默认+语句级覆盖,池中连接被对端关闭时重试一次
+ *           (自6.0于2026-11-13的改进批次合并,本侧为httpclient4+elasticsearch-rest-client形态)
  */
 public class HttpClientUtils {
 
@@ -65,8 +65,7 @@ public class HttpClientUtils {
 	 * rest通用请求的httpclient5连接配置(连接超时)
 	 */
 	private final static org.apache.hc.client5.http.config.ConnectionConfig restConnectionConfig = org.apache.hc.client5.http.config.ConnectionConfig
-			.custom()
-			.setConnectTimeout(
+			.custom().setConnectTimeout(
 					org.apache.hc.core5.util.Timeout.ofMilliseconds(NoSqlConfigModel.DEFAULT_CONNECT_TIMEOUT))
 			.build();
 
@@ -162,8 +161,8 @@ public class HttpClientUtils {
 								// 返回结果
 								org.apache.hc.core5.http.HttpEntity reponseEntity = response.getEntity();
 								if (reponseEntity != null) {
-									return org.apache.hc.core5.http.io.entity.EntityUtils
-											.toString(reponseEntity, CHARSET);
+									return org.apache.hc.core5.http.io.entity.EntityUtils.toString(reponseEntity,
+											CHARSET);
 								}
 								return null;
 							}
@@ -334,8 +333,7 @@ public class HttpClientUtils {
 	}
 
 	/**
-	 * 组织rest客户端的请求相对路径(节点地址与base path由客户端构建时的HttpHost/pathPrefix承载);
-	 * 包级可见以便同包测试
+	 * 组织rest客户端的请求相对路径(节点地址与base path由客户端构建时的HttpHost/pathPrefix承载); 包级可见以便同包测试
 	 *
 	 * @param esConfig
 	 * @param nosqlConfig
@@ -412,8 +410,7 @@ public class HttpClientUtils {
 	}
 
 	/**
-	 * 解析字符集:语句级配置优先,endpoint(默认UTF-8)兜底;配置值非法时给出明确的配置错误。
-	 * 包级可见以便同包测试
+	 * 解析字符集:语句级配置优先,endpoint(默认UTF-8)兜底;配置值非法时给出明确的配置错误。 包级可见以便同包测试
 	 *
 	 * @param nosqlConfig
 	 * @param esConfig
@@ -421,7 +418,8 @@ public class HttpClientUtils {
 	 */
 	static Charset resolveCharset(NoSqlConfigModel nosqlConfig, ElasticEndpoint esConfig) {
 		String charset = (nosqlConfig.isCharsetSet() && StringUtil.isNotBlank(nosqlConfig.getCharset()))
-				? nosqlConfig.getCharset() : esConfig.getCharset();
+				? nosqlConfig.getCharset()
+				: esConfig.getCharset();
 		if (StringUtil.isBlank(charset)) {
 			return Charset.forName(CHARSET);
 		}

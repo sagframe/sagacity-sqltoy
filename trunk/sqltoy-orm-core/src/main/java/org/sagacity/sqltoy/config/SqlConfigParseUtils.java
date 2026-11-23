@@ -917,7 +917,8 @@ public class SqlConfigParseUtils {
 		return c == ' ' || c == '\t' || c == '\n' || c == '\u000B' || c == '\f' || c == '\r';
 	}
 
-	// update 2026-11-11 与Java正则\b口径一致:Java的\b按Character.isLetterOrDigit(Unicode)判定词字符
+	// update 2026-11-11
+	// 与Java正则\b口径一致:Java的\b按Character.isLetterOrDigit(Unicode)判定词字符
 	// (与\w的ASCII口径不同),故CJK/重音字母均视为词内字符,等价性由SqlConfigParseUtilsEquivalenceTest锁定
 	private static boolean isWordChar(char c) {
 		return Character.isLetterOrDigit(c) || c == '_';
@@ -2227,8 +2228,7 @@ public class SqlConfigParseUtils {
 			return;
 		}
 		// 提取with as 和fast部分的sql，用于分页或取随机记录查询记录数量提供最简sql
-		SqlWithAnalysis sqlWith = new SqlWithAnalysis(sqlToyConfig.getSql(dialect),
-				DataSourceUtils.getDBType(dialect));
+		SqlWithAnalysis sqlWith = new SqlWithAnalysis(sqlToyConfig.getSql(dialect), DataSourceUtils.getDBType(dialect));
 		// 存在with xxx as () 形式的查询
 		if (null != sqlWith.getWithSqlSet()) {
 			String[] aliasTableAs;

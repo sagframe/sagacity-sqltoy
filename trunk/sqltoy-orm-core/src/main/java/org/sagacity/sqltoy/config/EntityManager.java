@@ -2,6 +2,7 @@ package org.sagacity.sqltoy.config;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Time;
@@ -63,6 +64,7 @@ import org.sagacity.sqltoy.model.IgnoreKeyCaseMap;
 import org.sagacity.sqltoy.model.SecureType;
 import org.sagacity.sqltoy.plugins.id.IdGenerator;
 import org.sagacity.sqltoy.utils.BeanUtil;
+import org.sagacity.sqltoy.utils.NativeTypeUtils;
 import org.sagacity.sqltoy.utils.ReservedWordsUtil;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -91,12 +93,11 @@ public class EntityManager {
 	protected final static Logger logger = LoggerFactory.getLogger(EntityManager.class);
 
 	/**
-	 * 存放主键生成策略实例
-	 * update 2026-11-15 static改为实例字段:原JVM级共享导致首个解析实体的上下文独占初始化生成器
+	 * 存放主键生成策略实例 update 2026-11-15 static改为实例字段:原JVM级共享导致首个解析实体的上下文独占初始化生成器
 	 * (RedisIdGenerator经initialize绑定该上下文的redisTemplate),后续上下文containsKey短路跳过
 	 * 初始化而串用首个上下文的连接工厂(quickstart CI实测:Lesson01的嵌入式redis被无视,save走了
-	 * 主上下文无redis的STOPPED工厂报"LettuceConnectionFactory has been STOPPED");EntityManager
-	 * 本为每SqlToyContext一份,元数据缓存entitysMetaMap亦为实例级,生成器随上下文走;
+	 * 主上下文无redis的STOPPED工厂报"LettuceConnectionFactory has been
+	 * STOPPED");EntityManager 本为每SqlToyContext一份,元数据缓存entitysMetaMap亦为实例级,生成器随上下文走;
 	 * 与cascadeModels改ClassValue同族的"静态结构持有上下文资源"治理;无状态生成器行为不变
 	 */
 	private IgnoreKeyCaseMap<String, IdGenerator> IdGeneratorsInstance = new IgnoreKeyCaseMap<String, IdGenerator>();
@@ -809,8 +810,47 @@ public class EntityManager {
 		}
 		// 字段是否自增
 		fieldMeta.setAutoIncrement(column.autoIncrement());
+		// update 2026-11-21 nativeType解析期归一特殊类型逻辑族(json/jsonb/bson/vector/geometry/
+		// array):quickvo按源库生成nativeType(源方言物理类型名),消费点(merge cast/DDL)按族
+		// 翻译为目标方言形态,避免源类型名原样拼入目标SQL产生非法cast/DDL
+		String specialFamily = NativeTypeUtils.specialFamily(column.nativeType(), column.type());
+		fieldMeta.setSpecialFamily(specialFamily);
+		// update 2026-11-22 parse期jdbcType上调(族机制运行期落地的最后一环):quickvo对这些列
+		// 常只写nativeType不写type(@Column的type默认OTHER),此前运行期绑定走setString直插
+		// pg的jsonb/vector/geometry/uuid列报"character varying与列类型不匹配"(真库四连实证),
+		// DDL/merge cast亦缺失;上调后绑定进入各类型既有机器(JSONTypeUtil的PGobject/setObject
+		// (str,OTHER)、setVectorValue统一'[..]'字符串、setGeometryValue的WKT、UUID分派),DDL进入
+		// 既有case,merge cast进入jdbcType分支。仅type为OTHER(未显式指定)时上调,显式type不受影响
+		if (column.type() == java.sql.Types.OTHER) {
+			if (NativeTypeUtils.FAMILY_JSON.equals(specialFamily)) {
+				fieldMeta.setType(org.sagacity.sqltoy.model.JdbcTypes.JSON);
+			} else if (NativeTypeUtils.FAMILY_JSONB.equals(specialFamily)) {
+				fieldMeta.setType(org.sagacity.sqltoy.model.JdbcTypes.JSONB);
+			} else if (NativeTypeUtils.FAMILY_VECTOR.equals(specialFamily)) {
+				fieldMeta.setType(org.sagacity.sqltoy.model.JdbcTypes.VECTOR);
+			} else if (NativeTypeUtils.FAMILY_GEOMETRY.equals(specialFamily)) {
+				fieldMeta.setType(org.sagacity.sqltoy.model.JdbcTypes.GEOMETRY);
+			} else if (NativeTypeUtils.FAMILY_UUID.equals(specialFamily)) {
+				fieldMeta.setType(org.sagacity.sqltoy.model.JdbcTypes.UUID);
+			}
+		}
 		// 设置type类型，并转小写便于后续对比的统一
 		fieldMeta.setFieldType(field.getType().getTypeName().toLowerCase(Locale.ROOT));
+		// update 2026-11-21 数组/集合字段提取元素组件类型(定型数组取组件类,List/Set取泛型实参,
+		// 泛型实参非具体Class时留空),供h2等prepare期急切定型的方言生成cast(? as xx ARRAY)
+		// update 2026-11-22 byte[]是二进制语义(bytea/blob/varbinary/IMAGE),不是"字节数组列":不提取
+		// 组件类型,否则DDL按component=byte分派成int2[]/INT
+		// ARRAY/JSON等,丢失BYTEA/BLOB/VARBINARY(MAX)
+		// (与SqlUtil绑定路径"byte[]在数组分支前return"口径一致);Byte[]等真正数组语义保持提取
+		if (field.getType().isArray() && field.getType() != byte[].class) {
+			fieldMeta.setArrayComponentType(field.getType().getComponentType().getName());
+		} else if (java.util.Collection.class.isAssignableFrom(field.getType())
+				&& field.getGenericType() instanceof ParameterizedType) {
+			Type genericArg = ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
+			if (genericArg instanceof Class) {
+				fieldMeta.setArrayComponentType(((Class) genericArg).getName());
+			}
+		}
 		fieldMeta.setComments(StringUtil.isBlank(column.comment()) ? null : column.comment().trim());
 		// 设置是否分区字段
 		if (field.getAnnotation(PartitionKey.class) != null) {
@@ -851,7 +891,10 @@ public class EntityManager {
 			entityMeta.setForeignFields(foreignFieldMap);
 		}
 		// 兼容type不设置场景，根据字段类型自动补充,为时序数据库等手工简化写注解做准备
-		if (column.type() == java.sql.Types.OTHER) {
+		// update 2026-11-22 仅当type仍为OTHER(未被上方特殊族parse期上调为JSON/JSONB/VECTOR/
+		// GEOMETRY/UUID)时才按字段类型推断——此前String字段的json/jsonb/uuid/向量/空间列
+		// 被此处覆盖回VARCHAR,上调失效致pg系原生列insert/merge裸?绑定报类型不匹配(真库实证)
+		if (column.type() == java.sql.Types.OTHER && fieldMeta.getType() == java.sql.Types.OTHER) {
 			Class fieldType = field.getType();
 			if (fieldType.equals(String.class)) {
 				fieldMeta.setType(java.sql.Types.VARCHAR);

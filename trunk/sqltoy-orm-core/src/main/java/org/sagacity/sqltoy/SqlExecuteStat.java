@@ -15,6 +15,7 @@ import org.sagacity.sqltoy.model.OverTimeSql;
 import org.sagacity.sqltoy.plugins.FirstBizCodeTrace;
 import org.sagacity.sqltoy.plugins.OverTimeSqlHandler;
 import org.sagacity.sqltoy.plugins.formater.SqlFormater;
+import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.DataSourceUtils;
 import org.sagacity.sqltoy.utils.SqlUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
@@ -255,7 +256,15 @@ public class SqlExecuteStat {
 							if (i > 0) {
 								paramStr.append(",");
 							}
-							paramStr.append("p[" + i + "]=" + args[i]);
+							paramStr.append("p[" + i + "]=");
+							// update 2026-11-21 数组/集合参数渲染为元素列表,
+							// 避免Object[]默认toString输出[Ljava.lang.String;@..形态
+							if (args[i] != null
+									&& (args[i].getClass().isArray() || args[i] instanceof java.util.Collection)) {
+								paramStr.append(SqlUtil.combineArray(CollectionUtil.convertArray(args[i])));
+							} else {
+								paramStr.append(args[i]);
+							}
 						}
 						result.append(paramStr);
 					} else {
@@ -343,7 +352,9 @@ public class SqlExecuteStat {
 			preSql = sql.substring(start, matcher.start() + 1);
 			lastSql.append(preSql);
 			if (index < paramSize) {
-				lastSql.append(SqlUtil.toSqlLogStr(params[index], preSql, true, dbType));
+				// update 2026-11-21 日志拟合入口启用数组分派:比较位置的数组/集合参数
+				// 按方言输出ARRAY[..]或各库二进制字面量/null揭示形态(拼接真实sql的场景不启用)
+				lastSql.append(SqlUtil.toSqlLogStr(params[index], preSql, true, dbType, true));
 			} else {
 				// 问号数量大于参数值数量,说明sql中存在写死的条件值里面存在问号,因此不再进行条件值拟合
 				return sql;

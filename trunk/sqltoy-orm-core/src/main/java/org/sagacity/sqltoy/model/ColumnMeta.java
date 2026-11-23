@@ -52,6 +52,18 @@ public class ColumnMeta implements Serializable {
 	 */
 	private String typeName;
 
+	/**
+	 * update 2026-11-21 数组/集合字段的元素组件类型全限定名(源自FieldMeta.arrayComponentType,
+	 * 实体→DDL链路透传),DDL生成时按方言转数组列类型(pg系elem[]、h2的elem ARRAY)
+	 */
+	private String arrayComponentType;
+
+	/**
+	 * update 2026-11-21 nativeType归一的特殊类型逻辑族(源自FieldMeta.specialFamily,
+	 * json/jsonb/bson/vector/geometry/array,null=非特殊族),DDL生成按族翻译目标方言形态
+	 */
+	private String specialFamily;
+
 	private String nativeType;
 
 	/**
@@ -112,6 +124,28 @@ public class ColumnMeta implements Serializable {
 
 	public void setTypeName(String typeName) {
 		this.typeName = typeName;
+	}
+
+	/**
+	 * @return 数组/集合字段的元素组件类型全限定名,非数组/集合字段null
+	 */
+	public String getArrayComponentType() {
+		return arrayComponentType;
+	}
+
+	public void setArrayComponentType(String arrayComponentType) {
+		this.arrayComponentType = arrayComponentType;
+	}
+
+	/**
+	 * @return nativeType归一的特殊类型逻辑族,非特殊族null
+	 */
+	public String getSpecialFamily() {
+		return specialFamily;
+	}
+
+	public void setSpecialFamily(String specialFamily) {
+		this.specialFamily = specialFamily;
 	}
 
 	public String getDefaultValue() {

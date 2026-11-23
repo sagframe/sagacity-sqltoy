@@ -11,6 +11,7 @@ import org.sagacity.sqltoy.callback.ReflectPropsHandler;
 import org.sagacity.sqltoy.callback.UpdateRowCallback;
 import org.sagacity.sqltoy.callback.UpdateRowHandler;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
+import org.sagacity.sqltoy.dialect.utils.DefaultDialectUtils;
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.DBProfile;
 import org.sagacity.sqltoy.model.LockMode;
@@ -258,6 +259,27 @@ public interface Dialect {
 	public Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
 			final UpdateRowCallback updateRowCallback, final int lockWaitTimeout, final String[] uniqueProps,
 			final Connection conn, final DBProfile profile, final String tableName) throws Exception;
+
+	/**
+	 * 单实体锁查询：存在则修改并返回修改后的实体；不存在且 insertIfAbsent=false 时返回 null，不执行 insert。
+	 * <p>
+	 * 与上面的 updateSaveFetch 共享锁查询、代理更新、数据版本、公共字段处理，仅多一个 insertIfAbsent 开关。
+	 * </p>
+	 */
+	default Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
+			final UpdateRowCallback updateRowCallback, final int lockWaitTimeout, final String[] uniqueProps,
+			final Connection conn, final DBProfile profile, final String tableName, final boolean insertIfAbsent)
+			throws Exception {
+		// update 2026-11-22 insertIfAbsent=true 时回到既有8参重载:方言/第三方Dialect对8参方法(回调形态)
+		// 的覆写继续生效(自定义主键回填、锁语义、不支持异常等),避免新增9参方法把既有覆写变成死代码;
+		// 仅新增的"不存在不插入"(updateFetch,insertIfAbsent=false)语义走默认实现
+		if (insertIfAbsent) {
+			return updateSaveFetch(sqlToyContext, entity, updateRowCallback, lockWaitTimeout, uniqueProps, conn,
+					profile, tableName);
+		}
+		return DefaultDialectUtils.updateSaveFetch(sqlToyContext, entity, null, updateRowCallback, uniqueProps, conn,
+				profile, tableName, lockWaitTimeout, false);
+	}
 
 	/**
 	 * 批量修改对象

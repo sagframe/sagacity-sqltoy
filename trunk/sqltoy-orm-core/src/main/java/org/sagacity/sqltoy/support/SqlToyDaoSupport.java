@@ -1269,6 +1269,39 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
+	 * 单实体对象化 updateFetch：按实体唯一属性锁查询并修改，只更新；记录不存在返回 null，不执行 insert。
+	 * <p>
+	 * 与 updateSaveFetch(EntityUpdateCallback) 共享锁查询、实体代理更新、数据版本和公共字段处理，
+	 * 区别仅在于不存在记录时不插入。
+	 * </p>
+	 * 
+	 * @param <T>         实体类型
+	 * @param entity      待锁定的实体对象，以主键或 uniqueProps 的属性值定位记录
+	 * @param callback    实体更新回调，只操作实体 get/set，无 ResultSet
+	 * @param uniqueProps 唯一性字段属性名数组，不设置则按主键定位
+	 * @return 修改后的实体；记录不存在返回 null
+	 */
+	public <T extends Serializable> T updateFetch(final T entity, final EntityUpdateCallback<T> callback,
+			final String... uniqueProps) {
+		return updateFetch(entity, callback, -1, uniqueProps, null);
+	}
+
+	/**
+	 * 单实体对象化 updateFetch 的数据源/锁等待扩展入口，供 spring、solon 等子类按自身 dataSource 调用。
+	 */
+	protected <T extends Serializable> T updateFetch(final T entity, final EntityUpdateCallback<T> callback,
+			final int lockWaitTimeout, final String[] uniqueProps, final DataSource dataSource) {
+		if (entity == null || callback == null) {
+			throw new IllegalArgumentException("updateFetch entity and callback must not be null!");
+		}
+		Class<T> entityClazz = (Class<T>) entity.getClass();
+		UpdateRowCallback updateRowCallback = BeanUtil.toSqlToyHandler(getEntityMeta(entityClazz), entityClazz,
+				callback);
+		return (T) dialectFactory.updateFetch(sqlToyContext, entity, updateRowCallback, lockWaitTimeout, uniqueProps,
+				getDataSource(dataSource));
+	}
+
+	/**
 	 * 深度更新实体对象数据,根据对象的属性值全部更新对应表的字段数据,不涉及级联修改
 	 * 
 	 * @param entity 待深度修改的实体对象(根据主键定位记录,属性值为null则更新对应字段为null)
@@ -2058,6 +2091,29 @@ public class SqlToyDaoSupport {
 	}
 
 	/**
+	 * update 2026-11-22 判定同列翻译的目标列是否已在本次查询投影中(selectFieldAry为null/空表示查全部字段)
+	 *
+	 * @param selectFieldAry 投影字段(属性名或列名)
+	 * @param column         翻译目标属性名
+	 * @param dbColumn       对应的数据库列名
+	 * @return true表示投影已包含该列,可原地翻译;false时须补充"key as column"查询列
+	 */
+	private static boolean isTranslatedColumnSelected(String[] selectFieldAry, String column, String dbColumn) {
+		if (selectFieldAry == null || selectFieldAry.length == 0) {
+			return true;
+		}
+		for (String field : selectFieldAry) {
+			if (field == null) {
+				continue;
+			}
+			if (field.equalsIgnoreCase(column) || field.equalsIgnoreCase(dbColumn)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * 提供findEntity的基础实现，供对外接口包装，额外开放了resultClass的自定义功能
 	 * 
 	 * @param entityClass 单表对应的实体类
@@ -2072,6 +2128,24 @@ public class SqlToyDaoSupport {
 		EntityMeta entityMeta = getEntityMeta(entityClass);
 		validEntity(entityMeta, entityClass, false);
 		EntityQueryExtend innerModel = entityQuery.getInnerModel();
+		// update 2026-11-22 select字段与notSelect的解析前移到翻译处理之前:同列翻译需要先知道本次
+		// 投影是否已包含目标列,否则"select(id)+translate(同列)"会静默失效(见下方翻译分支注释)
+		// 将notSelect构造成select，形成统一处理机制
+		String[] selectFieldAry = null;
+		Set<String> notSelect = innerModel.notSelectFields;
+		if (notSelect != null) {
+			List<String> selectFields = new ArrayList<String>();
+			for (String field : entityMeta.getFieldsArray(false)) {
+				if (!notSelect.contains(field.toLowerCase(Locale.ROOT))) {
+					selectFields.add(field);
+				}
+			}
+			if (selectFields.size() > 0) {
+				selectFieldAry = selectFields.toArray(new String[0]);
+			}
+		} else {
+			selectFieldAry = innerModel.fields;
+		}
 		String translateFields = "";
 		// 将缓存翻译对应的查询补充到select column 上,形成select keyColumn as viewColumn 模式
 		if (!innerModel.translates.isEmpty()) {
@@ -2093,26 +2167,23 @@ public class SqlToyDaoSupport {
 						translate.setCompareColumn(compareColumn);
 					}
 				}
-				// 保留字处理
+				// 同列翻译(key与target指向同一属性/列):把翻译目标改成真实列名,让翻译按结果列名命中;
+				// 属性名与库列名存在驼峰/下划线差异(如staffLevel/STAFF_LEVEL),沿用属性名会找不到结果列;
+				// 仅结果类型就是实体本身时走原列翻译,自定义VO结果仍沿用"key as target"别名映射
+				// update 2026-11-22 仅当该列确在投影中才原地翻译:此前无条件跳过补列,select(id)+同列
+				// 翻译或join通道别名与属性不一致时,结果集里没有该列,翻译静默no-op且属性为null(实测);
+				// 投影未包含该列时与key→target同口径补"key as column"查询列,保证翻译一定落地
+				if ((resultClass == null || resultClass == entityClass) && StringUtil.isNotBlank(extend.keyColumn)
+						&& (extend.keyColumn.equalsIgnoreCase(extend.column)
+								|| keyColumn.equalsIgnoreCase(extend.column))) {
+					if (isTranslatedColumnSelected(selectFieldAry, extend.column, keyColumn)) {
+						translate.setColumn(keyColumn);
+						continue;
+					}
+				}
 				keyColumn = ReservedWordsUtil.convertWord(keyColumn, null);
 				translateFields = translateFields.concat(",").concat(keyColumn).concat(" as ").concat(extend.column);
 			}
-		}
-		// 将notSelect构造成select，形成统一处理机制
-		String[] selectFieldAry = null;
-		Set<String> notSelect = innerModel.notSelectFields;
-		if (notSelect != null) {
-			List<String> selectFields = new ArrayList<String>();
-			for (String field : entityMeta.getFieldsArray(false)) {
-				if (!notSelect.contains(field.toLowerCase(Locale.ROOT))) {
-					selectFields.add(field);
-				}
-			}
-			if (selectFields.size() > 0) {
-				selectFieldAry = selectFields.toArray(new String[0]);
-			}
-		} else {
-			selectFieldAry = innerModel.fields;
 		}
 		// 指定的查询字段
 		String fields = "";

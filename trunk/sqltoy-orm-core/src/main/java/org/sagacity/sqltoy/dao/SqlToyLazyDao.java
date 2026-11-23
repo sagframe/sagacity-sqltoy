@@ -216,6 +216,18 @@ public interface SqlToyLazyDao extends LambdaDao {
 			final int lockWaitTimeout, final String... uniqueProps);
 
 	/**
+	 * 单实体对象化 updateFetch：按实体唯一属性锁查询并修改，只更新；记录不存在返回 null，不执行 insert。
+	 * 
+	 * @param <T>         实体类型
+	 * @param entity      待锁定的实体对象，以主键或 uniqueProps 的属性值定位记录
+	 * @param callback    实体更新回调，只操作实体 get/set，无 ResultSet
+	 * @param uniqueProps 唯一性字段属性名数组，不设置则按主键定位
+	 * @return 修改后的实体；记录不存在返回 null
+	 */
+	public <T extends Serializable> T updateFetch(final T entity, final EntityUpdateCallback<T> callback,
+			final String... uniqueProps);
+
+	/**
 	 * 深度修改,不管是否为null全部字段强制修改
 	 * 
 	 * @param serializableVO 待深度修改的实体对象，全部非主键字段（包括null值属性）强制参与修改

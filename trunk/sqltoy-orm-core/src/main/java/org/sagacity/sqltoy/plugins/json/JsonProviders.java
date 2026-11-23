@@ -11,10 +11,9 @@ import org.slf4j.LoggerFactory;
 /**
  * @project sagacity-sqltoy
  * @description JsonProvider 的解析与持有: 1) spring.sqltoy.jsonProvider 显式配置的实现类优先;
- *              2) 否则按 classpath 探测:fastjson2(兼容存量项目) -> jackson2;
- *              3) 候选必须通过冒烟解析才会被采纳:库在 classpath 上并不等于可用,
- *              此时记 WARN 并降级到下一个候选; 4) 没有任何可用实现时,触及 JSON
- *              列才抛出带明确指引的异常(而非 NoClassDefFoundError)。
+ *              2) 否则按 classpath 探测:fastjson2(兼容存量项目) -> jackson2; 3)
+ *              候选必须通过冒烟解析才会被采纳:库在 classpath 上并不等于可用, 此时记 WARN 并降级到下一个候选; 4)
+ *              没有任何可用实现时,触及 JSON 列才抛出带明确指引的异常(而非 NoClassDefFoundError)。
  *              (jre8同步适配:剔除jackson3候选——tools.jackson为JDK17生态,jre8不可用)
  * @author zhongxuchen
  * @version v1.0, Date:2026-10-15
@@ -31,8 +30,8 @@ public final class JsonProviders {
 
 	/**
 	 * 探测候选:{marker 类名, 实现类名}。顺序即优先级:fastjson2 优先,因为 provider 抽象出现之前 就把 JSON 列跑起来的项目
-	 * classpath 上一定有 fastjson2,保持它们的行为完全不变; 其后 jackson2。
-	 * 全部用字符串:引用 Xxx.class 或 Xxx::new 都会在类加载/初始化阶段就要求对应的 JSON 库存在
+	 * classpath 上一定有 fastjson2,保持它们的行为完全不变; 其后 jackson2。 全部用字符串:引用 Xxx.class 或
+	 * Xxx::new 都会在类加载/初始化阶段就要求对应的 JSON 库存在
 	 */
 	private static final String[][] CANDIDATES = { { "com.alibaba.fastjson2.JSON", FASTJSON_IMPL },
 			{ "com.fasterxml.jackson.databind.ObjectMapper", JACKSON2_IMPL } };
@@ -60,8 +59,8 @@ public final class JsonProviders {
 
 	/**
 	 * 由 SqlToyContext 初始化时调用(配置项 spring.sqltoy.jsonProvider)。
-	 * 取值支持两种写法:内置实现的简写别名(fastjson2 / jackson2), 或任意 JsonProvider
-	 * 实现的全限定类名。 显式配置代表使用者的明确意图,因此不可用时直接失败并带上根因, 而不是静默回落到探测结果(那会让配置形同虚设且难以排查)。
+	 * 取值支持两种写法:内置实现的简写别名(fastjson2 / jackson2), 或任意 JsonProvider 实现的全限定类名。
+	 * 显式配置代表使用者的明确意图,因此不可用时直接失败并带上根因, 而不是静默回落到探测结果(那会让配置形同虚设且难以排查)。
 	 */
 	public static void configure(String providerClass) {
 		if (providerClass == null || providerClass.trim().isEmpty()) {

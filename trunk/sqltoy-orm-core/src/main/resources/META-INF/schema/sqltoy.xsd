@@ -722,7 +722,7 @@
 			<xsd:element name="l-like" minOccurs="0"
 				maxOccurs="unbounded">
 				<xsd:annotation>
-					<xsd:documentation><![CDATA[like查询时,当参数不为null或空白的情况下给参数右边补%]]></xsd:documentation>
+					<xsd:documentation><![CDATA[like查询时,当参数不为null或空白的情况下给参数左边补%]]></xsd:documentation>
 				</xsd:annotation>
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string"
@@ -733,7 +733,7 @@
 			<xsd:element name="r-like" minOccurs="0"
 				maxOccurs="unbounded">
 				<xsd:annotation>
-					<xsd:documentation><![CDATA[like查询时,当参数不为null或空白的情况下给参数左边补%]]></xsd:documentation>
+					<xsd:documentation><![CDATA[like查询时,当参数不为null或空白的情况下给参数右边补%]]></xsd:documentation>
 				</xsd:annotation>
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string"
@@ -754,7 +754,7 @@
 			<xsd:element name="like" minOccurs="0"
 				maxOccurs="unbounded">
 				<xsd:annotation>
-					<xsd:documentation><![CDATA[统一LIKE处理:mode=both/left/right控制补%方向;escape-mode=raw/legacy控制转义;escape-percent控制%是否作为字面量。raw/legacy需SQL显式声明ESCAPE '\'(mysql为ESCAPE '\\')]]></xsd:documentation>
+					<xsd:documentation><![CDATA[统一LIKE处理:mode=both/left/right控制补%方向(left=%在参数左侧即%xxx,right=%在参数右侧即xxx%;别名contains=both,suffix=left,prefix=right);escape-mode=raw/legacy控制转义;escape-percent控制%是否作为字面量。ESCAPE子句由框架按方言自动追加(ClickHouse/Impala/TDengine/StarRocks/Doris不支持ESCAPE语法,自动省略),无需SQL显式声明]]></xsd:documentation>
 				</xsd:annotation>
 				<xsd:complexType>
 					<xsd:attribute name="params" type="xsd:string" />

@@ -83,6 +83,20 @@
 > LambdaLikeBackslashH2Test(10例)新增,**List.of→Arrays.asList 转换(10+13处)后进入适配清单**;
 > UriTest 拷贝6.0版后恢复hc4异常import(新增2例index防重复);ComboEdge增3例、LikeFilterElementTest增1例。
 > 门禁:core 330类 2541例全绿(82例环境性跳过,较上轮净增22例)。
+>
+> **第七轮同步完成(2026-11-23,6.0.12 正式发版内容,版本 5.6.99.jre8)**:5.6.98.jre8 已于 2026-11-19 发布(内容=6.0.11 同步),
+> 故本轮版本号升为 **5.6.99.jre8**(上游 release-6.0.12.md 写的"jdk8 对应 5.6.98.jre8"已过时)。gitee 6.0.11..HEAD 共 76 文件
+> (+5171/-186):数组参数绑定/回写/日志拟合全链路、nativeType 特殊类型族(NativeTypeUtils 解析期归族+消费点方言翻译,
+> FieldMeta/ColumnMeta 新增 specialFamily/arrayComponentType)、单实体 updateFetch、lambda 编程式缓存翻译、跨库 DDL/cast/
+> boolean/UUID/时区修正。做法见下方「同步流程」的分类法:干净基线文件整体拷贝(main 34 含新增 NativeTypeUtils、test 19 含
+> lambda-cache-translate.xml、模块 2 个 SqlToyDaoImpl),登记适配文件三方合并——main 3 个(DialectUtils +27/-1、
+> PostgreSqlDialectUtils +86/-2、BeanUtil +23/-8)+模块 dao impl 6 个(各 +6),两条不变量全部校验通过。测试仅 4 处 JDK9 写法
+> (Set.of×1、List.of×3);**OracleTzNormalizeTest 按驱动能力改写(见适配清单:ojdbc8 19.24 无无参 offsetDateTimeValue(),
+> 本线 Oracle TIMESTAMPTZ 读回归一不生效)**。pom 无依赖变更(上游 spring-framework 7.0.11/spring-boot 4.1.3 不适用本线)。
+> 门禁:core clean 全量 347 类 2714 例全绿(82 例环境性跳过);与同步前提交(008ca5b62,独立 worktree clean 实跑 330 类
+> 2583 例)逐类比对——+131 例全部归因(17 个新测试类 127 例 + DDLConvertTypeMatrixTest 7→11),无类丢失、既有类计数零变化;
+> starter 4 例、solon 7 例、spring 编译通过。合并后全景:trunk 下 930 文件 836 个与上游逐字节一致,差异 92 个(本轮 17 +
+> 既有 75)、上游独有 36、jre8 独有 2,全部有归属。
 
 ## 同步流程(每个 6.0 release tag 执行一轮)
 
@@ -92,6 +106,19 @@
 4. 合并 pom 依赖(按「pom 差异基线」jre8 化)
 5. 编译门禁:JDK8 全量编译 + 全量测试(2196例)+ spring/starter/solon 模块编译
 6. 更新本清单(新增的适配点登记)
+
+**分类法(第七轮起,替代人工逐文件判断)**:gitee 与 github 两仓库的提交 SHA 不通(同一 tag 两边 SHA 不同),不能靠 git 祖先
+关系求差异;两边均 `core.autocrlf=true`(仓库内为 LF),故用 `git ls-tree -r` 的 **blob 哈希逐文件比对**:
+
+| 类别 | 判定 | 处置 |
+|---|---|---|
+| A 干净基线 | 上游本轮变更 且 jre8 blob == gitee@上个 tag blob | 整体拷贝(覆盖前再校验目标文件==基线,防误覆盖登记适配文件),再做 `--release 8` 编译 |
+| B 登记适配 | 上游本轮变更 且 jre8 blob != gitee@上个 tag blob | 三方合并(base=gitee@上个 tag,ours=jre8,theirs=gitee@HEAD,`git merge-file`),须校验两条不变量:diff(ours→merged)≡diff(base→theirs)、diff(theirs→merged)≡diff(base→ours) |
+| C 残余差异 | 上游未变 但 jre8 与上游不同 | 应全部命中「排除清单」/「适配清单」,出现未登记项即为存量缺口 |
+| D | 上游已变 但 jre8 已等于上游新值 | 应为 0,否则说明基线 tag 选错 |
+
+上游变更范围以 gitee 自身的 `git diff --stat <上个 tag> HEAD` 为准;合并后用同一哈希法对工作区做全景复核,所有差异必须能归入
+上述清单。B 类合并的三方输入一律取 git blob(`git show`),输出再转回工作区的 CRLF。
 
 ## 排除清单(不进入 5.6.jre8 的文件/代码)
 
@@ -124,6 +151,8 @@
 | `BeanUtilEnumClassReloadTest` | `ClassLoader.getPlatformClassLoader()`(JDK9+) | `getSystemClassLoader().getParent()`(扩展类加载器,同样看不到测试 classpath) |
 | `LambdaCompositionH2Test` | 6.0(H2 2.5.252)已移除链式 CTE 版本守卫 | 恢复 `@DisabledIf`+H2LegacyChainedCteParamBug 守卫(H2≤2.2.224 引擎限制) |
 | solon `DbManager.getService` | `crudService.setLightDao(...)`(6.0 服务类签名) | 保持本模块 `setSqlToyLazyDao(...)` 形态(第 13 条的切换清空逻辑照常移植) |
+| `OracleTzNormalizeTest` | 断言 TIMESTAMPTZ 必解析出无参 `offsetDateTimeValue()`(ojdbc11 23.x 具备该方法) | 按驱动能力分派断言——ojdbc8 19.24(JDK8 最后一条 Oracle 驱动线)的 TIMESTAMPTZ 只有 `offsetDateTimeValue(Connection)`,javap 实证无无参方法:此时断言解析为 null。产品代码 `ResultUtils` 与 6.0 逐字一致(反射不到方法即保留驱动对象=6.0.12 之前行为),故**本线 Oracle TIMESTAMPTZ 读回归一不生效**,需要可读值时 SQL 端 to_char 或 VO 用 Timestamp 接收;若日后 ojdbc8 线提供无参方法,产品代码自动生效、测试自动切换断言 |
+| `BeanUtilArrayConvertTypeTest`/`SqlUtilsExtArrayResultUpdateTest` | `Set.of(..)`/`List.of(..)`(JDK9) | `new HashSet<>(Arrays.asList(..))`/`Arrays.asList(..)` |
 
 ## pom 差异基线(5.6 侧 jre8 化规则)
 
@@ -140,6 +169,7 @@
 | junit 6.1.3 | 5.11.4/1.11.4 | JUnit 6 需 JDK17 |
 | 新增驱动(starrocks/mysql/sqlite/hana/kingbase/oceanbase/db2/dm等,test scope) | 随同步引入 | 保持 test 作用域 |
 | 编译配置 | source/target 1.8,移除release | |
+| spring-framework 7.0.11 / spring-boot 4.1.3(6.0.12 升级) | 不跟进 | 本线为 Boot2/javax 生态,模块 pom 维持 5.6 线依赖;6.0.12 自身无 core 依赖变更 |
 
 ## 测试门禁
 
@@ -151,3 +181,5 @@
 - 移植测试的已知改写规则:文本块→拼接(**关键:收尾"""独占一行时内容以\n结尾,末段字面量必须补\n;定界符前还有空行则补\n\n——第三轮曾整体漏掉,经JDK17文本块求值对比器TBVerify逐对修复并验证15/15等价**)、record fixture→剔除、`var`→显式类型、`Map.of`→HashMap、`.repeat`→nCopies、`readAllBytes`→循环读取
 - 删除过源码的测试务必 `mvn clean`(陈旧 class 会被 surefire 捡起误报,如 TranslateCacheCheckersTest/record 系排除用例)
 - spring/spring-starter/solon 模块:编译验证通过;starter/solon 自第三轮起有真实单测(caffeine 双上下文 3 例/DbManager 作用域 1 例),构建前需先 `mvn install` 同步后的 core
+- 版本号:已发布的版本(如 5.6.98.jre8)不得再用 `mvn install` 覆盖本地仓库——同版本本地构件会与中央仓库不一致,且 `_remote.repositories` 残留远端来源标记使 Maven 不再重新下载(第七轮曾误覆盖,已删除该版本目录后 `dependency:get` 从镜像恢复);模块验证一律安装**新的未发布版本号**(core→spring→starter 有依赖顺序,三模块无聚合 pom)
+- 统计口径(第七轮实测):同步前 008ca5b62 = 330 类 2583 例/82 跳过,同步后 = 347 类 2714 例/82 跳过。核对测试数时注意——①带 `@DisplayName` 的类,`Running` 行与汇总行输出的是显示名而非类全名(第七轮有 18 个类如此),且控制台日志为 GBK;按类统计应数 `target/surefire-reports/TEST-*.xml`,或用紧邻的 `Running` 行归属汇总行,否则会漏计;②`EntityScannerFatJarTest` 的 5 例是否跳过取决于构建目录是否遗留 boot-loader(clean 检出跳过→82,增量目录执行并通过→77),属环境差异非代码差异;③要证明"零回归",把同步前的提交检出到独立 worktree(`git worktree add --detach <tmp> HEAD`)clean 实跑一遍,再与同步后的日志逐类比对

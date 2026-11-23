@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqltoy-translate>
+	<cache-translates>
+		<local-translate cache="dict_staff_status"/>
+		<local-translate cache="dict_organ"/>
+		<local-translate cache="dict_level"/>
+	</cache-translates>
+</sqltoy-translate>

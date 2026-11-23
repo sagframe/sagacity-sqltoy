@@ -55,25 +55,30 @@ public class SqlServerDDLGenerator implements DialectDDLGenerator {
 			}
 			// 字段名
 			tableSql.append(TAB).append(StringUtil.toLowerOrUpper(colMeta.getColName(), upperOrLower));
-			// 类型:SQLServer VARCHAR上限8000,超长降级VARCHAR(MAX);VECTOR降级VARBINARY(MAX)
+			// 类型:SQLServer VARCHAR/NVARCHAR上限4000(8000仅限VARCHAR),超长降级(MAX);VECTOR见下方说明
 			String colType = DDLUtils.convertType(colMeta, dbType);
+			// update 2026-11-22 同时兼容NVARCHAR(unicode)与(MAX)形态:此前只识别VARCHAR且上限按8000,
+			// NVARCHAR(8000)会漏判(DDLUtils已按4000上限输出NVARCHAR(MAX),此处兜底NVARCHAR超长)
 			if (colType.startsWith("VARCHAR") || colType.startsWith("NVARCHAR")) {
 				int open = colType.indexOf('(');
 				int close = colType.indexOf(')', open);
 				if (open > 0 && close > open) {
 					try {
 						int len = Integer.parseInt(colType.substring(open + 1, close).trim());
-						if (len > 8000) {
+						int maxLen = colType.startsWith("NVARCHAR") ? 4000 : 8000;
+						if (len > maxLen) {
 							colType = colType.substring(0, open) + "(MAX)";
 						}
 					} catch (NumberFormatException ignore) {
 					}
 				}
 			}
-			// SQLServer无原生VECTOR类型(2025预览版才有),降级VARBINARY(MAX)
-			if (colType.startsWith("VECTOR")) {
-				colType = "VARBINARY(MAX)";
-			}
+			// update 2026-11-22 仅 SQL Server 2025+ 支持原生 VECTOR(n)(真库实证:2025版VECTOR(3)建表/
+			// setString隐式写入/读回解码均OK)。2022及更早版本无 VECTOR 类型,该版本部署须以
+			// @Column(nativeType=..) 显式指定承载类型(如 VARBINARY(MAX))或升级到 2025+;
+			// 不再自动降级VARBINARY(MAX)——降级后绑定setString(nvarchar)与VARBINARY列错配报
+			// "implicit conversion nvarchar to varbinary(max)"。维度由@Column(length)提供
+			// (sqlserver VECTOR维度必填,裸VECTOR报"Cannot find data type vector",真库实证)
 			// 计算列:SQLServer语法为 col AS (expr) [PERSISTED],不带数据类型(带类型会让AS变成语法错误)
 			if (colMeta.getGeneratedType() > 0 && StringUtil.isNotBlank(colMeta.getDefaultValue())) {
 				tableSql.append(" AS (").append(colMeta.getDefaultValue()).append(") ");

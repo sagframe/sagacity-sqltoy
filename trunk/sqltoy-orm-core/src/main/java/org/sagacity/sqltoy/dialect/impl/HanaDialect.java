@@ -387,6 +387,14 @@ public class HanaDialect implements Dialect {
 		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
 	}
 
+	@Override
+	public Serializable updateSaveFetch(SqlToyContext sqlToyContext, Serializable entity,
+			UpdateRowCallback updateRowCallback, int lockWaitTimeout, String[] uniqueProps, Connection conn,
+			DBProfile profile, String tableName, boolean insertIfAbsent) throws Exception {
+		// 不支持(ngdbc无可更新结果集,同上)
+		throw new UnsupportedOperationException(SqlToyConstants.UN_SUPPORT_MESSAGE);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 

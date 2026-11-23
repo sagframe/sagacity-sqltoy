@@ -110,6 +110,11 @@ public class SqlUtil {
 	public static final Pattern COMPARE_PATTERN = Pattern
 			.compile("(?i)(\\<|\\=|\\>|\\<\\>|\\!\\=|\\<\\=|\\>\\=|\\Wand|\\Wbetween|\\()\\s*$");
 
+	// update 2026-11-21 纯标量比较符结尾(=、!=、<>、>=、<=、>、<),区别于COMPARE_PATTERN
+	// (后者另含and/between/(——in(、between等位置的数组参数维持逗号串形态,不参与数组字面量分派)
+	public static final Pattern SCALAR_COMPARE_PATTERN = Pattern
+			.compile("(\\<\\>|\\!\\=|\\<\\=|\\>\\=|=|\\>|\\<)\\s*$");
+
 	/**
 	 * 查询select 匹配
 	 */
@@ -371,6 +376,26 @@ public class SqlUtil {
 			setVectorValue(dbProfile, pst, paramIndex, paramValue);
 			return;
 		}
+		// update 2026-11-22 uuid类型参数赋值:String/java.util.UUID承载
+		if (jdbcType == JdbcTypes.UUID) {
+			// pg内核系/h2: setObject(java.util.UUID)按JDBC原生uuid类型映射(此前setObject(str,OTHER)
+			// 在pgjdbc仍按varchar发送,直插uuid列报character varying不匹配,真库实证);
+			// 其余目标uuid以varchar(36)族标量列承载(DDL族映射),setString即正确
+			String uuidStr = paramValue.toString();
+			if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
+					|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
+					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE
+					|| dbType == DBType.HIGHGO || dbType == DBType.H2) {
+				pst.setObject(paramIndex, toUuidValue(paramValue));
+			} else if (dbType == DBType.SQLSERVER) {
+				// update 2026-11-22 UNIQUEIDENTIFIER为原生GUID(非varchar承载),须36位规范形:32位无连字符
+				// (框架生成形态)直setString报"Conversion failed...to uniqueidentifier"(真库实证),规范化后绑定
+				pst.setString(paramIndex, toUuidValue(paramValue).toString());
+			} else {
+				pst.setString(paramIndex, uuidStr);
+			}
+			return;
+		}
 		// geometry空间类型,统一以WKT字符串为媒介
 		if (jdbcType == JdbcTypes.GEOMETRY) {
 			setGeometryValue(dbProfile, pst, paramIndex, paramValue);
@@ -454,6 +479,25 @@ public class SqlUtil {
 				} else {
 					pst.setNull(paramIndex, java.sql.Types.OTHER);
 				}
+			} else if (jdbcType == JdbcTypes.UUID) {
+				// update 2026-11-22 uuid null绑定:pg内核系/h2原生uuid列按OTHER置null;其余目标uuid为
+				// varchar(36)/char(36)/uniqueidentifier承载列按VARCHAR置null——此前无UUID分支落else的
+				// setNull(idx,3003),pg报"不支持的值类型"、mssql报"JDBC类型3003无效"(真库实证)
+				if (NativeTypeUtils.isPgKernel(dbType) || dbType == DBType.H2) {
+					pst.setNull(paramIndex, java.sql.Types.OTHER);
+				} else {
+					pst.setNull(paramIndex, java.sql.Types.VARCHAR);
+				}
+			} else if (jdbcType == java.sql.Types.OTHER && (dbType == DBType.ORACLE || dbType == DBType.ORACLE11)) {
+				// update 2026-11-22 oracle拒setNull(OTHER=1111)报ORA-17004(数组族等未定型字段的null绑定,
+				// 真库A/B实证VARCHAR/JSON/NULL均可);以VARCHAR置null通用可行(JSON/CLOB承载列均OK)
+				pst.setNull(paramIndex, java.sql.Types.VARCHAR);
+			} else if (jdbcType == java.sql.Types.BOOLEAN && dbType == DBType.VASTBASE) {
+				// update 2026-11-22 vastbase boolean null:setNull(BOOLEAN)经驱动发smallint拒收、
+				// setNull(VARCHAR)在无cast的insert/谓词路径报"column boolean but expression character
+				// varying"
+				// (真库矩阵);setNull(OTHER)为unknown,insert null与where谓词均可行,与setObject(OTHER)绑定同口径
+				pst.setNull(paramIndex, java.sql.Types.OTHER);
 			} else {
 				pst.setNull(paramIndex, jdbcType);
 			}
@@ -540,8 +584,8 @@ public class SqlUtil {
 	private static java.util.Date parseTextDateParam(String value, int jdbcType) {
 		java.util.Date date = DateUtil.parseString(value);
 		if (date == null) {
-			throw new IllegalArgumentException("the parameter value [" + value + "] can not be parsed as jdbcType ["
-					+ jdbcType + "]!");
+			throw new IllegalArgumentException(
+					"the parameter value [" + value + "] can not be parsed as jdbcType [" + jdbcType + "]!");
 		}
 		return date;
 	}
@@ -655,6 +699,11 @@ public class SqlUtil {
 			if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NCHAR
 					|| jdbcType == java.sql.Types.NVARCHAR) {
 				pst.setString(paramIndex, ((OffsetDateTime) paramValue).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+			} else if (dbType == DBType.DB2) {
+				// update 2026-11-22 db2无TIMESTAMP WITH TIME
+				// ZONE(DDL承载TIMESTAMP),驱动拒OffsetDateTime
+				// (-4461,真库A/B实证);按DateUtil约定toLocalDateTime保墙钟时间,setObject(LocalDateTime)可行
+				pst.setObject(paramIndex, ((OffsetDateTime) paramValue).toLocalDateTime());
 			} else {
 				pst.setObject(paramIndex, (OffsetDateTime) paramValue);
 			}
@@ -665,6 +714,9 @@ public class SqlUtil {
 					|| jdbcType == java.sql.Types.NVARCHAR) {
 				pst.setString(paramIndex, (((ZonedDateTime) paramValue).toOffsetDateTime())
 						.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+			} else if (dbType == DBType.DB2) {
+				// 同OffsetDateTime:db2驱动拒带时区对象,toLocalDateTime保墙钟时间(真库实证)
+				pst.setObject(paramIndex, ((ZonedDateTime) paramValue).toLocalDateTime());
 			} else {
 				pst.setObject(paramIndex, ((ZonedDateTime) paramValue).toOffsetDateTime());
 			}
@@ -754,9 +806,13 @@ public class SqlUtil {
 				// 在已死连接上执行报"This connection has been closed.";openGauss系驱动的setBlob亦发送
 				// 大对象oid与bytea列不匹配。PG系bytea列原生接受setBytes,直接绑定不走createBlob/setBlob
 				// (gaussdb:真GaussDB Kernel JDBC驱动连openGauss实测同样bytea类型不匹配,2026-9-6补入)
-				if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.MOGDB
-						|| dbType == DBType.VASTBASE || dbType == DBType.OPENGAUSS || dbType == DBType.STARDB
-						|| dbType == DBType.GAUSSDB) {
+				// update 2026-11-22 统一isPgKernel覆盖10库(补HIGHGO/KINGBASE/OSCAR):与DDL
+				// BLOB→BYTEA映射一致;
+				// HIGHGO经pgjdbc连接,createBlob未实现致连接broken(真库实证),须直接setBytes绑定bytea
+				// update 2026-11-22 doris/starrocks
+				// BLOB承载VARBINARY,byte[]须setBytes二进制绑定:createBlob/setBlob
+				// 经mysql协议驱动发hex字符串('010203'→DECIMAL),merge coalesce无法cast到VARBINARY(真库实证)
+				if (NativeTypeUtils.isPgKernel(dbType) || dbType == DBType.DORIS || dbType == DBType.STARROCKS) {
 					pst.setBytes(paramIndex, (byte[]) paramValue);
 				} else {
 					Blob blob = null;
@@ -793,6 +849,15 @@ public class SqlUtil {
 			} else if (jdbcType == java.sql.Types.INTEGER || jdbcType == java.sql.Types.SMALLINT
 					|| jdbcType == java.sql.Types.TINYINT) {
 				pst.setInt(paramIndex, ((Boolean) paramValue) ? 1 : 0);
+			} else if (dbType == DBType.VASTBASE) {
+				// update 2026-11-22 vastbase驱动setBoolean发smallint:boolean列insert/update拒收
+				// (column "x" is of type boolean but expression is of type
+				// smallint),cast(smallint as boolean)亦非法;
+				// 以Types.OTHER的unknown文本绑定,四种上下文全通(真库矩阵:setBoolean谓词可用但insert失败、
+				// setString谓词报invalid input syntax for type
+				// numeric、唯setObject("true",OTHER)同时满足
+				// insert/update/merge与where flag=?、flag<>?谓词)——unknown由服务器按列型推断为boolean
+				pst.setObject(paramIndex, ((Boolean) paramValue) ? "true" : "false", java.sql.Types.OTHER);
 			} else {
 				pst.setBoolean(paramIndex, (Boolean) paramValue);
 			}
@@ -809,25 +874,45 @@ public class SqlUtil {
 			return;
 		}
 		// update 2023-5-26 增加集合类型场景支持(对应数据库Array)
-		if (paramValue instanceof Collection) {
-			Object[] values = ((Collection) paramValue).toArray();
-			// 集合为空，无法判断具体类型，设置为null
-			if (values.length == 0) {
-				pst.setNull(paramIndex, java.sql.Types.ARRAY);
+		// update 2026-11-21 Object[]数组参数与Collection同路径分派:按元素具体类型转数组后经
+		// setArray绑定。此前Object[]直落setObject兜底,pg系驱动(pgjdbc/openGauss分支)将数组
+		// toString成"[Ljava.lang.String;@.."字符串发送,数组列insert/update/比较均报
+		// malformed array literal/missing dimension value;mysql等驱动setObject对数组
+		// 本就按序列化bytes处理,setObject(x,Types.ARRAY)行为一致,路径合并无回归
+		// update 2026-11-21 定型数组(String[]等)直接取组件类型:空数组/全null元素亦可定型,
+		// 此前按首个非null元素推断,new String[]{null}和new String[0]被静默置成SQL NULL
+		// ({NULL}≠NULL、{}≠NULL,pg数组语义下均为有效值);仅Object[](组件为Object)和
+		// Collection(泛型擦除)无法从自身定型,回退按首个非null元素推断
+		// update 2026-11-21 原始类型数组(int[]/long[]等)纳入:经convertArray装箱后同路径定型
+		// 绑定(此前非Object[]直落setObject,pg系驱动toString发送报malformed array literal/
+		// missing dimension value,真库实测;装箱按包装类定型,char[]按convertArray产物String[]定型)
+		if (paramValue instanceof Collection || paramValue.getClass().isArray()) {
+			boolean isArray = !(paramValue instanceof Collection);
+			Object[] values;
+			String type = null;
+			if (isArray) {
+				Class componentType = paramValue.getClass().getComponentType();
+				// convertArray对装箱数组直通零开销,原始类型数组装箱
+				values = CollectionUtil.convertArray(paramValue);
+				if (componentType != Object.class) {
+					type = toBoxedComponentName(componentType).concat("[]");
+				}
 			} else {
-				String type = null;
+				values = ((Collection) paramValue).toArray();
+			}
+			if (type == null) {
 				for (Object val : values) {
 					if (val != null) {
 						type = val.getClass().getName().concat("[]");
 						break;
 					}
 				}
-				// 将Object[] 转为具体类型的数组(否则会抛异常)
-				if (type != null) {
-					setArray(dbType, conn, pst, paramIndex, BeanUtil.convertArray(values, type));
-				} else {
-					pst.setNull(paramIndex, java.sql.Types.ARRAY);
-				}
+			}
+			// 将Object[] 转为具体类型的数组(否则会抛异常);无法定型(空Collection/元素全null)置null
+			if (type != null) {
+				setArray(dbType, conn, pst, paramIndex, BeanUtil.convertArray(values, type));
+			} else {
+				pst.setNull(paramIndex, java.sql.Types.ARRAY);
 			}
 			return;
 		}
@@ -1182,6 +1267,58 @@ public class SqlUtil {
 	}
 
 	/**
+	 * uuid列回写(updateSaveFetch/upsert等场景通过ResultSet回写)
+	 * <p>
+	 * 与setParamValue/setNullParam的uuid口径一致:pg内核系/h2原生uuid列以rs.updateObject(col,java.util.UUID)
+	 * 按JDBC原生uuid映射(真库实证CONCUR_UPDATABLE结果集上updateString、updateObject(str)、
+	 * updateObject(str,OTHER)均报"column is of type uuid but expression is of type
+	 * character varying",
+	 * 唯updateObject(UUID)可行);其余目标uuid为varchar(36)/char(36)/uniqueidentifier承载列,updateString即正确。
+	 * 此前resultUpdate无UUID分派,String承载uuid落常规String分支updateString,pg原生uuid列updateRow报类型不匹配。
+	 * </p>
+	 *
+	 * @param profile    数据库类型档案
+	 * @param rs         ResultSet结果集对象
+	 * @param columnName 列名称
+	 * @param value      uuid值,支持字符串或java.util.UUID
+	 * @throws SQLException
+	 */
+	public static void updateUuidValue(DBProfile profile, ResultSet rs, String columnName, Object value)
+			throws SQLException {
+		String uuidStr = value.toString();
+		int dbType = profile.getDbType();
+		if (NativeTypeUtils.isPgKernel(dbType) || dbType == DBType.H2) {
+			rs.updateObject(columnName, toUuidValue(value));
+		} else if (dbType == DBType.SQLSERVER) {
+			// UNIQUEIDENTIFIER原生GUID须36位规范形,与insert口径一致(32位规范化后回写)
+			rs.updateString(columnName, toUuidValue(value).toString());
+		} else {
+			rs.updateString(columnName, uuidStr);
+		}
+	}
+
+	/**
+	 * update 2026-11-22 uuid值归一为java.util.UUID:兼容36位带连字符规范形与32位无连字符hex
+	 * (框架IdUtil.getUUID()/strategy="uuid"生成形态),后者补连字符后再fromString——此前直接
+	 * fromString(32位)抛IllegalArgumentException,32位生成值无法进pg/h2原生uuid列。
+	 * 值本为java.util.UUID时直接返回;非法格式仍由fromString响亮报错。
+	 *
+	 * @param value uuid值,字符串(32/36位)或java.util.UUID
+	 * @return java.util.UUID实例
+	 */
+	public static java.util.UUID toUuidValue(Object value) {
+		if (value instanceof java.util.UUID) {
+			return (java.util.UUID) value;
+		}
+		String str = value.toString().trim();
+		if (str.length() == 32 && str.indexOf('-') < 0) {
+			str = str.substring(0, 8) + "-" + str.substring(8, 12) + "-" + str.substring(12, 16) + "-"
+					+ str.substring(16, 20) + "-" + str.substring(20);
+		}
+		return java.util.UUID.fromString(str);
+	}
+
+	/**
 	 * 以mssql-jdbc 13.4+内置的microsoft.sql.Vector构造类型化向量对象(rs回写用):
 	 * Vector(dimensionCount, VectorDimensionType.FLOAT32, Float[]);12.x驱动无此类
 	 * (setter对字符串/字节均拒vector列),反射构造失败返回null由调用方回退
@@ -1248,8 +1385,47 @@ public class SqlUtil {
 	}
 
 	/**
+	 * update 2026-11-21 数组组件类型对应的定型名称:原始类型映射包装类名
+	 * (char特殊:CollectionUtil.convertArray(char[])装箱产物为String[],按String定型与之一致),
+	 * 非原始类型原样返回全限定名
+	 *
+	 * @param componentType 数组组件类型(int.class、String.class等)
+	 * @return 定型用的组件类型全限定名(如java.lang.Integer)
+	 */
+	private static String toBoxedComponentName(Class componentType) {
+		if (!componentType.isPrimitive()) {
+			return componentType.getName();
+		}
+		if (componentType == int.class) {
+			return Integer.class.getName();
+		}
+		if (componentType == long.class) {
+			return Long.class.getName();
+		}
+		if (componentType == double.class) {
+			return Double.class.getName();
+		}
+		if (componentType == float.class) {
+			return Float.class.getName();
+		}
+		if (componentType == boolean.class) {
+			return Boolean.class.getName();
+		}
+		if (componentType == short.class) {
+			return Short.class.getName();
+		}
+		if (componentType == byte.class) {
+			return Byte.class.getName();
+		}
+		if (componentType == char.class) {
+			return String.class.getName();
+		}
+		return componentType.getName();
+	}
+
+	/**
 	 * setArray gaussdb 必须要通过conn构造Array
-	 * 
+	 *
 	 * @param dbType     数据库类型，参见DataSourceUtils.DBType
 	 * @param conn       数据库连接对象(gaussdb系构造Array必须)
 	 * @param pst        PreparedStatement预编译语句对象
@@ -1259,29 +1435,50 @@ public class SqlUtil {
 	 */
 	private static void setArray(Integer dbType, Connection conn, PreparedStatement pst, int paramIndex,
 			Object paramValue) throws SQLException {
-		// 目前只支持Integer 和 String两种类型
+		// update 2026-11-21 kingbase纳入createArrayOf分支:KES为pg内核系,其驱动setObject(数组,
+		// Types.ARRAY)报"Cannot cast an instance of [Ljava.lang.Integer; to type
+		// Types.ARRAY"
+		// (真库实测),conn.createArrayOf为可用路径
+		// update 2026-11-21 类型名统一小写pg规范名(integer/varchar/numeric/bigint/float):
+		// gaussdb华为驱动/openGauss/kingbase/vastbase四引擎真库矩阵实证小写全通;大写VARCHAR/NUMERIC
+		// 在华为驱动报"Unable to find server array type"(按typname精确匹配),NUMBER为oracle别名
+		// og/kingbase拒绝、vastbase的number[]无法赋给numeric[]列(此前BigDecimal[]在该分支普遍不可绑定)
 		if (dbType == DBType.GAUSSDB || dbType == DBType.MOGDB || dbType == DBType.OPENGAUSS
-				|| dbType == DBType.VASTBASE || dbType == DBType.STARDB || dbType == DBType.OSCAR) {
+				|| dbType == DBType.VASTBASE || dbType == DBType.STARDB || dbType == DBType.OSCAR
+				|| dbType == DBType.KINGBASE) {
 			if (paramValue instanceof Integer[]) {
-				Array array = conn.createArrayOf("INTEGER", (Integer[]) paramValue);
+				Array array = conn.createArrayOf("integer", (Integer[]) paramValue);
 				pst.setArray(paramIndex, array);
 			} else if (paramValue instanceof String[]) {
-				Array array = conn.createArrayOf("VARCHAR", (String[]) paramValue);
+				Array array = conn.createArrayOf("varchar", (String[]) paramValue);
 				pst.setArray(paramIndex, array);
 			} else if (paramValue instanceof BigDecimal[]) {
-				Array array = conn.createArrayOf("NUMBER", (BigDecimal[]) paramValue);
+				Array array = conn.createArrayOf("numeric", (BigDecimal[]) paramValue);
 				pst.setArray(paramIndex, array);
 			} else if (paramValue instanceof BigInteger[]) {
-				Array array = conn.createArrayOf("BIGINT", (BigInteger[]) paramValue);
+				Array array = conn.createArrayOf("bigint", (BigInteger[]) paramValue);
 				pst.setArray(paramIndex, array);
 			} else if (paramValue instanceof Float[]) {
-				Array array = conn.createArrayOf("FLOAT", (Float[]) paramValue);
+				Array array = conn.createArrayOf("float", (Float[]) paramValue);
 				pst.setArray(paramIndex, array);
 			} else if (paramValue instanceof Long[]) {
 				// update 2026-11-10
 				// INTEGER→BIGINT:与SqlUtilsExt.setArray(ResultSet回写路径)及BigInteger[]口径对齐,
 				// openGauss真库实测int4数组无法承载long范围值(4000000000报out of range),回写路径BIGINT则成功
-				Array array = conn.createArrayOf("BIGINT", (Long[]) paramValue);
+				Array array = conn.createArrayOf("bigint", (Long[]) paramValue);
+				pst.setArray(paramIndex, array);
+			} else if (paramValue instanceof Double[]) {
+				// update 2026-11-21 Double[]/Boolean[]/Short[]补入:此前落else setObject(x,ARRAY),
+				// 华为驱动/kingbase报Cannot cast(og/vastbase绑定侥幸可用但回写路径四引擎均失败),
+				// float8/bool/int2四引擎绑定+回写真库矩阵24红→24绿实证;double[]/boolean[]/short[]
+				// 原始参数经processParam装箱后亦到达此处
+				Array array = conn.createArrayOf("float8", (Double[]) paramValue);
+				pst.setArray(paramIndex, array);
+			} else if (paramValue instanceof Boolean[]) {
+				Array array = conn.createArrayOf("bool", (Boolean[]) paramValue);
+				pst.setArray(paramIndex, array);
+			} else if (paramValue instanceof Short[]) {
+				Array array = conn.createArrayOf("int2", (Short[]) paramValue);
 				pst.setArray(paramIndex, array);
 			} else {
 				pst.setObject(paramIndex, paramValue, java.sql.Types.ARRAY);
@@ -3633,8 +3830,10 @@ public class SqlUtil {
 			valueStr = sign + DateUtil.formatDate(paramValue, "HH:mm:ss") + sign;
 		} else if (paramValue instanceof Date) {
 			valueStr = sign + DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss") + sign;
-		} else if (paramValue instanceof Object[]) {
-			valueStr = combineArray((Object[]) paramValue);
+		} else if (paramValue.getClass().isArray() && !(paramValue instanceof byte[])) {
+			// update 2026-11-21 原始类型数组装箱后渲染(此前走""+paramValue输出"[I@.."乱码);
+			// byte[]除外(二进制语义,见toSqlLogStr同款注释)
+			valueStr = combineArray(CollectionUtil.convertArray(paramValue));
 		} else if (paramValue instanceof Collection) {
 			valueStr = combineArray(((Collection) paramValue).toArray());
 		} else {
@@ -3645,7 +3844,7 @@ public class SqlUtil {
 
 	/**
 	 * 将参数值转成字符传
-	 * 
+	 *
 	 * @param sqlArgValue        待转换的参数值，null返回"null"
 	 * @param preSql             前面的sql片段
 	 * @param addSingleQuotation 是否加单引号
@@ -3653,6 +3852,25 @@ public class SqlUtil {
 	 * @return 参数值对应的字符串形式，日期时间类型且需要引号时按数据库方言包上转日期函数
 	 */
 	public static String toSqlLogStr(Object sqlArgValue, String preSql, boolean addSingleQuotation, int dbType) {
+		// update 2026-11-21 数组/集合参数不按方言分派,维持逗号串形态:@loop宏经此方法将值
+		// 拼入真实执行sql,数组分派(arrayLogDispatch)仅日志拟合入口(fitSqlParams)启用
+		return toSqlLogStr(sqlArgValue, preSql, addSingleQuotation, dbType, false);
+	}
+
+	/**
+	 * 将参数值转成字符传
+	 *
+	 * @param sqlArgValue        待转换的参数值，null返回"null"
+	 * @param preSql             前面的sql片段
+	 * @param addSingleQuotation 是否加单引号
+	 * @param dbType             数据库方言
+	 * @param arrayLogDispatch   update 2026-11-21 标量比较符位置的数组/集合参数是否按方言
+	 *                           分派输出(见toArrayLogStr),true仅用于日志拟合(fitSqlParams),
+	 *                           拼接真实sql的场景(@loop宏)必须传false维持逗号串形态
+	 * @return 参数值对应的字符串形式，日期时间类型且需要引号时按数据库方言包上转日期函数
+	 */
+	public static String toSqlLogStr(Object sqlArgValue, String preSql, boolean addSingleQuotation, int dbType,
+			boolean arrayLogDispatch) {
 		if (sqlArgValue == null) {
 			return "null";
 		}
@@ -3726,13 +3944,30 @@ public class SqlUtil {
 		} else if (paramValue instanceof Date) {
 			valueStr = sign + DateUtil.formatDate(paramValue, "yyyy-MM-dd HH:mm:ss") + sign;
 			dateType = 2;
-		} else if (paramValue instanceof Object[]) {
+		} else if (paramValue.getClass().isArray() && !(paramValue instanceof byte[])) {
 			// update 2026-9-15 数组/IN参数的日期元素同样按比较位置包裹方言日期函数(与标量路径
 			// 同款门控),保证IN条件日志SQL可copy到客户端直接执行(此前仅加单引号,oracle依赖
 			// 会话NLS_DATE_FORMAT,默认NLS下报ORA-01861);addSingleQuotation=false时preSql传null不包裹
-			valueStr = combineArray((Object[]) paramValue, addSingleQuotation ? preSql : null, dbType);
+			// update 2026-11-21 标量比较符(=、!=等)位置的数组参数可按方言分派输出(见toArrayLogStr,
+			// 仅日志拟合入口启用),保证日志SQL copy执行不产生假阳性并尽量呈现真实绑定形态;
+			// in(、between等位置维持逗号串形态
+			// update 2026-11-21 从instanceof Object[]放宽为isArray+convertArray装箱:原始类型数组
+			// (int[]等)此前不匹配任何分支走""+paramValue输出"[I@.."乱码,现装箱后同数组路径
+			// (装箱数组convertArray直通零开销);byte[]除外——其绑定语义为二进制(setBytes),
+			// 数组化渲染会伪装成整数数组产生误导
+			Object[] arrValues = CollectionUtil.convertArray(paramValue);
+			if (arrayLogDispatch && addSingleQuotation && StringUtil.matches(preSql, SCALAR_COMPARE_PATTERN)) {
+				valueStr = toArrayLogStr(arrValues, dbType);
+			} else {
+				valueStr = combineArray(arrValues, addSingleQuotation ? preSql : null, dbType);
+			}
 		} else if (paramValue instanceof Collection) {
-			valueStr = combineArray(((Collection) paramValue).toArray(), addSingleQuotation ? preSql : null, dbType);
+			if (arrayLogDispatch && addSingleQuotation && StringUtil.matches(preSql, SCALAR_COMPARE_PATTERN)) {
+				valueStr = toArrayLogStr(((Collection) paramValue).toArray(), dbType);
+			} else {
+				valueStr = combineArray(((Collection) paramValue).toArray(), addSingleQuotation ? preSql : null,
+						dbType);
+			}
 		} else {
 			valueStr = "" + paramValue;
 		}
@@ -4125,6 +4360,114 @@ public class SqlUtil {
 	}
 
 	/**
+	 * update 2026-11-21 标量比较符位置的数组/集合参数按方言输出日志形态(2026-11-21晚按
+	 * pg18/openGauss5/highgo/kingbase/vastbase/mysql9/clickhouse/h2/oracle23/dm8/
+	 * sqlserver2025/db2真库实测结论修订),目标:日志SQL copy到客户端执行不产生"日志能查出
+	 * 结果而程序无结果/报错"的假阳性(旧版单元素数组输出='a'最典型),并尽可能呈现参数的 真实绑定形态:
+	 * <li>原生数组方言输出数组字面量:clickhouse输出['a','b'](实测驱动原生绑定,日志与
+	 * 程序双向一致);h2输出ARRAY['a','b'](实测setObject(Object[])原生映射,双向一致);
+	 * PG系(pg/greenplum/openGauss系/金仓/瀚高)输出ARRAY[..],元素类型随值自适应(字符串
+	 * 定型text[]、数值定型数值数组,实测text[]/int[]列直接copy执行且命中)——注意pg系
+	 * 程序侧绑定路径在数组列上普遍报错(裸数组toString报malformed array literal/ missing dimension
+	 * value,集合路径createArrayOf硬编码VARCHAR仅varchar[]列成功,
+	 * pg数组等值比较无跨元素类型隐式转换),故此处按"语义正确的数组字面量"输出而非模拟 错误绑定,varchar[]列需自行补::varchar[]
+	 * cast</li>
+	 * <li>无原生数组语义的方言输出"绑定形态揭示"串:驱动setObject将数组Java序列化成
+	 * ACED0005..二进制bytes绑定,按各库二进制字面量语法呈现序列化流头ACED0005并附
+	 * array注释保留原始值:mysql系X'ACED0005'(实测列上copy执行与程序报同一字符集
+	 * 转换错,X''仅接受十六进制不接受省略号);oracle/dm用HEXTORAW('ACED0005')(实测
+	 * 合法且恒0行);sqlserver用0xACED0005(实测合法且恒0行);db2用BX'ACED0005'(实测
+	 * 语法合法,列比较报-401类型不可比较,程序绑定报-4228/-4461,双报错无假阳性);
+	 * hana用TO_VARBINARY('ACED0005')(实测驱动绑定静默0行、copy执行同为0行,双向一致);
+	 * 其余未实测方言(oscar等)用null形态,copy恒0行且不引入语法风险</li>
+	 *
+	 * @param array  参数值数组
+	 * @param dbType 数据库方言
+	 * @return 原生数组方言返回数组字面量,其余返回各库二进制字面量/null加array注释的揭示形态
+	 */
+	private static String toArrayLogStr(Object[] array, int dbType) {
+		// update 2026-11-21 空数组/全null与绑定侧口径对齐(SqlUtil.processParam定型规则):
+		// 组件为Object(含Collection.toArray)且无非null元素时绑定侧置SQL NULL,日志同输出null揭示形态;
+		// 定型空数组绑定{}/[],日志输出空数组字面量。此前combineArray(empty)返回"null"使日志产出
+		// ARRAY[null](1元素null数组),H2/kingbase真库copy执行与空数组绑定0命中不一致(假阳性)
+		if (array.getClass().getComponentType() == Object.class) {
+			boolean hasValue = false;
+			for (Object value : array) {
+				if (value != null) {
+					hasValue = true;
+					break;
+				}
+			}
+			if (!hasValue) {
+				return "null /*array:" + (array.length == 0 ? "[]" : "null") + "*/";
+			}
+		}
+		if (array.length == 0) {
+			if (dbType == DBType.CLICKHOUSE) {
+				return "[]";
+			}
+			if (isArrayLiteralDialect(dbType)) {
+				// pg系ARRAY[]无法推断元素类型,用'{}'由目标列强转;h2支持ARRAY[]空构造器
+				return (dbType == DBType.H2) ? "ARRAY[]" : "'{}'";
+			}
+		}
+		String csv = (array.length == 0) ? "[]" : combineArray(array);
+		// clickhouse原生数组字面量为['a','b']形态(单引号元素与combineArray一致)
+		if (dbType == DBType.CLICKHOUSE) {
+			return "[" + csv + "]";
+		}
+		if (isArrayLiteralDialect(dbType)) {
+			return "ARRAY[" + csv + "]";
+		}
+		// 注释内元素值含*/会提前截断注释(@loop宏将本输出拼入真实sql时破坏语法),插入空格消解
+		String comment = " /*array:" + csv.replace("*/", "* /") + "*/";
+		// mysql系二进制字面量X'..':仅接受十六进制位,8位hex即Java序列化流头ACED0005
+		if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB || dbType == DBType.DORIS
+				|| dbType == DBType.STARROCKS || dbType == DBType.OCEANBASE) {
+			return "X'ACED0005'" + comment;
+		}
+		// oracle/dm实测HEXTORAW('ACED0005')合法且恒0行
+		if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11 || dbType == DBType.DM) {
+			return "HEXTORAW('ACED0005')" + comment;
+		}
+		// sqlserver实测0x十六进制字面量合法且恒0行
+		if (dbType == DBType.SQLSERVER) {
+			return "0xACED0005" + comment;
+		}
+		// db2二进制串常量BX'..'(实测语法合法,varchar列比较报SQLCODE=-401类型不可比较,
+		// 程序绑定报-4228/-4461,双双报错无假阳性)
+		if (dbType == DBType.DB2) {
+			return "BX'ACED0005'" + comment;
+		}
+		// hana实测:驱动绑定数组不报错、比较静默0行(唯一"静默0行"方言),TO_VARBINARY('ACED0005')
+		// 语法合法且copy执行同为0行,双向一致
+		if (dbType == DBType.HANA) {
+			return "TO_VARBINARY('ACED0005')" + comment;
+		}
+		// oscar等数组能力未实测的方言:null形态copy恒0行,不赌语法
+		return "null" + comment;
+	}
+
+	/**
+	 * update 2026-11-21 判断是否ARRAY[..]字面量方言:postgresql/greenplum、openGauss系
+	 * (gaussdb/mogdb/stardb/vastbase)及金仓、瀚高均为pg内核系,ARRAY[..]为合法字面量;
+	 * h2的setObject(Object[])亦原生映射数组类型(实测日志与程序双向一致)
+	 * <li>不纳入的方言及实测原因:oracle绑定报ORA-17004(列类型无效)/ORA-17059(需
+	 * ArrayDescriptor绑定具名VARRAY类型,类型名用户自定义,日志无法拟合);dm报不支持该
+	 * 数据类型;sqlserver报"不支持从UNKNOWN到OTHER/ARRAY的转换"(无数组类型,正路为 TVP表值参数);db2数组仅SQL
+	 * PL内使用;hana的ARRAY()构造器仅SQLScript语法不可 内联;oscar数组能力未证实——均走各库二进制字面量/null揭示形态</li>
+	 *
+	 * @param dbType 数据库方言
+	 * @return true表示按ARRAY[..]字面量输出
+	 */
+	private static boolean isArrayLiteralDialect(int dbType) {
+		return dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
+				|| dbType == DBType.OPENGAUSS || dbType == DBType.STARDB || dbType == DBType.VASTBASE
+				|| dbType == DBType.MOGDB || dbType == DBType.HIGHGO || dbType == DBType.KINGBASE
+				|| dbType == DBType.H2;
+	}
+
+	/**
 	 * merge into sql特定数据库下需要补充;符号(sql加工成SqlToyConfig 时统一清理掉了分号)
 	 * 
 	 * @param sql    sql语句
@@ -4399,10 +4742,10 @@ public class SqlUtil {
 	}
 
 	/**
-	 * update 2026-11-13 原始LIKE值单遍转义(不先剥离已有转义):
-	 * 供新的&lt;like escape-mode="raw"&gt;使用,正确区分"用户原始反斜杠"和"已转义值";
-	 * 旧escapeLikeValue保留其幂等语义,供legacy场景使用。
-	 * 转义顺序:反斜杠→下划线→百分号(受escapePercent控制)→SQL Server方括号。
+	 * update 2026-11-13 原始LIKE值单遍转义(不先剥离已有转义): 供新的&lt;like
+	 * escape-mode="raw"&gt;使用,正确区分"用户原始反斜杠"和"已转义值";
+	 * 旧escapeLikeValue保留其幂等语义,供legacy场景使用。 转义顺序:反斜杠→下划线→百分号(受escapePercent控制)→SQL
+	 * Server方括号。
 	 *
 	 * @param value         原始值
 	 * @param dbType        数据库类型

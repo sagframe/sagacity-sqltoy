@@ -31,9 +31,9 @@ import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.GeneratedType;
 import org.sagacity.sqltoy.config.model.OperateType;
 import org.sagacity.sqltoy.config.model.SqlToyConfig;
-import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.config.model.SqlToyResult;
 import org.sagacity.sqltoy.config.model.SqlType;
+import org.sagacity.sqltoy.config.model.SqlWithAnalysis;
 import org.sagacity.sqltoy.exception.DataAccessException;
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.DBProfile;
@@ -353,18 +353,19 @@ public class DefaultDialectUtils {
 			final UpdateRowHandler updateRowHandler, String[] uniqueProps, final Connection conn, DBProfile profile,
 			String tableName, int lockWaitTimeout) throws Exception {
 		return updateSaveFetch(sqlToyContext, entity, updateRowHandler, null, uniqueProps, conn, profile, tableName,
-				lockWaitTimeout);
+				lockWaitTimeout, true);
 	}
 
 	public static Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
 			final UpdateRowCallback updateRowCallback, String[] uniqueProps, final Connection conn, DBProfile profile,
 			String tableName, int lockWaitTimeout) throws Exception {
 		return updateSaveFetch(sqlToyContext, entity, null, updateRowCallback, uniqueProps, conn, profile, tableName,
-				lockWaitTimeout);
+				lockWaitTimeout, true);
 	}
 
 	/**
-	 * 实现：1、锁查询；2、记录存在则修改；3、记录不存在则执行insert；4、返回修改或插入的记录信息，尽量不要使用identity、sequence主键
+	 * 实现：1、锁查询；2、记录存在则修改；3、记录不存在且允许插入时执行insert；4、返回修改或插入的记录信息，
+	 * 尽量不要使用identity、sequence主键
 	 * 
 	 * @param sqlToyContext
 	 * @param entity
@@ -374,13 +375,16 @@ public class DefaultDialectUtils {
 	 * @param profile
 	 * @param dialect
 	 * @param tableName
+	 * @param insertIfAbsent   记录不存在时是否执行insert(false即updateFetch语义)
 	 * @return
 	 * @throws Exception
 	 */
 	public static Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
 			final UpdateRowHandler updateRowHandler, final UpdateRowCallback updateRowCallback, String[] uniqueProps,
-			final Connection conn, DBProfile profile, String tableName, int lockWaitTimeout) throws Exception {
+			final Connection conn, DBProfile profile, String tableName, int lockWaitTimeout, boolean insertIfAbsent)
+			throws Exception {
 		Integer dbType = profile.getDbType();
+		final String operateName = insertIfAbsent ? "updateSaveFetch" : "updateFetch";
 		final EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
 		// 条件字段
 		String[] whereFields = uniqueProps;
@@ -388,7 +392,7 @@ public class DefaultDialectUtils {
 			whereFields = entityMeta.getIdArray();
 		}
 		if (whereFields == null || whereFields.length == 0) {
-			throw new DataAccessException("updateSaveFetch table [" + tableName
+			throw new DataAccessException(operateName + " table [" + tableName
 					+ "] has no condition fields to uniquely fetch a single record, please check!");
 		}
 		// 全部字段的值
@@ -401,13 +405,22 @@ public class DefaultDialectUtils {
 			tmpVersionValue = BeanUtil.getProperty(entity, entityMeta.getDataVersion().getField());
 		}
 		for (int i = 0; i < whereParamValues.length; i++) {
-			// 唯一性属性值存在空，则表示首次插入
 			if (StringUtil.isBlank(whereParamValues[i])) {
-				// 调用默认值、主键策略等
-				tempFieldValues = processFieldValues(sqlToyContext, entityMeta, entity, false);
-				// 重新反射获取主键等字段值
-				whereParamValues = BeanUtil.reflectBeanToAry(entity, whereFields);
-				break;
+				// 唯一性属性值存在空:updateSaveFetch 表示首次插入(处理主键策略、默认值等)
+				if (insertIfAbsent) {
+					// 调用默认值、主键策略等
+					tempFieldValues = processFieldValues(sqlToyContext, entityMeta, entity, false);
+					// 重新反射获取主键等字段值
+					whereParamValues = BeanUtil.reflectBeanToAry(entity, whereFields);
+					break;
+				}
+				// update 2026-11-22 updateFetch(insertIfAbsent=false)定位值为空即"记录不存在",必须在此
+				// 直接返回:继续往下会由wrapFetchSql把null值渲染成"col is null",从而命中"业务键为NULL"的
+				// 无关行并对其实施更新(真库实测H2:stockCode=null的updateFetch改写了stock_code IS NULL
+				// 那一行);updateSaveFetch的空值走上方插入分支不会到达本形态,故此处仅约束updateFetch
+				SqlExecuteStat.debug("execute updateFetch",
+						"the unique property values are blank, treat as no record matched");
+				return null;
 			}
 		}
 		// 统一字段赋值处理
@@ -489,8 +502,8 @@ public class DefaultDialectUtils {
 							for (int i = 0; i < rowCnt; i++) {
 								String tn = usfTypeNames[i];
 								usfCols[i] = new ResultColumnMeta(null, null, i + 1, tn, tn,
-										ResultColumnMeta.ReadStrategy.of(usfKinds[i]),
-										ResultColumnMeta.ExtType.of(tn), 0, null);
+										ResultColumnMeta.ReadStrategy.of(usfKinds[i]), ResultColumnMeta.ExtType.of(tn),
+										0, null);
 							}
 							int index = 0;
 							List result = new ArrayList();
@@ -517,8 +530,8 @@ public class DefaultDialectUtils {
 									};
 							while (finalRs.next()) {
 								if (index > 0) {
-									throw new DataAccessException(
-											"updateSaveFetch can only operate on a single record, please check the uniqueProps setting!");
+									throw new DataAccessException(operateName
+											+ " can only operate on a single record, please check the uniqueProps setting!");
 								}
 								// update 2026-9-14 oracle系重查回读的行定位值:须在回调执行前提取
 								// (回调可能修改uniqueProps对应列,主键值则稳定)
@@ -545,8 +558,8 @@ public class DefaultDialectUtils {
 										}
 										if (entityVersion != null && !entityVersion.toString().equals(nowVersion)) {
 											throw new IllegalArgumentException("table [" + entityMeta.getTableName()
-													+ "] has @DataVersion configuration, when updateSaveFetch updates, the property ["
-													+ dataVersionField
+													+ "] has @DataVersion configuration, when " + operateName
+													+ " updates, the property [" + dataVersionField
 													+ "] value does not equal the current value in database:"
 													+ entityVersion + "<>" + nowVersion
 													+ ", the data has been modified by others!");
@@ -640,8 +653,7 @@ public class DefaultDialectUtils {
 									// 重新获得修改后的值(列元数据已在循环前查询级一次构建,重查
 									// select列清单与锁查询完全一致,类型名/序号一一对应)
 									result.add(ResultUtils.processResultRow(dbType, typeHandler, dynamicCacheFetch,
-											dynamicCacheHolder, readRs, null, rowCnt, null, null, false,
-											usfCols, 0));
+											dynamicCacheHolder, readRs, null, rowCnt, null, null, false, usfCols, 0));
 								} finally {
 									if (reReadPst != null) {
 										// close语句连带关闭其结果集
@@ -649,8 +661,8 @@ public class DefaultDialectUtils {
 									}
 								}
 							}
-							// 没有查询到记录，表示是需要首次插入
-							if (index == 0) {
+							// 没有查询到记录且允许插入时，表示是需要首次插入；updateFetch 直接返回 null
+							if (index == 0 && insertIfAbsent) {
 								SqlExecuteStat.debug("execute insertRow",
 										"perform the first insert when the query does not match any result!");
 								// 移到插入行
@@ -679,9 +691,9 @@ public class DefaultDialectUtils {
 						}
 					}
 				});
-		// 记录不存在首次保存，返回entity自身
+		// 记录不存在：updateSaveFetch 返回entity自身；updateFetch 不做save，返回null
 		if (updateResult == null || updateResult.isEmpty()) {
-			return entity;
+			return insertIfAbsent ? entity : null;
 		}
 		List rowList = (List) updateResult.get(0);
 		// update 2026-9-10 覆盖返回值

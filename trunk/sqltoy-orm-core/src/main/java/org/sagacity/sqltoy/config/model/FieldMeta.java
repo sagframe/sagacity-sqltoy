@@ -61,6 +61,19 @@ public class FieldMeta implements Serializable {
 	private String fieldType;
 
 	/**
+	 * update 2026-11-21 数组/集合字段的元素组件类型全限定名(定型数组取组件类,如java.lang.String;
+	 * List/Set取泛型实参,泛型实参非具体Class时为null),供h2等prepare期急切定型的方言 生成cast(? as xx ARRAY)
+	 */
+	private String arrayComponentType;
+
+	/**
+	 * update 2026-11-21 nativeType解析期归一的特殊类型逻辑族(NativeTypeUtils.specialFamily产物:
+	 * json/jsonb/bson/vector/geometry/array,null=非特殊族保持原样精确控制)。quickvo按源库生成
+	 * nativeType(源方言物理类型名),消费点(merge cast/DDL)按本族翻译为目标方言形态
+	 */
+	private String specialFamily;
+
+	/**
 	 * 数据库对应的字段类型
 	 */
 	private String nativeType;
@@ -280,6 +293,28 @@ public class FieldMeta implements Serializable {
 
 	public void setFieldType(String fieldType) {
 		this.fieldType = fieldType;
+	}
+
+	/**
+	 * @return 数组/集合字段的元素组件类型全限定名,非数组/集合字段或无法确定元素类型时null
+	 */
+	public String getArrayComponentType() {
+		return arrayComponentType;
+	}
+
+	public void setArrayComponentType(String arrayComponentType) {
+		this.arrayComponentType = arrayComponentType;
+	}
+
+	/**
+	 * @return nativeType归一的特殊类型逻辑族(json/jsonb/bson/vector/geometry/array),非特殊族null
+	 */
+	public String getSpecialFamily() {
+		return specialFamily;
+	}
+
+	public void setSpecialFamily(String specialFamily) {
+		this.specialFamily = specialFamily;
 	}
 
 	/**

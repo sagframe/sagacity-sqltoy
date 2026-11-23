@@ -273,6 +273,12 @@ public class DefaultLightDaoImpl extends SqlToyDaoSupport implements LightDao {
 	}
 
 	@Override
+	public <T extends Serializable> T updateFetch(final T entity, final EntityUpdateCallback<T> callback,
+			final String... uniqueProps) {
+		return super.updateFetch(entity, callback, -1, uniqueProps, dataSource);
+	}
+
+	@Override
 	public Long updateDeeply(Serializable entity) {
 		return super.updateDeeply(entity);
 	}

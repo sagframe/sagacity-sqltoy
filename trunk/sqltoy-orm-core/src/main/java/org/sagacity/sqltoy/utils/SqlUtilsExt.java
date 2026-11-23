@@ -351,6 +351,9 @@ public class SqlUtilsExt {
 		} else if (jdbcType == JdbcTypes.GEOMETRY) {
 			// geometry空间类型回写(避免byte[]、String等常规分支按错误类型处理)
 			SqlUtil.updateGeometryValue(dbProfile, rs, columnName, paramValue);
+		} else if (jdbcType == JdbcTypes.UUID) {
+			// uuid类型回写(pg内核系原生uuid列须updateObject(UUID),避免String分支updateString报类型不匹配)
+			SqlUtil.updateUuidValue(dbProfile, rs, columnName, paramValue);
 		} else if (paramValue instanceof java.lang.String) {
 			tmpStr = (String) paramValue;
 			// clob 类型只有oracle、db2、dm、oceanBase等数据库支持
@@ -516,8 +519,34 @@ public class SqlUtilsExt {
 			}
 		} else if (paramValue instanceof java.lang.Byte) {
 			rs.updateByte(columnName, (Byte) paramValue);
-		} else if (paramValue instanceof Object[]) {
-			setArray(dbType, conn, rs, columnName, paramValue);
+		} else if (paramValue.getClass().isArray()) {
+			// update 2026-11-21 与SqlUtil.processParam数组定型口径对齐:定型数组取组件类型,Object[]按
+			// 首个非null元素推断,经convertArray转具体类型数组再交setArray(此前裸Object[]直传,
+			// kingbase/gauss系驱动updateObject(Object[],ARRAY)报malformed array literal/Cannot
+			// cast,
+			// 真库实测);无法定型(空/全null)时与下方Collection分支同口径按null语义处理
+			// update 2026-11-21 原始类型数组(int[]/char[]等)同路径接纳:装箱后按包装类组件定型
+			// (char[]装箱产物String[]按String定型,与绑定路径一致;此前char[]落else updateObject,
+			// kingbase真库报malformed array literal "[C@..");byte[]已在上方二进制分支拦截
+			Object[] values = CollectionUtil.convertArray(paramValue);
+			String type = null;
+			Class componentType = values.getClass().getComponentType();
+			if (componentType != Object.class) {
+				type = componentType.getName().concat("[]");
+			}
+			if (type == null) {
+				for (Object val : values) {
+					if (val != null) {
+						type = val.getClass().getName().concat("[]");
+						break;
+					}
+				}
+			}
+			if (type != null) {
+				setArray(dbType, conn, rs, columnName, BeanUtil.convertArray(values, type));
+			} else if (isForcedUpdate) {
+				rs.updateNull(columnName);
+			}
 		} else if (paramValue instanceof Enum) {
 			rs.updateObject(columnName, BeanUtil.getEnumValue(paramValue));
 		} else if (paramValue instanceof Collection) {
@@ -555,25 +584,44 @@ public class SqlUtilsExt {
 	private static void setArray(Integer dbType, Connection conn, ResultSet rs, String columnName, Object paramValue)
 			throws SQLException {
 		// gaussdb系(兼容oracle模式)通过createArrayOf按具体类型构造,其余数据库走updateObject通用路径
+		// update 2026-11-21 kingbase同步纳入(与SqlUtil.setArray同因:驱动setObject(数组,ARRAY)不支持)
+		// update 2026-11-21 类型名统一小写pg规范名(与SqlUtil.setArray同因:华为驱动按typname精确匹配,
+		// 大写VARCHAR/NUMERIC报type not found,NUMBER为oracle别名og/kingbase拒绝,四引擎真库矩阵实证)
+		// update 2026-11-21 pg系(pgjdbc)纳入:真库实证CONCUR_UPDATABLE结果集上rs.updateObject(数组列,
+		// java数组[,ARRAY])+updateRow后,该列读回的PgArray.getArray()报ArrayIndexOutOfBounds(驱动将
+		// update值以非规范格式写入行缓冲,updateSaveFetch回读组装即崩);updateArray(createArrayOf)干净
 		if (dbType == DBType.GAUSSDB || dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.OSCAR
-				|| dbType == DBType.STARDB || dbType == DBType.VASTBASE) {
+				|| dbType == DBType.STARDB || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE
+				|| dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.HIGHGO) {
 			if (paramValue instanceof Integer[]) {
-				Array array = conn.createArrayOf("INTEGER", (Integer[]) paramValue);
+				Array array = conn.createArrayOf("integer", (Integer[]) paramValue);
 				rs.updateArray(columnName, array);
 			} else if (paramValue instanceof String[]) {
-				Array array = conn.createArrayOf("VARCHAR", (String[]) paramValue);
+				Array array = conn.createArrayOf("varchar", (String[]) paramValue);
 				rs.updateArray(columnName, array);
 			} else if (paramValue instanceof BigDecimal[]) {
-				Array array = conn.createArrayOf("NUMBER", (BigDecimal[]) paramValue);
+				Array array = conn.createArrayOf("numeric", (BigDecimal[]) paramValue);
 				rs.updateArray(columnName, array);
 			} else if (paramValue instanceof BigInteger[]) {
-				Array array = conn.createArrayOf("BIGINT", (BigInteger[]) paramValue);
+				Array array = conn.createArrayOf("bigint", (BigInteger[]) paramValue);
 				rs.updateArray(columnName, array);
 			} else if (paramValue instanceof Float[]) {
-				Array array = conn.createArrayOf("FLOAT", (Float[]) paramValue);
+				Array array = conn.createArrayOf("float", (Float[]) paramValue);
 				rs.updateArray(columnName, array);
 			} else if (paramValue instanceof Long[]) {
-				Array array = conn.createArrayOf("BIGINT", (Long[]) paramValue);
+				Array array = conn.createArrayOf("bigint", (Long[]) paramValue);
+				rs.updateArray(columnName, array);
+			} else if (paramValue instanceof Double[]) {
+				// update 2026-11-21 Double[]/Boolean[]/Short[]补入(与SqlUtil.setArray同因):
+				// 此前落else updateObject(x,ARRAY),四引擎回写均失败(Can't infer SQL type/
+				// malformed array literal),float8/bool/int2四引擎真库矩阵24红→24绿实证
+				Array array = conn.createArrayOf("float8", (Double[]) paramValue);
+				rs.updateArray(columnName, array);
+			} else if (paramValue instanceof Boolean[]) {
+				Array array = conn.createArrayOf("bool", (Boolean[]) paramValue);
+				rs.updateArray(columnName, array);
+			} else if (paramValue instanceof Short[]) {
+				Array array = conn.createArrayOf("int2", (Short[]) paramValue);
 				rs.updateArray(columnName, array);
 			} else {
 				rs.updateObject(columnName, paramValue, java.sql.Types.ARRAY);

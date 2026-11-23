@@ -20,10 +20,13 @@ import org.sagacity.sqltoy.config.model.FieldMeta;
 import org.sagacity.sqltoy.config.model.ForeignModel;
 import org.sagacity.sqltoy.config.model.IndexModel;
 import org.sagacity.sqltoy.config.model.ReferentialAction;
+import org.sagacity.sqltoy.dialect.utils.H2DialectUtils;
+import org.sagacity.sqltoy.dialect.utils.PostgreSqlDialectUtils;
 import org.sagacity.sqltoy.model.ColumnMeta;
 import org.sagacity.sqltoy.model.JdbcTypes;
 import org.sagacity.sqltoy.model.TableMeta;
 import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
+import org.sagacity.sqltoy.utils.NativeTypeUtils;
 import org.sagacity.sqltoy.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -198,6 +201,10 @@ public class DDLUtils {
 			columnMeta.setNullable(fieldMeta.isNullable());
 			columnMeta.setDataType(fieldMeta.getType());
 			columnMeta.setTypeName(fieldMeta.getFieldType());
+			// update 2026-11-21 数组/集合字段组件类型透传,DDL生成按方言转数组列类型
+			columnMeta.setArrayComponentType(fieldMeta.getArrayComponentType());
+			// update 2026-11-21 nativeType特殊族透传(json/jsonb/bson/vector/geometry/array)
+			columnMeta.setSpecialFamily(fieldMeta.getSpecialFamily());
 			columnMeta.setPK(fieldMeta.isPK() || fieldMeta.isDdlPk());
 			columnMeta.setGeneratedType(fieldMeta.getGeneratedType());
 			columnMeta.setDecimalDigits(fieldMeta.getPrecision());
@@ -235,22 +242,145 @@ public class DDLUtils {
 	 * @return
 	 */
 	public static String convertType(ColumnMeta colMeta, int dbType) {
-		if (colMeta.getNativeType() != null) {
-			if (colMeta.getNativeType().equalsIgnoreCase("JSON")) {
-				return jsonCarrierType(dbType);
-			} else if (colMeta.getNativeType().equalsIgnoreCase("BSON")) {
-				if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
-						|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
-						|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE
-						|| dbType == DBType.HIGHGO) {
-					return "BSON";
+		// update 2026-11-21 nativeType特殊族分派(替代原JSON/BSON词面特判):quickvo按源库生成
+		// nativeType(源方言物理类型名,如pg的jsonb),跨库部署原样输出为目标列类型会非法;json族
+		// pg内核系保源精度(json/jsonb),其余目标走jsonCarrierType承载映射;bson同构;数组族见下方
+		// 组件分派;族不可识别(如dm具名VARRAY)不在此拦截,经default分支原样透传保持精确控制
+		// update 2026-11-22 特殊族字段为空时现场兜底识别(幂等):实体链路由EntityManager解析期
+		// 填充specialFamily,但手工构造/反向工程(getTableColumns)链路的ColumnMeta不携带该字段,
+		// 仅依赖字段会使json/bson词面特判在这些链路失效(DDLConvertTypeMatrixTest真库回归暴露)
+		String specialFamily = (colMeta.getSpecialFamily() != null) ? colMeta.getSpecialFamily()
+				: NativeTypeUtils.specialFamily(colMeta.getNativeType(), colMeta.getDataType());
+		if (specialFamily != null) {
+			Integer metaType = colMeta.getDataType();
+			if ((metaType != null && (metaType == JdbcTypes.JSON || metaType == JdbcTypes.JSONB))
+					|| NativeTypeUtils.FAMILY_JSON.equals(specialFamily)
+					|| NativeTypeUtils.FAMILY_JSONB.equals(specialFamily)) {
+				// jdbcType=JSON/JSONB或nativeType为json/jsonb族:pg系保源精度,其余按目标承载
+				// update 2026-11-22 源精度以nativeType词面为准:此前只按族/type判定,type=JSON与
+				// nativeType=jsonb(或type=JSONB与nativeType=json)的实体被静默改写(jsonb→json属
+				// schema降级:索引/操作符/比较语义不同),而改动前default分支原样输出nativeType;
+				// 现nativeType为json/jsonb词面时优先,其余按族/type判定,与merge cast同口径
+				String nativeJson = (colMeta.getNativeType() == null) ? "" : colMeta.getNativeType().trim();
+				boolean jsonb;
+				if ("jsonb".equalsIgnoreCase(nativeJson)) {
+					jsonb = true;
+				} else if ("json".equalsIgnoreCase(nativeJson)) {
+					jsonb = false;
 				} else {
-					return jsonCarrierType(dbType);
+					jsonb = NativeTypeUtils.FAMILY_JSONB.equals(specialFamily)
+							|| (metaType != null && metaType == JdbcTypes.JSONB);
 				}
+				if (NativeTypeUtils.isPgKernel(dbType)) {
+					return jsonb ? "jsonb" : "json";
+				}
+				return jsonCarrierType(dbType);
+			}
+			if (NativeTypeUtils.FAMILY_BSON.equals(specialFamily)) {
+				if (NativeTypeUtils.isPgKernel(dbType)) {
+					return "BSON";
+				}
+				return jsonCarrierType(dbType);
+			}
+			// update 2026-11-22 uuid族列类型:原生uuid方言(pg内核10库/h2的UUID/sqlserver的
+			// uniqueidentifier)保原生,其余方言以36位变长字符承载(oracle VARCHAR2(36)/mysql系
+			// VARCHAR(36)/db2 VARCHAR(36)/hana NVARCHAR(36)/sqlite TEXT/dm
+			// VARCHAR(36));统一用变长
+			// 而非CHAR——CHAR空白填充会给去连字符的32位值补尾空格,读回带空格(Java equals/JSON错位),
+			// 迁到其它方言的VARCHAR后尾空格变成有效字符,跨库等值/唯一约束失真
+			Integer metaType0 = colMeta.getDataType();
+			if (NativeTypeUtils.FAMILY_UUID.equals(specialFamily)
+					|| (metaType0 != null && metaType0 == JdbcTypes.UUID)) {
+				// update 2026-11-22 显式nativeType优先(恢复"族不可识别精确控制"口径):uuid族/type=UUID
+				// 且nativeType为方言专属物理类型(如BINARY(16)/CHAR(36)紧凑存储)时原样输出,此前
+				// 一律落VARCHAR(36)静默改写既有实体列类型;uuid/uniqueidentifier拼写继续走下方原生映射
+				String uuidNative = (colMeta.getNativeType() == null) ? "" : colMeta.getNativeType().trim();
+				if (!uuidNative.isEmpty() && !"uuid".equalsIgnoreCase(uuidNative)
+						&& !"uniqueidentifier".equalsIgnoreCase(uuidNative)) {
+					return uuidNative;
+				}
+				if (NativeTypeUtils.isPgKernel(dbType)) {
+					return "uuid";
+				}
+				if (dbType == DBType.H2) {
+					return "UUID";
+				}
+				if (dbType == DBType.SQLSERVER) {
+					return "UNIQUEIDENTIFIER";
+				}
+				if (dbType == DBType.ORACLE || dbType == DBType.ORACLE11) {
+					return "VARCHAR2(36)";
+				}
+				if (dbType == DBType.HANA) {
+					return "NVARCHAR(36)";
+				}
+				if (dbType == DBType.SQLITE) {
+					return "TEXT";
+				}
+				return "VARCHAR(36)";
 			}
 		}
 		boolean isBytes = false;
 		String typeName = "VARCHAR";
+		// update 2026-11-21 数组/集合字段按组件类型生成数组列类型(优先级在nativeType之后,
+		// 与wrapSelectFields同优先链:nativeType显式声明最优先,配置了就不参与组件推断):
+		// pg内核系9库生成elem[]标准数组建表语法(varchar[]/integer[]/bigint[]/numeric[]/float[]/
+		// float8[]/bool[]/int2[],元素名与SqlUtil.setArray的createArrayOf及merge cast口径一致);
+		// h2生成elem ARRAY。此前实体数组字段落default统一VARCHAR:pg系仅String[]靠typeName以[]
+		// 结尾碰巧生成_VARCHAR,数值/布尔数组错型;h2直接丢数组维度成标量列,运行期数组绑定不匹配。
+		// 无标准数组列的方言(mysql系/oracle/dm/sqlserver/db2/hana/ob等)维持switch现状,
+		// 建议以@Column(nativeType=..)显式指定承载类型;未识别组件(日期时间等)同样回落switch
+		// update 2026-11-22 二进制列优先于数组列分派:byte[]实体已由EntityManager排除组件提取,此处兜底
+		// 反向工程/手工构造链路(ColumnMeta同时带BINARY/BLOB类型与组件类型)——byte[]在SQL侧无对应数组
+		// 元素类型(int2为2字节整数,与byte语义不同),必须保BYTEA/BLOB/VARBINARY(MAX),不得降级为elem[]
+		boolean binaryColumn = colMeta.getDataType() != null
+				&& (colMeta.getDataType() == java.sql.Types.BINARY || colMeta.getDataType() == java.sql.Types.VARBINARY
+						|| colMeta.getDataType() == java.sql.Types.LONGVARBINARY
+						|| colMeta.getDataType() == java.sql.Types.BLOB);
+		// update 2026-11-22 显式标量jdbcType优先于组件类型推断(与wrapSelectFields的jdbcType优先链
+		// 统一):此前只要arrayComponentType非空且nativeType为空就生成数组列,导致①List<String>+
+		// type=CLOB(应用以TypeHandler把集合序列化进CLOB,既有工程常见写法)的列被静默改成
+		// varchar[]/VARCHAR ARRAY/JSON承载;②String[]+type=VARCHAR被改成数组列,而merge into的
+		// using-select按jdbcType产出 cast(? as VARCHAR(n)),同一字段DDL与DML口径相反——h2实测
+		// saveOrUpdate不报错但落库cardinality=1(数组元素被再次包裹),属静默错写数据。
+		// 仅在jdbcType为中性(未声明/OTHER/ARRAY/JAVA_OBJECT/STRUCT)时才按组件类型生成数组列
+		Integer declaredType = colMeta.getDataType();
+		boolean neutralType = declaredType == null || declaredType == java.sql.Types.OTHER
+				|| declaredType == java.sql.Types.ARRAY || declaredType == java.sql.Types.JAVA_OBJECT
+				|| declaredType == java.sql.Types.STRUCT;
+		if (!binaryColumn && neutralType && StringUtil.isNotBlank(colMeta.getArrayComponentType()) && (StringUtil
+				.isBlank(colMeta.getNativeType())
+				// 数组族nativeType(pg源text[]/varchar[]形态)仅pg内核系目标有效,其余目标视同未配置
+				// 回落组件链(elem[]/elem ARRAY),避免源形态拼入h2/dm等目标产生非法DDL
+				// update 2026-11-22 用现场兜底识别的specialFamily(与json/bson族同构),而非仅取字段——
+				// 手工构造/反向工程链路ColumnMeta字段为空但nativeType=text[]时,非pg目标亦须回落JSON承载
+				|| (NativeTypeUtils.FAMILY_ARRAY.equals(specialFamily) && !NativeTypeUtils.isPgKernel(dbType)))) {
+			if (NativeTypeUtils.isPgKernel(dbType)) {
+				String elem = PostgreSqlDialectUtils.pgArrayElementTypeName(colMeta.getArrayComponentType());
+				if (elem != null) {
+					return elem.concat("[]");
+				}
+			} else if (dbType == DBType.H2) {
+				String elem = H2DialectUtils.h2ArrayElementTypeName(colMeta.getArrayComponentType());
+				if (elem != null) {
+					return elem.concat(" ARRAY");
+				}
+			} else {
+				// update 2026-11-22 无数组列方言(mysql/oracle/hana/sqlserver/db2/dm等)以JSON/文本承载
+				// (jsonCarrierType按目标分派:mysql/oracle 21c+原生JSON,oracle11/db2 CLOB,hana NCLOB,
+				// sqlserver NVARCHAR(MAX))——此前落default将pg源text[]/integer[]等形态原样输出为非法DDL,
+				// 或裸VARCHAR在mysql/oracle缺长度非法;数组运行期绑定在这些方言本就不可用(无数组列,
+				// 序列化bytes绑定报错,见ArrayTypeEndToEndTest t11无假阳性),JSON承载亦是数组跨库
+				// 迁移的正路,运行期由应用层以JSON字符串读写
+				return jsonCarrierType(dbType);
+			}
+			// update 2026-11-22 未识别组件(java.time.*、String[][]等)此前静默回落下方switch生成
+			// 标量列(如LocalDate[]→VARCHAR),而运行期仍按SQL数组绑定,DDL与DML必然不匹配且无提示;
+			// 此处显式告警,需要数组列时由@Column(nativeType=..)指定承载类型
+			logger.warn(
+					"ddl convertType: array component type [{}] has no mapped element type on dbType [{}], fallback to a scalar column; declare @Column(nativeType=..) explicitly if an array column is required",
+					colMeta.getArrayComponentType(), dbType);
+		}
 		switch (colMeta.getDataType()) {
 		case java.sql.Types.BIGINT:
 			if (isOracleFamily(dbType)) {
@@ -264,11 +394,26 @@ public class DDLUtils {
 			typeName = "INTEGER";
 			break;
 		case java.sql.Types.TINYINT:
+			// update 2026-11-22 tinyint方言分派:mysql源实体的tinyint(4)列部署目标库——此前
+			// 非oracle系统一TINYINT,在pg/db2等无tinyint的库为非法DDL(真库实证pg报
+			// type "tinyint" does not exist);最小整型方言:pg内核系/db2为SMALLINT,
+			// oracle系INTEGER(现状),mysql系/sqlserver/sqlite/h2/hana原生TINYINT
+			// update 2026-11-22 HANA移出SMALLINT名单:SAP HANA类型清单含TINYINT(见HanaDialectUtils
+			// 类型分支),原先归入SMALLINT会把既有hana实体的tinyint列静默加宽为smallint
 			if (isOracleFamily(dbType)) {
 				typeName = "INTEGER";
+			} else if (dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
+					|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
+					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE
+					|| dbType == DBType.HIGHGO || dbType == DBType.DB2) {
+				typeName = "SMALLINT";
 			} else {
 				typeName = "TINYINT";
-				typeName = setLength(typeName, true, colMeta);
+				// update 2026-11-22 hana不接受显示宽度(TINYINT(n)非法),只有mysql系等既有方言沿用
+				// setLength;hana自此分支承接TINYINT后须跳过长度后缀
+				if (dbType != DBType.HANA) {
+					typeName = setLength(typeName, true, colMeta);
+				}
 			}
 			break;
 		case java.sql.Types.SMALLINT:
@@ -282,12 +427,26 @@ public class DDLUtils {
 			break;
 		case java.sql.Types.VARCHAR:
 		case java.sql.Types.NVARCHAR: {
-			typeName = (dbType == DBType.HANA) ? "NVARCHAR" : "VARCHAR";
-			typeName = setLength(typeName, false, colMeta);
+			// update 2026-11-22
+			// sqlserver默认NVARCHAR(unicode):VARCHAR为非unicode码页,中文经setString
+			// (nvarchar参数)隐式转换丢失为"????"(真库A/B实证NVARCHAR中文往返MATCH);hana同因ASCII须NVARCHAR
+			typeName = (dbType == DBType.HANA || dbType == DBType.SQLSERVER) ? "NVARCHAR" : "VARCHAR";
+			// update 2026-11-22 sqlserver
+			// NVARCHAR上限4000:varchar源列(length=8000等)直接拼NVARCHAR(8000)
+			// 建表报"The size (8000) given to the parameter ... exceeds the maximum allowed
+			// (4000)"
+			// (真库实证),超出上限按NVARCHAR(MAX)承载;4000及以内沿用长度
+			if (dbType == DBType.SQLSERVER && colMeta.getColumnSize() > 4000) {
+				typeName = "NVARCHAR(MAX)";
+			} else {
+				typeName = setLength(typeName, false, colMeta);
+			}
 		}
 			break;
 		case java.sql.Types.LONGNVARCHAR:
-			if (isOracleFamily(dbType) || dbType == DBType.H2) {
+			// update 2026-11-22 补db2→CLOB(无TEXT类型,真库实证-204);OCEANBASE归oracle族→CLOB
+			// (ob mysql模式经dialect=mysql配置走MYSQL分支,不应在OCEANBASE分支强改TEXT破坏oracle模式)
+			if (isOracleFamily(dbType) || dbType == DBType.H2 || dbType == DBType.DB2) {
 				typeName = "CLOB";
 			} else if (dbType == DBType.HANA) {
 				typeName = "NCLOB";
@@ -301,7 +460,10 @@ public class DDLUtils {
 					|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.ORACLE
 					// update 2026-9-14 KINGBASE(KingbaseES基于PG,类型映射归PG系)
 					|| dbType == DBType.KINGBASE || dbType == DBType.HIGHGO || dbType == DBType.ORACLE11
-					|| dbType == DBType.DM || dbType == DBType.OCEANBASE) {
+					|| dbType == DBType.DM || dbType == DBType.OCEANBASE
+					// update 2026-11-22 H2支持TIMESTAMP WITH TIME ZONE(真库实证:TIMESTAMP列插OffsetDateTime
+					// 读回丢时区,TSTZ列保"+08");此前落else TIMESTAMP与merge cast TSTZ分歧且静默丢时区
+					|| dbType == DBType.H2) {
 				// 精度需跟在TIMESTAMP之后:TIMESTAMP(6) WITH TIME ZONE
 				typeName = "TIMESTAMP";
 				if (colMeta.getColumnSize() > 0) {
@@ -328,6 +490,13 @@ public class DDLUtils {
 				typeName = "BYTEA";
 			} else if (dbType == DBType.SQLSERVER) {
 				typeName = "VARBINARY(MAX)";
+			} else if (dbType == DBType.DORIS) {
+				// update 2026-11-22 doris类型集无BLOB且不支持VARBINARY建表(真库实证"do not support
+				// varbinary create table, could use it by catalog"),二进制以STRING承载
+				typeName = "STRING";
+			} else if (dbType == DBType.STARROCKS) {
+				// update 2026-11-22 starrocks类型集无BLOB(真库实证Unexpected input),以VARBINARY承载
+				typeName = "VARBINARY";
 			} else {
 				typeName = "BLOB";
 			}
@@ -368,7 +537,17 @@ public class DDLUtils {
 			break;
 		case java.sql.Types.CLOB:
 		case java.sql.Types.NCLOB:
-			if (isOracleFamily(dbType) || dbType == DBType.H2 || dbType == DBType.DB2) {
+			// update 2026-11-22 LONGVARCHAR(mysql源text/longtext列的jdbcType)归并CLOB家族:此前无case
+			// 落default按nativeType原样输出,在db2/hana等无TEXT类型库为非法DDL(真库实证db2报-204
+			// SQLERRMC=TEXT)。但mysql系目标须保留源nativeType(longtext/mediumtext),否则longtext降级
+			// TEXT(64KB上限)截断大文本——故仅mysql协议系(MYSQL/MYSQL57/TIDB)目标透传nativeType,
+			// 其余目标翻译为CLOB/NCLOB/TEXT(DORIS/STARROCKS用STRING非longtext,亦走翻译)
+		case java.sql.Types.LONGVARCHAR:
+			if (colMeta.getDataType() == java.sql.Types.LONGVARCHAR
+					&& (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB)
+					&& StringUtil.isNotBlank(colMeta.getNativeType())) {
+				typeName = colMeta.getNativeType();
+			} else if (isOracleFamily(dbType) || dbType == DBType.H2 || dbType == DBType.DB2) {
 				typeName = "CLOB";
 			} else if (dbType == DBType.HANA) {
 				// hana无TEXT类型,大文本为NCLOB(unicode)
@@ -441,9 +620,10 @@ public class DDLUtils {
 			// (nativeType)覆盖为准;HIGHGO同pgvector(需库内create extension vector,社区镜像
 			// 未预装,可源码编译pgvector 0.7.4后安装,实测vector(3)建表/绑定/读回/近邻均可用)
 			if (dbType == DBType.H2) {
-				// h2无向量类型,测试场景按varchar存储'[1,2,3]'字符串形式
+				// h2无向量类型,按varchar承载'[1,2,3]'文本。update 2026-11-22 不复用@Column(length)作字符长度:
+				// 该长度语义为向量维度(元素数),误作VARCHAR(n)会截断文本(维度3→VARCHAR(3)容不下'[1,2,3]'7字符,
+				// 真库实证"Value too long");h2 VARCHAR不带长度为大上限,承载任意维度向量文本
 				typeName = "VARCHAR";
-				typeName = setLength(typeName, false, colMeta);
 			} else if (dbType == DBType.DB2) {
 				// update 2026-9-10 db2 12.1.2.0/12.1.5.0实测:VECTOR须显式坐标类型双参形态VECTOR(n,
 				// FLOAT32),单参VECTOR(n)
@@ -483,19 +663,24 @@ public class DDLUtils {
 			break;
 		}
 		case JdbcTypes.GEOMETRY: {
-			// 空间类型:oracle/dm为SDO_GEOMETRY,其余(postgis系/mysql/sqlserver/h2)为GEOMETRY
+			// 空间类型:oracle为SDO_GEOMETRY,dm为ST_GEOMETRY,其余(postgis系/mysql/sqlserver/h2)为GEOMETRY
 			// 类型精度修饰(如geometry(Point,4326)、geography)通过@Column(nativeType="...")指定;
 			// nativeType未配置时注解默认为空串(非null),须按blank判断,否则生成空列类型导致DDL非法
 			// 扩展且依赖GEOS/PROJ无法容器内源码编译),nativeType覆盖为唯一路径
-			if (StringUtil.isNotBlank(colMeta.getNativeType())) {
-				typeName = colMeta.getNativeType();
-			} else if (isOracleFamily(dbType)) {
-				typeName = "SDO_GEOMETRY";
-			} else if (dbType == DBType.HANA) {
-				// hana空间类型为ST_GEOMETRY(构造函数ST_GeomFromText与mysql系同名同参)
+			// update 2026-11-22 dm空间类型为DMGEO.ST_GEOMETRY(须SP_INIT_GEO_SYS初始化),与绑定链
+			// DialectExtUtils的DMGEO.ST_GeomFromText一致
+			// update 2026-11-22 显式nativeType须判定DM是否支持,不支持的须转成DM支持的类型:真库实测
+			// (DM8 20260710+DMGEO)DM列类型仅 ST_GEOMETRY 可建表——DMGEO.ST_GEOMETRY(带schema)/
+			// SDO_GEOMETRY/GEOMETRY/GEOGRAPHY/POINT/MDSYS.SDO_GEOMETRY 全部报-3719非法基类名;
+			// 受支持拼写只有 ST_GEOMETRY 一个且类型名大小写不敏感,故统一输出 ST_GEOMETRY
+			// (pg源nativeType="geometry"直通dm即-3719,此处亦覆盖跨库部署场景)
+			if (dbType == DBType.DM) {
+				// DM白名单:仅ST_GEOMETRY可建表(真库实证DM8+DMGEO),无条件收敛(含显式nativeType外部拼写)
 				typeName = "ST_GEOMETRY";
 			} else {
-				typeName = "GEOMETRY";
+				// update 2026-11-22 按目标库匹配转化(作者原则):nativeType匹配目标几何类型则用nativeType保精度,
+				// 目标完全不支持则尽可能转化为目标默认几何类型,无法判断的未知拼写回落nativeType精确控制
+				typeName = NativeTypeUtils.geometryDdlType(dbType, colMeta.getNativeType());
 			}
 			break;
 		}
@@ -542,12 +727,14 @@ public class DDLUtils {
 		}
 		// 数组类型(pg系:typeName以[]结尾时渲染为下划线前缀的数组类型);
 		// VECTOR除外:pgvector的vector本身即向量类型(非"向量的数组"),加_前缀会变成_vector数组类型导致建表失败
+		// update 2026-11-21 typeName已是elem[]数组语法(nativeType显式声明如text[]经default透传)时
+		// 不再加_前缀(此前会被包成"_text[]"非法类型,建表必败)
 		if ((dbType == DBType.POSTGRESQL || dbType == DBType.POSTGRESQL14 || dbType == DBType.GAUSSDB
 				|| dbType == DBType.OPENGAUSS || dbType == DBType.MOGDB || dbType == DBType.STARDB
 				|| dbType == DBType.OSCAR || dbType == DBType.VASTBASE || dbType == DBType.KINGBASE
 				|| dbType == DBType.HIGHGO) && colMeta.getDataType() != JdbcTypes.VECTOR
 				&& colMeta.getTypeName() != null && colMeta.getTypeName().endsWith("[]") && !isBytes
-				&& !typeName.startsWith("_")) {
+				&& !typeName.startsWith("_") && !typeName.endsWith("[]")) {
 			return "_".concat(typeName);
 		}
 		return typeName;

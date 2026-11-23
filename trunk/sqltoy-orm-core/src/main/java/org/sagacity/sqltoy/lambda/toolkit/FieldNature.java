@@ -31,8 +31,8 @@ public final class FieldNature {
 			return false;
 		}
 		FieldNature other = (FieldNature) obj;
-		return entityClass == other.entityClass && (fieldName == null ? other.fieldName == null
-				: fieldName.equals(other.fieldName));
+		return entityClass == other.entityClass
+				&& (fieldName == null ? other.fieldName == null : fieldName.equals(other.fieldName));
 	}
 
 	@Override

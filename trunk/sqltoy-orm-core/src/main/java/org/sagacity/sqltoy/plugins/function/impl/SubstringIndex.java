@@ -156,7 +156,8 @@ public class SubstringIndex extends IFunction {
 	}
 
 	/**
-	 * update 2026-11-12 PG系<14内核(KingbaseES V9R1真库实测负索引报错;OpenGauss/MogDB/GaussDB等PG9.2/12系同理)
+	 * update 2026-11-12 PG系<14内核(KingbaseES
+	 * V9R1真库实测负索引报错;OpenGauss/MogDB/GaussDB等PG9.2/12系同理)
 	 * 的split_part负索引模拟:用正向split_part(cnt+1+n)换算,并以段数守卫把越界负索引收敛为''(PG14语义)。
 	 * 正整数字面量原生可用→IGNORE保持原SQL;n=0统一返回''(病态输入,与其它方言家族口径一致)。
 	 * 

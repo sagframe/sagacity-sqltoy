@@ -183,6 +183,11 @@ public class DialectExtUtils {
 					} else {
 						values.append("?");
 					}
+				} else if (fieldMeta.getType() == java.sql.Types.BOOLEAN && dbType == DBType.VASTBASE) {
+					// update 2026-11-22 vastbase
+					// boolean列:驱动setBoolean发smallint拒收,绑定改setObject(文本,OTHER)(见SqlUtil),
+					// insert以cast(? as boolean)定型(unknown→boolean可cast,smallint→boolean非法,真库实证)
+					values.append("cast(? as boolean)");
 				} else if (isString) {
 					// kudu 中文会产生乱码
 					if (dbType == DBType.IMPALA) {
@@ -566,15 +571,14 @@ public class DialectExtUtils {
 				+ ((pkStrategy == null) ? "" : pkStrategy.getValue()) + "|rv="
 				+ ((entityMeta.getRowVersionColumns() == null) ? -1 : entityMeta.getRowVersionColumns().hashCode())
 				+ "|pf=" + profile.getRealDBType() + "," + (profile.isOceanBase() ? 1 : 0) + ","
-				+ profile.getMajorVersion() + "," + profile.getHasGseSchema()
-				+ "|uf=" + unifyFieldsSqlToken(unifyFieldsHandler);
+				+ profile.getMajorVersion() + "," + profile.getHasGseSchema() + "|uf="
+				+ unifyFieldsSqlToken(unifyFieldsHandler);
 	}
 
 	/**
 	 * update 2026-11-15 unifyFieldsHandler参与缓存key的语义摘要:只取真正影响sql文本的集合
 	 * (createSqlTimeFields与mergeIgnore用到的forceUpdateFields),按集合内容(去序)摘要,
-	 * 使两个配置等价的上下文仍可共享同一条sql;handler为null或两者均空时统一为"-",
-	 * 保证未配置统一字段的场景key形态与历史一致
+	 * 使两个配置等价的上下文仍可共享同一条sql;handler为null或两者均空时统一为"-", 保证未配置统一字段的场景key形态与历史一致
 	 * 
 	 * @param unifyFieldsHandler
 	 * @return

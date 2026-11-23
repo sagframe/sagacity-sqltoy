@@ -28,8 +28,8 @@ public class TenantFilterInterceptor implements SqlInterceptor {
 	// update 2026-11-12 评审R1:尾边界用(?=\W|$)零宽前瞻——findTop实体top SQL以"limit <n>"结尾
 	// 无尾随空白,原\W要求会漏配;数字须[0-9]+(单位数字在"limit 10"的1后停下同样漏配)
 	private static final java.util.regex.Pattern PAGE_TAIL_PATTERN = java.util.regex.Pattern
-			.compile("(?i)\\W(limit\\s+(\\?|:[\\w.]+|#\\[?[\\w.]+|[0-9]+)"
-					+ "|offset\\s+(\\?|:[\\w.]+|[0-9]+)\\s+rows" + "|fetch\\s+(first|next))(?=\\W|$)");
+			.compile("(?i)\\W(limit\\s+(\\?|:[\\w.]+|#\\[?[\\w.]+|[0-9]+)" + "|offset\\s+(\\?|:[\\w.]+|[0-9]+)\\s+rows"
+					+ "|fetch\\s+(first|next))(?=\\W|$)");
 
 	/**
 	 * 对最终执行sql和sql参数进行处理

@@ -35,8 +35,8 @@ import org.sagacity.sqltoy.utils.StringUtil;
  * @modify Date:2023-08-31 优化@loop在update语句参数为null的场景,之前缺陷是值为null时被转为field is
  *         null，正确模式field=null
  * @modify Date:2026-11-18 #[...]段被引用集合的null/空白值剔除后内容全空的迭代按跳过处理:
- *         原实现在段剔除前拼linkSign,剔空迭代留下孤立or/and(#[..] or #[..]模式中间段
- *         消失后产生"or or"非法sql),现全空迭代不拼连接符不输出,与@secure-loop的跳过语义对齐
+ *         原实现在段剔除前拼linkSign,剔空迭代留下孤立or/and(#[..] or #[..]模式中间段 消失后产生"or
+ *         or"非法sql),现全空迭代不拼连接符不输出,与@secure-loop的跳过语义对齐
  */
 public class SqlLoop extends AbstractMacro {
 	/**

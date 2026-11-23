@@ -85,7 +85,7 @@ public class SqlWithAnalysis implements Serializable {
 	/**
 	 * update 2026-11-14 显式指定引号转义语义:mysql系为true,标准SQL为false。
 	 *
-	 * @param sql            原始sql
+	 * @param sql             原始sql
 	 * @param backslashEscape true:反斜杠转义引号(MySQL);false:标准SQL
 	 */
 	public SqlWithAnalysis(String sql, boolean backslashEscape) {
@@ -343,8 +343,7 @@ public class SqlWithAnalysis implements Serializable {
 	 * 改为携带SQL片段的可读异常,便于定位到具体SQL。
 	 */
 	private IllegalArgumentException cteBodyException() {
-		String preview = (sql == null) ? "null"
-				: (sql.length() > 200 ? sql.substring(0, 200).concat("...") : sql);
+		String preview = (sql == null) ? "null" : (sql.length() > 200 ? sql.substring(0, 200).concat("...") : sql);
 		return new IllegalArgumentException(
 				"the CTE body bracket can not be matched, please check the SQL: " + preview);
 	}

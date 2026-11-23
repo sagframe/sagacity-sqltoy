@@ -32,8 +32,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
- * @description es配置
- *              作为超时与字符集的默认值:语句(eql)上未显式配置时采用本配置;本配置同时用于构建
+ * @description es配置 作为超时与字符集的默认值:语句(eql)上未显式配置时采用本配置;本配置同时用于构建
  *              rest客户端(单地址与多地址统一使用rest客户端)
  * @author zhongxuchen
  * @version v1.0,Date:2018-02-05
@@ -191,8 +190,7 @@ public class ElasticEndpoint implements Serializable {
 	}
 
 	/**
-	 * 解析配置的节点地址列表:兼容全角分隔符,去除首尾空白与空白项。
-	 * 多地址用于构建rest客户端,单地址同样使用rest客户端(默认节点)
+	 * 解析配置的节点地址列表:兼容全角分隔符,去除首尾空白与空白项。 多地址用于构建rest客户端,单地址同样使用rest客户端(默认节点)
 	 *
 	 * @return 节点地址数组,未配置时返回空数组
 	 */
@@ -477,8 +475,7 @@ public class ElasticEndpoint implements Serializable {
 
 	/**
 	 * 获取rest客户端:与endpoint默认超时一致时复用默认客户端;语句级超时则按
-	 * (requestTimeout,connectTimeout,socketTimeout)组合单独构建——
-	 * 客户端的超时只能在构建时确定,无法逐请求生效
+	 * (requestTimeout,connectTimeout,socketTimeout)组合单独构建—— 客户端的超时只能在构建时确定,无法逐请求生效
 	 *
 	 * @param requestTimeout 从连接池获取连接的等待上限(毫秒)
 	 * @param connectTimeout 建连超时(毫秒)
@@ -498,8 +495,7 @@ public class ElasticEndpoint implements Serializable {
 			return restClient;
 		}
 		final String key = requestTimeout + "_" + connectTimeout + "_" + socketTimeout;
-		return restClients.computeIfAbsent(key,
-				k -> buildRestClient(requestTimeout, connectTimeout, socketTimeout));
+		return restClients.computeIfAbsent(key, k -> buildRestClient(requestTimeout, connectTimeout, socketTimeout));
 	}
 
 	/**
@@ -534,8 +530,9 @@ public class ElasticEndpoint implements Serializable {
 			builder.setPathPrefix(pathPrefix);
 		}
 		final CredentialsProvider credsProvider = new BasicCredentialsProvider();
-		final boolean hasCrede = (StringUtil.isNotBlank(this.getUsername())
-				&& StringUtil.isNotBlank(getPassword())) ? true : false;
+		final boolean hasCrede = (StringUtil.isNotBlank(this.getUsername()) && StringUtil.isNotBlank(getPassword()))
+				? true
+				: false;
 		// 是否ssl证书模式
 		final boolean hasSsl = StringUtil.isNotBlank(this.keyStore);
 		// 凭据提供器
@@ -548,8 +545,8 @@ public class ElasticEndpoint implements Serializable {
 		SSLContextBuilder sslBuilder = null;
 		try {
 			if (hasSsl) {
-				KeyStore truststore = KeyStore.getInstance(
-						StringUtil.isBlank(keyStoreType) ? KeyStore.getDefaultType() : keyStoreType);
+				KeyStore truststore = KeyStore
+						.getInstance(StringUtil.isBlank(keyStoreType) ? KeyStore.getDefaultType() : keyStoreType);
 				// KeyStore.load(null)不抛错而是初始化为空keystore,静默导致SSL握手失败难以定位
 				try (InputStream keyStoreStream = FileUtil.getFileInputStream(keyStore)) {
 					if (keyStoreStream == null) {
@@ -563,9 +560,8 @@ public class ElasticEndpoint implements Serializable {
 			final SSLContext sslContext = (sslBuilder == null) ? null : sslBuilder.build();
 			final boolean disableAuthCaching = !authCaching;
 			// hc4的RequestConfig统一承载从池取连接/建连/响应三类超时
-			final RequestConfig requestConfig = RequestConfig.custom()
-					.setConnectionRequestTimeout(requestTimeout).setConnectTimeout(connectTimeout)
-					.setSocketTimeout(socketTimeout).build();
+			final RequestConfig requestConfig = RequestConfig.custom().setConnectionRequestTimeout(requestTimeout)
+					.setConnectTimeout(connectTimeout).setSocketTimeout(socketTimeout).build();
 			builder.setHttpClientConfigCallback(new RestClientBuilder.HttpClientConfigCallback() {
 				@Override
 				public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder) {

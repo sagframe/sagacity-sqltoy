@@ -73,10 +73,9 @@ public class DateTrunc extends IFunction {
 		// ---- 原生透传族 ----
 		// oracle兼容格式模型;无date_trunc函数由下方转换族承担)
 		boolean truncNative = dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DM
-				|| dialect == DBType.OCEANBASE
-				|| dialect == DBType.DB2 || dialect == DBType.OPENGAUSS || dialect == DBType.GAUSSDB
-				|| dialect == DBType.MOGDB || dialect == DBType.OSCAR || dialect == DBType.STARDB
-				|| dialect == DBType.VASTBASE || dialect == DBType.KINGBASE;
+				|| dialect == DBType.OCEANBASE || dialect == DBType.DB2 || dialect == DBType.OPENGAUSS
+				|| dialect == DBType.GAUSSDB || dialect == DBType.MOGDB || dialect == DBType.OSCAR
+				|| dialect == DBType.STARDB || dialect == DBType.VASTBASE || dialect == DBType.KINGBASE;
 		// trunc(x,'code')原生:oracle/oracle11/dm/db2/og系/kingbase/vastbase(真库探针);
 		// 例外:WEEK单位在og内核族(og5实测不认IW码,与og7同方言名无法按方言区分)统一
 		// 走下方date_trunc('week')转换,该形态og5/og7/kb/vb真库均验证
@@ -119,8 +118,8 @@ public class DateTrunc extends IFunction {
 		}
 		// mysql语法族(含tidb/starrocks):组合形态
 		// update 2026-11-12 OB移出:框架约定dialect=oceanbase即Oracle模式租户,归truncNative族
-		if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57
-				|| dialect == DBType.TIDB || dialect == DBType.STARROCKS) {
+		if (dialect == DBType.MYSQL || dialect == DBType.MYSQL57 || dialect == DBType.TIDB
+				|| dialect == DBType.STARROCKS) {
 			switch (unit) {
 			case "DAY":
 				return "DATE(" + base + ")";

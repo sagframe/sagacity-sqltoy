@@ -221,6 +221,18 @@ public interface SqlToyDao {
 	public <T extends Serializable> T updateSaveFetch(final T entity, final EntityUpdateCallback<T> callback,
 			final int lockWaitTimeout, final String... uniqueProps);
 
+	/**
+	 * 单实体对象化 updateFetch：按实体唯一属性锁查询并修改，只更新；记录不存在返回 null，不执行 insert。
+	 * 
+	 * @param <T>         实体类型
+	 * @param entity      待锁定的实体对象，以主键或 uniqueProps 的属性值定位记录
+	 * @param callback    实体更新回调，只操作实体 get/set，无 ResultSet
+	 * @param uniqueProps 唯一性字段属性名数组，不设置则按主键定位
+	 * @return 修改后的实体；记录不存在返回 null
+	 */
+	public <T extends Serializable> T updateFetch(final T entity, final EntityUpdateCallback<T> callback,
+			final String... uniqueProps);
+
 	public Long updateByQuery(Class entityClass, EntityUpdate entityUpdate);
 
 	public Long updateCascade(Serializable entity, String[] forceUpdateProps, Class[] forceCascadeClasses,

@@ -1393,8 +1393,7 @@ public class ResultUtils {
 	 * update 2026-9-12
 	 * 处理Result单行数据(旧签名,已废弃):并行数组(labelNames/columnTypeNames/columnKinds)
 	 * 形态已被ResultColumnMeta[]取代,内部桥接转换后委托新签名;update 2026-11-12
-	 * 框架内部调用方(USF锁游标回读、getMoreLinkResultSet)已全部迁移至新签名,
-	 * 本签名仅为第三方兼容保留。
+	 * 框架内部调用方(USF锁游标回读、getMoreLinkResultSet)已全部迁移至新签名, 本签名仅为第三方兼容保留。
 	 */
 	@Deprecated
 	public static List processResultRow(Integer dbType, TypeHandler typeHandler, DynamicCacheFetch dynamicCacheFetch,
@@ -1588,6 +1587,31 @@ public class ResultUtils {
 
 	// pg系衍生驱动扩展类型对象的getType()方法缓存(类名→Method,按类解析一次规避逐单元格反射开销)
 	private static final java.util.concurrent.ConcurrentHashMap<String, java.util.Optional<java.lang.reflect.Method>> PG_GET_TYPE_METHODS = new java.util.concurrent.ConcurrentHashMap<>();
+	// update 2026-11-22
+	// oracle.sql.TIMESTAMPTZ/TIMESTAMPLTZ的offsetDateTimeValue()方法缓存(类名→Method,
+	// 按类解析一次规避大结果集逐行反射开销,与PG_GET_TYPE_METHODS同口径)
+	private static final java.util.concurrent.ConcurrentHashMap<String, java.util.Optional<java.lang.reflect.Method>> ORACLE_TZ_METHODS = new java.util.concurrent.ConcurrentHashMap<>();
+
+	/**
+	 * update 2026-11-22 oracle TIMESTAMPTZ 的无参转换方法解析:仅 TIMESTAMPTZ 提供无参
+	 * offsetDateTimeValue();TIMESTAMPLTZ 的转换入口均需 Connection(真库实测:无参
+	 * stringValue/timestampValue 报 Conversion failed,toJdbc 返回自身),故对 LTZ 返回 null
+	 * (调用方保留驱动对象,边界见 normalizeExtTypeValue 注释)
+	 *
+	 * @param clazz 驱动时区对象类型(oracle.sql.TIMESTAMPTZ)
+	 * @return 可无参调用的转换方法,无则null
+	 */
+	static java.lang.reflect.Method resolveOracleTzMethod(Class<?> clazz) {
+		if (clazz == null) {
+			return null;
+		}
+		try {
+			return clazz.getMethod("offsetDateTimeValue");
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
 	// mssql-jdbc的Geometry类与解码方法缓存(microsoft.sqlserver.jdbc.Geometry为驱动内置,
 	// 类不存在时AVAIL=false整体跳过;static Method线程安全)
 	private static final boolean MSSQL_GEO_AVAIL;
@@ -1751,6 +1775,12 @@ public class ResultUtils {
 				|| value instanceof java.time.temporal.Temporal) {
 			return value;
 		}
+		// update 2026-11-22 uuid统一文本化:pg内核系/h2原生uuid列驱动getObject返回java.util.UUID,
+		// Map/裸List无目标类型会携带该对象(与承载库varchar(36)回读String形态不一致);归一为规范文本,
+		// VO声明java.util.UUID字段经BeanUtil.convertType的String→UUID分支还原,两形态各得其所
+		if (value instanceof java.util.UUID) {
+			return value.toString();
+		}
 		// STRUCT形态:SDO兼容布局(oracle/达梦SYSGEO)与达梦WKB布局(DMGEO/sysgeo.ST_GEOMETRY)
 		if (value instanceof java.sql.Struct) {
 			String typeName = structTypeName((java.sql.Struct) value);
@@ -1870,6 +1900,25 @@ public class ResultUtils {
 			// (getType()为null,无其他类型访问器),PGobject.toString()恒为getValue()文本,
 			// 转String无损(实测json列),未知类型(hstore等文本形态)同样受益
 			return String.valueOf(value);
+		}
+		// update 2026-11-22 oracle.sql.TIMESTAMPTZ读回归一为OffsetDateTime:驱动专属对象,否则Map/VO得
+		// "oracle.sql.TIMESTAMPTZ@hash"地址形垃圾值(真库实证);TIMESTAMPTZ有无参
+		// offsetDateTimeValue()
+		// TIMESTAMPLTZ不在归一范围:其转换入口均需会话上下文(offsetDateTimeValue/stringValue/timestampValue
+		// 带Connection,无参版本报Conversion failed,toJdbc()返回自身),无参归一不可行——真库实证
+		// rs.getTimestamp/rs.getString可读("2026-11-22 10:00:00.0
+		// Asia/Shanghai"),需要可读值时在SQL端
+		// to_char或VO用Timestamp接收(边界记录)
+		if (className.equals("oracle.sql.timestamptz")) {
+			try {
+				java.lang.reflect.Method m = ORACLE_TZ_METHODS
+						.computeIfAbsent(className,
+								k -> java.util.Optional.ofNullable(resolveOracleTzMethod(value.getClass())))
+						.orElse(null);
+				return m != null ? m.invoke(value) : value;
+			} catch (Exception e) {
+				return value;
+			}
 		}
 		return value;
 	}
