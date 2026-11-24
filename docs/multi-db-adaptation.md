@@ -130,6 +130,8 @@ select id,name from sys_tenant_info
 
 oracle 上自动展开为 `from dual`、db2 展开为 `from sysibm.sysdummy1`、hana 展开为 `from dummy`，mysql/pg/sqlserver 等直接剔除。**从此不再为 `from dual` 站队。**
 
+也兼容更贴近标准 SQL 直觉的 `select 1 from @virtualTable()` 写法：oracle/db2/hana 复用前置 `from`，只展开成一个 `from`（不会出现 `from from dual`）；mysql/pg/sqlserver 等把 `from` 与宏一并剔除，不会残留悬空 `from`。两种写法可混用，别名 `@dual()` / `@dummyTable()` 同样适用。
+
 ### 4. redoDataSources：测试期就把所有目标库跑一遍
 
 产品级适配不靠现场救火。配置 `redoDataSources` 后，任意查询在测试阶段**同时在其他目标库重放执行**，不兼容写法提前暴露，而不是等客户现场换库时才报错：

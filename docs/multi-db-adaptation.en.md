@@ -126,6 +126,8 @@ select id,name from sys_tenant_info
 
 Expanded at parse time per dialect: `from dual` on the Oracle family (oracle/oracle11/dm/oceanbase), `from sysibm.sysdummy1` on DB2, `from dummy` on HANA, stripped entirely on MySQL/PostgreSQL/SQL Server and everyone else who supports FROM-less select natively. Aliases `@dual()` / `@dummyTable()` are equivalent, case-insensitive, and the macro may appear once per constant select. **No more picking sides on `from dual`.**
 
+The more conventional `select 1 from @virtualTable()` form is supported too: pseudo-table dialects reuse the preceding `from` (a single `from dual`, never `from from dual`), while FROM-less dialects remove the `from` together with the macro instead of leaving a dangling `from`. Both forms can be mixed, and the `@dual()` / `@dummyTable()` aliases behave identically.
+
 ### 4. Verify against every target database before shipping
 
 Product-grade adaptation must not rely on firefighting at customer sites. Configure `redoDataSources` and every query is **replayed once on each additional data source** during testing, exposing incompatible constructs immediately:
