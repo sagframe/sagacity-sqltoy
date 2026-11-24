@@ -233,6 +233,7 @@
 | `OracleTzNormalizeTest` | 断言 TIMESTAMPTZ 必解析出无参 `offsetDateTimeValue()`(ojdbc11 23.x 具备该方法) | 按驱动能力分派断言——ojdbc8 19.24(JDK8 最后一条 Oracle 驱动线)的 TIMESTAMPTZ 只有 `offsetDateTimeValue(Connection)`,javap 实证无无参方法:此时断言解析为 null。产品代码 `ResultUtils` 与 6.0 逐字一致(反射不到方法即保留驱动对象=6.0.12 之前行为),故**本线 Oracle TIMESTAMPTZ 读回归一不生效**,需要可读值时 SQL 端 to_char 或 VO 用 Timestamp 接收;若日后 ojdbc8 线提供无参方法,产品代码自动生效、测试自动切换断言 |
 | `BeanUtilArrayConvertTypeTest`/`SqlUtilsExtArrayResultUpdateTest` | `Set.of(..)`/`List.of(..)`(JDK9) | `new HashSet<>(Arrays.asList(..))`/`Arrays.asList(..)` |
 | `recheck/CacheAndRegexRecheckTest` | `String.isBlank()`(JDK11) | `trim().isEmpty()` |
+| `DateUtilScenarioTest` | 中文短名期望值按 JDK9+ 的 CLDR 写死(MMM=8月、EEE=周二) | 按运行 JDK 选择期望值:JDK8 用传统 JRE locale 数据(MMM=八月、EEE=星期二),JDK9+ 用 CLDR。**非框架缺陷**(DateUtil 只是按 locale 委托 SimpleDateFormat),全名与英文/日文形态两代一致;断言仍为精确匹配,不放宽为"两者皆可" |
 
 ## pom 差异基线(5.6 侧 jre8 化规则)
 
@@ -255,6 +256,7 @@
 
 - 全量测试(2196例):`mvn test`(pom已设surefire skip=false)
 - 全量测试(第三轮后 2481 例/323 类):`mvn test`(pom已设surefire skip=false);本机无 JDK8 时以 `-Dmaven.compiler.release=8` 于 JDK17 上等价执行(语法+API 双校验,勿用 source/target 8——jdk17 下 java.beans 会误报 PropertyInfo 不可访问)
+- **JDK8 真机门禁(2026-11-24 起本机已装 E:\jdk1.8,1.8.0_513)**:`set JAVA_HOME=E:\jdk1.8` 后 `mvn -o clean test`,pom 的 source/target 1.8 原生生效,无需 `--release`。**`--release 8` 于 JDK17 并不等价于 JDK8 真机**:它只校验语法与 API 签名,不覆盖运行期 JDK 数据/行为差异——第十四轮后的发版自检即在 JDK8 上抓到 `DateUtilScenarioTest` 的中文短名 locale 差异(JDK17 全绿而 JDK8 失败),故发版前必须跑 JDK8 真机全量
 - 链式CTE用例(testCteRefsCteExecution):H2≤2.2.224按版本守卫跳过(引擎限制,非框架缺陷)
 - fat jar集成测试(EntityScannerFatJarTest):需pom拷贝boot-loader(JDK17生态),jre8下跳过
 - docker真库冒烟:复用6.0的容器矩阵,测试代码jre8语法化
