@@ -110,6 +110,16 @@
 > DialectUtils/PostgreSqlDialectUtils 的登记适配保留。19 个新文件全部 jre8-clean,无需语法转换。门禁:core clean 全量
 > 360 类 2806 例全绿(82 例环境性跳过),与上轮 347 类 2714 例逐类比对——+92 例全部归因于 13 个新测试类,无类丢失、
 > 既有类计数零变化;starter 4 例、solon 7 例、spring 编译通过。全景:947 文件 853 个与上游一致,差异 92(本轮 6 + 既有 86)。
+>
+> **第九轮同步完成(2026-11-24 晚,计算器与结果处理算法修复,版本仍 5.6.99.jre8)**:上游 b1c980ab3..e532640cb 共 5 提交
+> 9 文件(+1075/-59),全部为 A 类干净基线(B=0、D=0),直接拷贝、无合并无冲突。内容:①ColsChainRelative/RowsChainRelative/
+> ReverseList 负数下标钳到 0、负数 end 改 python 式 dataSize+end(原差 1)、ReverseList 交换次数 (end-start+1)/2
+> (原 2 行时完全不反转)、RowsChainRelative 循环边界含首/末组(原 groupSize=1 漏行);②MapperUtils 父类链 null 守卫
+> (接口 getSuperclass() 为 null)与 IS-A 可赋值直接赋值(修 Map←HashMap/Number←Integer 等被丢弃);③ResultUtils 多列 link
+> 键与一对多分组键改逐列列表(消除值含下划线/逗号的撞键)、排序按当前比较对动态判型(修混合类型列 CCE)。
+> 4 个新测试文件在上游为 LF 结尾,拷入后转 CRLF 与本侧工作区一致(blob 不受影响)。门禁:core clean 全量 364 类 2838 例
+> 全绿(82 例环境性跳过),与上轮 360 类 2806 例逐类比对——+32 例全部归因于 4 个新测试类(12+9+6+5),无类丢失、
+> 既有类计数零变化;starter 4 例、solon 7 例、spring 编译通过。
 
 ## 同步流程(每个 6.0 release tag 执行一轮)
 
@@ -204,3 +214,4 @@
 - 版本号:已发布的版本(如 5.6.98.jre8)不得再用 `mvn install` 覆盖本地仓库——同版本本地构件会与中央仓库不一致,且 `_remote.repositories` 残留远端来源标记使 Maven 不再重新下载(第七轮曾误覆盖,已删除该版本目录后 `dependency:get` 从镜像恢复);模块验证一律安装**新的未发布版本号**(core→spring→starter 有依赖顺序,三模块无聚合 pom)
 - 统计口径(第七轮实测):同步前 008ca5b62 = 330 类 2583 例/82 跳过,同步后 = 347 类 2714 例/82 跳过。核对测试数时注意——①带 `@DisplayName` 的类,`Running` 行与汇总行输出的是显示名而非类全名(第七轮有 18 个类如此),且控制台日志为 GBK;按类统计应数 `target/surefire-reports/TEST-*.xml`,或用紧邻的 `Running` 行归属汇总行,否则会漏计;②`EntityScannerFatJarTest` 的 5 例是否跳过取决于构建目录是否遗留 boot-loader(clean 检出跳过→82,增量目录执行并通过→77),属环境差异非代码差异;③要证明"零回归",把同步前的提交检出到独立 worktree(`git worktree add --detach <tmp> HEAD`)clean 实跑一遍,再与同步后的日志逐类比对
 - 第八轮实测:360 类 2806 例/82 跳过,较第七轮 +13 类 +92 例,既有类计数零变化。新增测试文件中不以 `Test` 结尾的(如 `oracle/` 下的差分参照实现 `CollectionUtilLegacyOracle`/`TreeDataSortLegacyOracle` 与夹具 `TreeFixtures`/`DiffSupport`)不被 surefire 执行,统计"新增测试类"时须扣除(第八轮 17 个新文件中 13 个是测试类)
+- 第九轮实测:364 类 2838 例/82 跳过,较第八轮 +4 类 +32 例,既有类计数零变化。上游新建文件可能是 LF 结尾(第九轮 4 个新测试文件即如此),拷入后转 CRLF 与本侧工作区一致;`core.autocrlf=true` 下 blob 均为 LF,不影响哈希比对

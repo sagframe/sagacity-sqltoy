@@ -26,18 +26,24 @@ public class ReverseList {
 		}
 		int dataSize = result.size();
 		int start = (reverseModel.getStartRow() == null) ? 0 : reverseModel.getStartRow();
+		// update 2026-11-24 负数startRow钳到0,避免result.get(负下标)越界
+		if (start < 0) {
+			start = 0;
+		}
 		// 不合法反转
 		if (start > dataSize - 1) {
 			return;
 		}
 		int end = (reverseModel.getEndRow() == null) ? dataSize - 1 : reverseModel.getEndRow();
+		// update 2026-11-24 负数endRow按python式从末尾计:dataSize+end(-1指最后一行);原dataSize-1+end会差1指向倒数第二行
 		if (end < 0) {
-			end = dataSize - 1 + end;
+			end = dataSize + end;
 		}
 		if (end > dataSize - 1) {
 			end = dataSize - 1;
 		}
-		int loopCnt = (end - start) / 2;
+		// update 2026-11-24 交换次数取区间长度的一半:(end-start+1)/2;原(end-start)/2在偶数长度时少交换最中间一对(2行时loopCnt=0完全不反转)
+		int loopCnt = (end - start + 1) / 2;
 		Object row;
 		for (int i = 0; i < loopCnt; i++) {
 			row = result.get(start + i);

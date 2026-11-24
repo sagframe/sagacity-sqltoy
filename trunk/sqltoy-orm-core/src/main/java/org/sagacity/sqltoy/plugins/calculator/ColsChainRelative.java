@@ -63,6 +63,10 @@ public class ColsChainRelative {
 		} else if (labelIndexMap.containsKey(relativeModel.getStartColumn())) {
 			start = labelIndexMap.get(relativeModel.getStartColumn());
 		}
+		// update 2026-11-24 负数startColumn钳到0,避免按负下标取列越界
+		if (start < 0) {
+			start = 0;
+		}
 
 		// 截止列(支持:${dataWidth}-x 模式)
 		String endCol = relativeModel.getEndColumn();
@@ -82,9 +86,9 @@ public class ColsChainRelative {
 				end = new BigDecimal(ExpressionUtil.calculate(endCol).toString()).intValue();
 			}
 		}
-		// 负数等同于${dataWidth}-x 模式
+		// update 2026-11-24 负数等同于${dataWidth}-x:dataWidth+end(-1即最后一列,与表达式路径一致);原dataWidth-1+end差1
 		if (end < 0) {
-			end = dataWidth - 1 + end;
+			end = dataWidth + end;
 		}
 		if (end > dataWidth - 1) {
 			end = dataWidth - 1;

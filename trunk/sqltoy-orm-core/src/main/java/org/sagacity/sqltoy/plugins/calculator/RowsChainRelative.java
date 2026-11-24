@@ -45,9 +45,14 @@ public class RowsChainRelative {
 		// 实际需要计算的列(如果环比值是插入模式,则需要调整列的对应index)
 		Integer[] realRelativeCols = new Integer[rowsRelative.getRelativeColumns().length];
 		int start = rowsRelative.getStartRow() == null ? 0 : rowsRelative.getStartRow();
+		// update 2026-11-24 负数startRow钳到0,避免按负下标取行越界
+		if (start < 0) {
+			start = 0;
+		}
 		int end = rowsRelative.getEndRow() == null ? dataSize - 1 : rowsRelative.getEndRow();
+		// update 2026-11-24 负数endRow按python式从末尾计:dataSize+end(-1指最后一行);原dataSize-1+end会差1
 		if (end < 0) {
-			end = dataSize - 1 + end;
+			end = dataSize + end;
 		}
 		if (end > dataSize - 1) {
 			end = dataSize - 1;
@@ -126,7 +131,8 @@ public class RowsChainRelative {
 		boolean divIsZero;
 		// 逆序(从下到上)
 		if (rowsRelative.isReverse()) {
-			for (int i = end - groupSize; i > start; i = i - groupSize) {
+			// update 2026-11-24 下界含首组:i>=start+groupSize-1;原i>start在groupSize=1时漏掉首行(groupSize>=2时二者等价)
+			for (int i = end - groupSize; i >= start + groupSize - 1; i = i - groupSize) {
 				for (int j = 0; j < relativeIndexs.length; j++) {
 					index = relativeIndexs[j];
 					divIndex = i - groupSize + index + 1;
@@ -169,7 +175,8 @@ public class RowsChainRelative {
 				}
 			}
 		} else {
-			for (int i = start + groupSize; i < end; i = i + groupSize) {
+			// update 2026-11-24 上界含末组:i<=end-groupSize+1;原i<end在groupSize=1时漏掉末行(groupSize>=2时二者等价)
+			for (int i = start + groupSize; i <= end - groupSize + 1; i = i + groupSize) {
 				for (int j = 0; j < relativeIndexs.length; j++) {
 					index = relativeIndexs[j];
 					divIndex = i + index;

@@ -848,18 +848,14 @@ public class ResultUtils {
 			Object singleValue = rs.getObject(columns[0]);
 			return (singleValue == null) ? "null" : singleValue;
 		}
-		StringBuilder result = new StringBuilder();
-		Object colValue;
-		int index = 0;
+		// update 2026-11-24 多列link键由"下划线拼接文本"改为"逐列文本组成的列表":值含下划线时不同组合会拼出相同文本
+		// 而被误判为同一link组;List.equals逐元素比较消除碰撞(null仍按字符串"null")
+		List<String> result = new ArrayList<>(columns.length);
 		for (String column : columns) {
-			if (index > 0) {
-				result.append("_");
-			}
-			colValue = rs.getObject(column);
-			result.append(colValue == null ? "null" : colValue.toString());
-			index++;
+			Object colValue = rs.getObject(column);
+			result.add(colValue == null ? "null" : colValue.toString());
 		}
-		return result.toString();
+		return result;
 	}
 
 	/**
@@ -1227,12 +1223,8 @@ public class ResultUtils {
 		}
 		Object iData;
 		Object jData;
-		// 1:string,2:数字;3:日期
 		boolean lessThen = false;
 		String str1, str2;
-		int dataType = 1;
-		// 是否已经判断过数据类型
-		boolean finishedJudgeType = false;
 		for (int i = start; i < end; i++) {
 			for (int j = i + 1; j < end + 1; j++) {
 				iData = sortList.get(i).get(orderCol);
@@ -1242,23 +1234,19 @@ public class ResultUtils {
 				} else if (iData == null && jData != null) {
 					lessThen = true;
 				} else {
-					// 首次判断数据类型
-					if (!finishedJudgeType) {
-						if (iData instanceof java.lang.Number) {
-							dataType = 2;
-						} else if (iData instanceof java.util.Date) {
-							dataType = 3;
-						} else if (iData instanceof LocalDate) {
-							dataType = 4;
-						} else if (iData instanceof LocalDateTime) {
-							dataType = 5;
-						} else if (iData instanceof LocalTime) {
-							dataType = 6;
-						}
-						finishedJudgeType = true;
-					}
-					// 字符串
-					if (dataType == 1) {
+					// update 2026-11-24 按当前比较对的两个值动态判型:同类型走对应比较,类型不一致退回文本比较,
+					// 避免原先仅由首值定type后无条件强转导致混合类型列ClassCastException
+					if (iData instanceof Number && jData instanceof Number) {
+						lessThen = ((Number) iData).doubleValue() < ((Number) jData).doubleValue();
+					} else if (iData instanceof Date && jData instanceof Date) {
+						lessThen = ((Date) iData).before((Date) jData);
+					} else if (iData instanceof LocalDate && jData instanceof LocalDate) {
+						lessThen = ((LocalDate) iData).compareTo((LocalDate) jData) < 0;
+					} else if (iData instanceof LocalDateTime && jData instanceof LocalDateTime) {
+						lessThen = ((LocalDateTime) iData).compareTo((LocalDateTime) jData) < 0;
+					} else if (iData instanceof LocalTime && jData instanceof LocalTime) {
+						lessThen = ((LocalTime) iData).compareTo((LocalTime) jData) < 0;
+					} else {
 						str1 = iData.toString();
 						str2 = jData.toString();
 						if (str1.length() < str2.length()) {
@@ -1268,16 +1256,6 @@ public class ResultUtils {
 						} else {
 							lessThen = str1.compareTo(str2) < 0;
 						}
-					} else if (dataType == 2) {
-						lessThen = ((Number) iData).doubleValue() < ((Number) jData).doubleValue();
-					} else if (dataType == 3) {
-						lessThen = ((Date) iData).before((Date) jData);
-					} else if (dataType == 4) {
-						lessThen = ((LocalDate) iData).compareTo((LocalDate) jData) < 0;
-					} else if (dataType == 5) {
-						lessThen = ((LocalDateTime) iData).compareTo((LocalDateTime) jData) < 0;
-					} else if (dataType == 6) {
-						lessThen = ((LocalTime) iData).compareTo((LocalTime) jData) < 0;
 					}
 				}
 				if ((ascend && !lessThen) || (!ascend && lessThen)) {
@@ -2347,7 +2325,7 @@ public class ResultUtils {
 		int[] oneToManyGroupColIndexs = null;
 		// 分组的master数据
 		List masterData;
-		LinkedHashMap<String, List> groupListMap = null;
+		LinkedHashMap<List<String>, List> groupListMap = null;
 		Iterator<List> groupListIter;
 		// 存在oneToMany 则将数据进行分组
 		if (oneToMany != null) {
@@ -2599,16 +2577,19 @@ public class ResultUtils {
 	 * @param groupIndexes    分组列的下标数组
 	 * @return key为分组列值拼接串、value为同组行数据列表的LinkedHashMap(保持出现顺序)
 	 */
-	private static LinkedHashMap<String, List> hashGroupList(List queryResultRows, int[] groupIndexes) {
-		LinkedHashMap<String, List> groupListMap = new LinkedHashMap<String, List>();
+	private static LinkedHashMap<List<String>, List> hashGroupList(List queryResultRows, int[] groupIndexes) {
+		LinkedHashMap<List<String>, List> groupListMap = new LinkedHashMap<List<String>, List>();
 		List row;
-		String key = "";
 		List groupList;
+		// update 2026-11-24 分组键由"逗号拼接文本"改为"逐列文本组成的列表":原先值本身含逗号时不同组合会拼出相同文本
+		// 而被误判为同一组(一对多级联主对象分组错乱);逐列比较与原先按文本比较语义一致(null仍按字符串"null")
+		List<String> key;
 		for (int i = 0; i < queryResultRows.size(); i++) {
 			row = (List) queryResultRows.get(i);
-			key = "";
+			key = new ArrayList<>(groupIndexes.length);
 			for (int j = 0; j < groupIndexes.length; j++) {
-				key = key + "," + row.get(groupIndexes[j]);
+				Object cell = row.get(groupIndexes[j]);
+				key.add(cell == null ? "null" : cell.toString());
 			}
 			groupList = groupListMap.get(key);
 			if (groupList == null) {

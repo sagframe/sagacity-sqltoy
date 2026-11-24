@@ -512,7 +512,8 @@ public class MapperUtils {
 		// targetClass类型属性
 		Class parentClass = targetClass;
 		IgnoreKeyCaseMap<String, String> aliasMap = new IgnoreKeyCaseMap<String, String>();
-		while (!parentClass.equals(Object.class)) {
+		// update 2026-11-24 接口的getSuperclass()为null,加null守卫避免遍历到接口时NPE
+		while (parentClass != null && !parentClass.equals(Object.class)) {
 			for (Field field : parentClass.getDeclaredFields()) {
 				fieldName = field.getName();
 				// 不同对象，检查是否有别名
@@ -536,7 +537,8 @@ public class MapperUtils {
 		// dto以及其所有父类
 		parentClass = fromClass;
 		String aliasName;
-		while (!parentClass.equals(Object.class)) {
+		// update 2026-11-24 接口的getSuperclass()为null,加null守卫避免遍历到接口时NPE
+		while (parentClass != null && !parentClass.equals(Object.class)) {
 			for (Field field : parentClass.getDeclaredFields()) {
 				fieldName = field.getName();
 				aliasName = fieldName;
@@ -713,6 +715,10 @@ public class MapperUtils {
 									realMethods[j].invoke(bean, cellList);
 								}
 							}
+						} // update 2026-11-24 值已是字段类型的子类/实现(IS-A)时直接赋值,保留子类实例;
+						// 修复Map<-HashMap、Number<-Integer、Object<-String、raw List<-ArrayList等被静默丢弃或递归映射接口NPE
+						else if (realMethods[j].getParameterTypes()[0].isAssignableFrom(cellData.getClass())) {
+							realMethods[j].invoke(bean, cellData);
 						} // DTO->DTO 对象之间转换
 						else if (recursionLevel < MAX_RECURSION && methodGenTypes[j] != null
 								&& (cellData instanceof Serializable)) {
@@ -777,8 +783,8 @@ public class MapperUtils {
 									&& methodTypeValues[j] != DataType.setType) {
 								realMethods[j].invoke(bean, BeanUtil.convertType(cellData, JdbcTypes.OTHER,
 										methodTypeValues[j], methodTypes[j]));
-							} // 类型相同直接赋值
-							else if (cellData.getClass().getTypeName().equals(methodTypes[j])) {
+							} // update 2026-11-24 值可赋值给字段类型(含子类/实现)即直接赋值,修复Map/Number/Object/List子类丢失
+							else if (realMethods[j].getParameterTypes()[0].isAssignableFrom(cellData.getClass())) {
 								realMethods[j].invoke(bean, cellData);
 							}
 						} else if (!skipNull) {
@@ -898,7 +904,8 @@ public class MapperUtils {
 		HashMap<String, String> aliasMap = new HashMap<String, String>();
 		Class parentClass = targetClass;
 		SqlToyFieldAlias alias;
-		while (!parentClass.equals(Object.class)) {
+		// update 2026-11-24 接口的getSuperclass()为null,加null守卫避免遍历到接口时NPE
+		while (parentClass != null && !parentClass.equals(Object.class)) {
 			for (Field field : parentClass.getDeclaredFields()) {
 				// 不同对象，检查是否有别名
 				alias = field.getAnnotation(SqlToyFieldAlias.class);
