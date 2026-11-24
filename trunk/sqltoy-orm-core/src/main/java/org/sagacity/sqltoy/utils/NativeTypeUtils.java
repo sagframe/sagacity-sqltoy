@@ -7,12 +7,13 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
 /**
  * update 2026-11-21 @Column(nativeType=..)特殊类型族的解析期归一与消费点方言翻译。
  *
- * <p>背景:quickvo按<b>开发期源库</b>生成nativeType(源库物理类型名,如postgresql的jsonb/text[]),
+ * <p>
+ * 背景:quickvo按<b>开发期源库</b>生成nativeType(源库物理类型名,如postgresql的jsonb/text[]),
  * 但消费点(merge into的using-select cast、DDL生成)运行在<b>目标方言</b>上下文——源方言类型名
- * 原样拼入目标SQL即产生非法cast/非法DDL(实测:jsonb在h2/dm、text[]在h2/dm等)。常规类型由
- * @Column(type=jdbc类型)跨库承载(nativeType不参与),nativeType实际只服务特殊类型族。
+ * 原样拼入目标SQL即产生非法cast/非法DDL(实测:jsonb在h2/dm、text[]在h2/dm等)。常规类型由 @Column(type=jdbc类型)跨库承载(nativeType不参与),nativeType实际只服务特殊类型族。
  *
- * <p>机制(解析期分类+消费点翻译):
+ * <p>
+ * 机制(解析期分类+消费点翻译):
  * <ul>
  * <li>解析期:{@link #specialFamily(String, Integer)}将nativeType别名(含jdbcType辅助)归一为
  * 逻辑族——json/jsonb/bson/vector/geometry/array,存FieldMeta供消费点取用</li>
@@ -22,7 +23,8 @@ import org.sagacity.sqltoy.utils.DataSourceUtils.DBType;
  * 数组族非pg目标回落组件链)</li>
  * </ul>
  *
- * <p>边界:族无法识别(如dm的具名VARRAY类型名、db2gse.st_geometry形态)时族为null,消费点
+ * <p>
+ * 边界:族无法识别(如dm的具名VARRAY类型名、db2gse.st_geometry形态)时族为null,消费点
  * <b>原样透传nativeType</b>——用户显式声明的目标方言专属类型保持精确控制语义不变。
  *
  * @author zsy 2026-11-21
@@ -233,7 +235,8 @@ public class NativeTypeUtils {
 			return (isPgKernel(dbType) || dbType == DBType.H2) ? "uuid" : null;
 		case FAMILY_GEOMETRY:
 			// geometry须各库专属函数包装而非通用cast:DM实测cast(? as ST_GEOMETRY)报-6801、
-			// DB2内置形态cast(? as ST_GEOMETRY)报-408,正路DMGEO.ST_GeomFromText/db2GeomFromTextWrap
+			// DB2内置形态cast(? as
+			// ST_GEOMETRY)报-408,正路DMGEO.ST_GeomFromText/db2GeomFromTextWrap
 			// 才正确;DM/DB2回落null交由jdbcType=GEOMETRY分支(函数包装正路);h2归一GEOMETRY;
 			// update 2026-11-22 pg内核系仅geometry/geography拼写原样(保geometry(Point,4326)精度),
 			// ST_GEOMETRY/SDO_GEOMETRY/db2gse.st_geometry等外部拼写统一归一为geometry——原样透传
@@ -245,8 +248,7 @@ public class NativeTypeUtils {
 				return "GEOMETRY";
 			}
 			if (isPgKernel(dbType)) {
-				return (type.startsWith("geometry") || type.startsWith("geography")) ? nativeType.trim()
-						: "geometry";
+				return (type.startsWith("geometry") || type.startsWith("geography")) ? nativeType.trim() : "geometry";
 			}
 			return null;
 		default:
@@ -255,7 +257,8 @@ public class NativeTypeUtils {
 	}
 
 	/**
-	 * update 2026-11-22 geometry族DDL类型按目标库匹配转化(作者原则:nativeType与目标库几何类型匹配则用nativeType
+	 * update 2026-11-22
+	 * geometry族DDL类型按目标库匹配转化(作者原则:nativeType与目标库几何类型匹配则用nativeType
 	 * 保精度;目标库完全不支持该拼写则尽可能转化为目标库默认几何类型;无法判断的未知拼写回落nativeType精确控制)。
 	 * pg内核系/sqlserver支持geometry/geography,oracle支持sdo_geometry,hana/db2支持st_geometry,mysql/h2支持geometry;
 	 * 已知几何外部拼写(geometry/geography/st_geometry/sdo_geometry,含typmod与schema前缀)在不支持的目标转化为默认几何类型。

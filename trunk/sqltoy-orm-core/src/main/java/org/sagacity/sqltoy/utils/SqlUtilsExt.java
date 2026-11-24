@@ -522,7 +522,8 @@ public class SqlUtilsExt {
 		} else if (paramValue.getClass().isArray()) {
 			// update 2026-11-21 与SqlUtil.processParam数组定型口径对齐:定型数组取组件类型,Object[]按
 			// 首个非null元素推断,经convertArray转具体类型数组再交setArray(此前裸Object[]直传,
-			// kingbase/gauss系驱动updateObject(Object[],ARRAY)报malformed array literal/Cannot cast,
+			// kingbase/gauss系驱动updateObject(Object[],ARRAY)报malformed array literal/Cannot
+			// cast,
 			// 真库实测);无法定型(空/全null)时与下方Collection分支同口径按null语义处理
 			// update 2026-11-21 原始类型数组(int[]/char[]等)同路径接纳:装箱后按包装类组件定型
 			// (char[]装箱产物String[]按String定型,与绑定路径一致;此前char[]落else updateObject,

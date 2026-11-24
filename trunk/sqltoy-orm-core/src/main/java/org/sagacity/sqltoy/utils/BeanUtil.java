@@ -113,7 +113,8 @@ public class BeanUtil {
 	/**
 	 * 保存set方法
 	 * <p>
-	 * update 2026-11-15 原Map<ClassKey,...>改为ClassValue<...>:条目挂Class自身,热部署/多classloader
+	 * update 2026-11-15
+	 * 原Map<ClassKey,...>改为ClassValue<...>:条目挂Class自身,热部署/多classloader
 	 * 下同名类重新加载后按新Class重新解析(不会命中旧加载器Method),类卸载时条目随Class回收
 	 * </p>
 	 */
@@ -167,6 +168,19 @@ public class BeanUtil {
 		}
 	}
 
+	// update 2026-11-24 枚举转换结果按"原始key文本"记忆(仅缓存命中项)：大批量结果集里同一枚举值反复出现时，
+	// 省去每次线性扫描全部常量并反射调用getKey(实测20个常量约145ns/次,命中后约20ns)。键用原始文本而不做小写归一，
+	// 避免与String.equalsIgnoreCase在特殊字符(如土耳其语无点i)上的差异；只缓存命中项，未命中仍走原逻辑，
+	// 因此缓存规模受"实际出现过的有效写法"约束，再用上限兜底；缓存按枚举Class归属，类卸载即回收
+	private static final ClassValue<ConcurrentHashMap<String, Object>> enumInstanceCache = new ClassValue<ConcurrentHashMap<String, Object>>() {
+		@Override
+		protected ConcurrentHashMap<String, Object> computeValue(Class<?> enumClass) {
+			return new ConcurrentHashMap<String, Object>();
+		}
+	};
+
+	private static final int ENUM_INSTANCE_CACHE_MAX_SIZE = 512;
+
 	// update 2026-11-15 枚举类解析缓存改为"按类名缓存+装载器校验"(见resolveEnumClass):原只按类名
 	// 静态缓存且固定用框架类加载器解析,热部署/多classloader下同名类重新加载后会继续使用旧Class
 	// (枚举转换错误并钉住旧类);校验缓存Class的装载器不一致即重新解析并覆盖
@@ -188,7 +202,8 @@ public class BeanUtil {
 	 * 避免每次查询对voClass做getMethods()全量拷贝+逐属性toLowerCase匹配
 	 * (同一查询反复执行时属性表形态恒定,键空间与查询集同阶);调用方均只读返回数组,可共享
 	 * <p>
-	 * update 2026-11-15 改为ClassValue<ConcurrentHashMap<属性表签名,...>>:外层按Class归属(类卸载即回收),
+	 * update 2026-11-15
+	 * 改为ClassValue<ConcurrentHashMap<属性表签名,...>>:外层按Class归属(类卸载即回收),
 	 * 内层集合合计仍受全JVM总量上限约束
 	 * </p>
 	 */
@@ -269,7 +284,8 @@ public class BeanUtil {
 	}
 
 	/**
-	 * 测试可见:取已缓存的无参构造器(避免测试反射ClassValue内部结构)
+	 * 同包及测试可见:取已缓存的无参构造器(避免反射ClassValue内部结构)；
+	 * MapperUtils用它判断"类型与字段相同的值能否经递归映射产生副本"
 	 * 
 	 * @param voClass
 	 * @return
@@ -349,9 +365,32 @@ public class BeanUtil {
 			return null;
 		}
 		String keyStr = key.toString();
+		// update 2026-11-24 先查记忆结果(值就是原算法对同一文本的返回值，语义按构造成立)
+		ConcurrentHashMap<String, Object> cache = enumInstanceCache.get(enumClass);
+		Object cached = cache.get(keyStr);
+		if (cached != null) {
+			return cached;
+		}
 		// ClassValue按Class缓存探测结果(matchEnumKeyMethod对每个Class只执行一次)
 		Method getKeyMethod = enumKeyAccessors.get(enumClass).getKeyMethod;
 		Object[] enums = enumClass.getEnumConstants();
+		Object matched = matchEnumInstance(keyStr, enums, getKeyMethod);
+		// 只记忆命中项：未命中(如非法枚举文本)仍保持每次按原逻辑扫描，缓存不会被大量无效键撑大
+		if (matched != null && cache.size() < ENUM_INSTANCE_CACHE_MAX_SIZE) {
+			cache.putIfAbsent(keyStr, matched);
+		}
+		return matched;
+	}
+
+	/**
+	 * 按原始逻辑匹配枚举常量：按声明顺序首个命中，getKey值或name(忽略大小写)均可，getKey抛异常时整轮中断返回null
+	 * 
+	 * @param keyStr       待匹配的文本
+	 * @param enums        枚举常量数组(声明顺序)
+	 * @param getKeyMethod 取key值的方法，null表示无自定义key
+	 * @return 匹配的枚举常量，无匹配返回null
+	 */
+	private static Object matchEnumInstance(String keyStr, Object[] enums, Method getKeyMethod) {
 		if (getKeyMethod == null) {
 			for (Object enumConstant : enums) {
 				if (enumConstant instanceof Enum<?> enumVal && keyStr.equalsIgnoreCase(enumVal.name())) {
@@ -3187,7 +3226,9 @@ public class BeanUtil {
 		if (bean instanceof Map) {
 			return ((Map) bean).get(property);
 		}
-		String cacheKey = ":get".concat(property);
+		// update 2026-11-24 缓存键直接用属性名：getMethods这个ClassValue只存放get方法，无需":get"前缀，
+		// 省去每次调用拼接临时字符串(与getComplexProperty共用同一份缓存条目)
+		String cacheKey = property;
 		// 利用缓存提升方法匹配效率(外层ClassValue按Class归属)
 		ConcurrentHashMap<String, Method> cache = getMethods.get(bean.getClass());
 		Method method = cache.get(cacheKey);
@@ -3232,7 +3273,8 @@ public class BeanUtil {
 			}
 			return result;
 		}
-		String cacheKey = ":get".concat(realProperty);
+		// update 2026-11-24 缓存键用去掉数组下标后的属性名(与getProperty共用)，省去每次拼接":get"临时字符串
+		String cacheKey = realProperty;
 		// 利用缓存提升方法匹配效率(外层ClassValue按Class归属)
 		ConcurrentHashMap<String, Method> cache = getMethods.get(bean.getClass());
 		Method method = cache.get(cacheKey);
@@ -3627,6 +3669,11 @@ public class BeanUtil {
 
 	public static KeyAndIndex getKeyAndIndex(String property) {
 		if (property == null) {
+			return null;
+		}
+		// update 2026-11-24 ARRAY_PATTERN 必须以'['开头匹配，不含'['时直接返回，避免为绝大多数普通属性
+		// 每次创建正则Matcher(逐行逐属性取值时是最主要的固定开销)
+		if (property.indexOf('[') < 0) {
 			return null;
 		}
 		if (!StringUtil.matches(property, ARRAY_PATTERN)) {

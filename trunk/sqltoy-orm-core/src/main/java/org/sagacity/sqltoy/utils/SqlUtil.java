@@ -140,6 +140,19 @@ public class SqlUtil {
 	private final static String[] FAST_END_REGEXS = { "(?i)\\-{2}\\s+\\@fast\\_end",
 			"(?i)\\/\\*\\s*\\@fast\\_end\\s*\\*\\/" };
 
+	// update 2026-11-24 预编译@fast标记正则:原先replaceFirst(String regex,..)每次调用各编译一次正则,
+	// 改为静态Pattern数组(仍以FAST_START_REGEXS/FAST_END_REGEXS为唯一正则来源)
+	private final static Pattern[] FAST_START_PATTERNS = compilePatterns(FAST_START_REGEXS);
+	private final static Pattern[] FAST_END_PATTERNS = compilePatterns(FAST_END_REGEXS);
+
+	private static Pattern[] compilePatterns(String[] regexs) {
+		Pattern[] patterns = new Pattern[regexs.length];
+		for (int i = 0; i < regexs.length; i++) {
+			patterns[i] = Pattern.compile(regexs[i]);
+		}
+		return patterns;
+	}
+
 	// 数字、字母、下划线、横杠
 	public static final Pattern STRICT_WORD = Pattern.compile("^[a-zA-Z0-9_\\-\\.]+$");
 	// 含中文、点号、%号、单引号、双引号、@
@@ -494,7 +507,8 @@ public class SqlUtil {
 				pst.setNull(paramIndex, java.sql.Types.VARCHAR);
 			} else if (jdbcType == java.sql.Types.BOOLEAN && dbType == DBType.VASTBASE) {
 				// update 2026-11-22 vastbase boolean null:setNull(BOOLEAN)经驱动发smallint拒收、
-				// setNull(VARCHAR)在无cast的insert/谓词路径报"column boolean but expression character varying"
+				// setNull(VARCHAR)在无cast的insert/谓词路径报"column boolean but expression character
+				// varying"
 				// (真库矩阵);setNull(OTHER)为unknown,insert null与where谓词均可行,与setObject(OTHER)绑定同口径
 				pst.setNull(paramIndex, java.sql.Types.OTHER);
 			} else {
@@ -583,8 +597,8 @@ public class SqlUtil {
 	private static java.util.Date parseTextDateParam(String value, int jdbcType) {
 		java.util.Date date = DateUtil.parseString(value);
 		if (date == null) {
-			throw new IllegalArgumentException("the parameter value [" + value + "] can not be parsed as jdbcType ["
-					+ jdbcType + "]!");
+			throw new IllegalArgumentException(
+					"the parameter value [" + value + "] can not be parsed as jdbcType [" + jdbcType + "]!");
 		}
 		return date;
 	}
@@ -699,7 +713,8 @@ public class SqlUtil {
 					|| jdbcType == java.sql.Types.NVARCHAR) {
 				pst.setString(paramIndex, ((OffsetDateTime) paramValue).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
 			} else if (dbType == DBType.DB2) {
-				// update 2026-11-22 db2无TIMESTAMP WITH TIME ZONE(DDL承载TIMESTAMP),驱动拒OffsetDateTime
+				// update 2026-11-22 db2无TIMESTAMP WITH TIME
+				// ZONE(DDL承载TIMESTAMP),驱动拒OffsetDateTime
 				// (-4461,真库A/B实证);按DateUtil约定toLocalDateTime保墙钟时间,setObject(LocalDateTime)可行
 				pst.setObject(paramIndex, ((OffsetDateTime) paramValue).toLocalDateTime());
 			} else {
@@ -804,9 +819,11 @@ public class SqlUtil {
 				// 在已死连接上执行报"This connection has been closed.";openGauss系驱动的setBlob亦发送
 				// 大对象oid与bytea列不匹配。PG系bytea列原生接受setBytes,直接绑定不走createBlob/setBlob
 				// (gaussdb:真GaussDB Kernel JDBC驱动连openGauss实测同样bytea类型不匹配,2026-9-6补入)
-				// update 2026-11-22 统一isPgKernel覆盖10库(补HIGHGO/KINGBASE/OSCAR):与DDL BLOB→BYTEA映射一致;
+				// update 2026-11-22 统一isPgKernel覆盖10库(补HIGHGO/KINGBASE/OSCAR):与DDL
+				// BLOB→BYTEA映射一致;
 				// HIGHGO经pgjdbc连接,createBlob未实现致连接broken(真库实证),须直接setBytes绑定bytea
-				// update 2026-11-22 doris/starrocks BLOB承载VARBINARY,byte[]须setBytes二进制绑定:createBlob/setBlob
+				// update 2026-11-22 doris/starrocks
+				// BLOB承载VARBINARY,byte[]须setBytes二进制绑定:createBlob/setBlob
 				// 经mysql协议驱动发hex字符串('010203'→DECIMAL),merge coalesce无法cast到VARBINARY(真库实证)
 				if (NativeTypeUtils.isPgKernel(dbType) || dbType == DBType.DORIS || dbType == DBType.STARROCKS) {
 					pst.setBytes(paramIndex, (byte[]) paramValue);
@@ -847,9 +864,11 @@ public class SqlUtil {
 				pst.setInt(paramIndex, ((Boolean) paramValue) ? 1 : 0);
 			} else if (dbType == DBType.VASTBASE) {
 				// update 2026-11-22 vastbase驱动setBoolean发smallint:boolean列insert/update拒收
-				// (column "x" is of type boolean but expression is of type smallint),cast(smallint as boolean)亦非法;
+				// (column "x" is of type boolean but expression is of type
+				// smallint),cast(smallint as boolean)亦非法;
 				// 以Types.OTHER的unknown文本绑定,四种上下文全通(真库矩阵:setBoolean谓词可用但insert失败、
-				// setString谓词报invalid input syntax for type numeric、唯setObject("true",OTHER)同时满足
+				// setString谓词报invalid input syntax for type
+				// numeric、唯setObject("true",OTHER)同时满足
 				// insert/update/merge与where flag=?、flag<>?谓词)——unknown由服务器按列型推断为boolean
 				pst.setObject(paramIndex, ((Boolean) paramValue) ? "true" : "false", java.sql.Types.OTHER);
 			} else {
@@ -1265,7 +1284,8 @@ public class SqlUtil {
 	 * <p>
 	 * 与setParamValue/setNullParam的uuid口径一致:pg内核系/h2原生uuid列以rs.updateObject(col,java.util.UUID)
 	 * 按JDBC原生uuid映射(真库实证CONCUR_UPDATABLE结果集上updateString、updateObject(str)、
-	 * updateObject(str,OTHER)均报"column is of type uuid but expression is of type character varying",
+	 * updateObject(str,OTHER)均报"column is of type uuid but expression is of type
+	 * character varying",
 	 * 唯updateObject(UUID)可行);其余目标uuid为varchar(36)/char(36)/uniqueidentifier承载列,updateString即正确。
 	 * 此前resultUpdate无UUID分派,String承载uuid落常规String分支updateString,pg原生uuid列updateRow报类型不匹配。
 	 * </p>
@@ -1429,7 +1449,8 @@ public class SqlUtil {
 	private static void setArray(Integer dbType, Connection conn, PreparedStatement pst, int paramIndex,
 			Object paramValue) throws SQLException {
 		// update 2026-11-21 kingbase纳入createArrayOf分支:KES为pg内核系,其驱动setObject(数组,
-		// Types.ARRAY)报"Cannot cast an instance of [Ljava.lang.Integer; to type Types.ARRAY"
+		// Types.ARRAY)报"Cannot cast an instance of [Ljava.lang.Integer; to type
+		// Types.ARRAY"
 		// (真库实测),conn.createArrayOf为可用路径
 		// update 2026-11-21 类型名统一小写pg规范名(integer/varchar/numeric/bigint/float):
 		// gaussdb华为驱动/openGauss/kingbase/vastbase四引擎真库矩阵实证小写全通;大写VARCHAR/NUMERIC
@@ -4355,16 +4376,15 @@ public class SqlUtil {
 	 * update 2026-11-21 标量比较符位置的数组/集合参数按方言输出日志形态(2026-11-21晚按
 	 * pg18/openGauss5/highgo/kingbase/vastbase/mysql9/clickhouse/h2/oracle23/dm8/
 	 * sqlserver2025/db2真库实测结论修订),目标:日志SQL copy到客户端执行不产生"日志能查出
-	 * 结果而程序无结果/报错"的假阳性(旧版单元素数组输出='a'最典型),并尽可能呈现参数的
-	 * 真实绑定形态:
+	 * 结果而程序无结果/报错"的假阳性(旧版单元素数组输出='a'最典型),并尽可能呈现参数的 真实绑定形态:
 	 * <li>原生数组方言输出数组字面量:clickhouse输出['a','b'](实测驱动原生绑定,日志与
 	 * 程序双向一致);h2输出ARRAY['a','b'](实测setObject(Object[])原生映射,双向一致);
 	 * PG系(pg/greenplum/openGauss系/金仓/瀚高)输出ARRAY[..],元素类型随值自适应(字符串
 	 * 定型text[]、数值定型数值数组,实测text[]/int[]列直接copy执行且命中)——注意pg系
-	 * 程序侧绑定路径在数组列上普遍报错(裸数组toString报malformed array literal/
-	 * missing dimension value,集合路径createArrayOf硬编码VARCHAR仅varchar[]列成功,
-	 * pg数组等值比较无跨元素类型隐式转换),故此处按"语义正确的数组字面量"输出而非模拟
-	 * 错误绑定,varchar[]列需自行补::varchar[] cast</li>
+	 * 程序侧绑定路径在数组列上普遍报错(裸数组toString报malformed array literal/ missing dimension
+	 * value,集合路径createArrayOf硬编码VARCHAR仅varchar[]列成功,
+	 * pg数组等值比较无跨元素类型隐式转换),故此处按"语义正确的数组字面量"输出而非模拟 错误绑定,varchar[]列需自行补::varchar[]
+	 * cast</li>
 	 * <li>无原生数组语义的方言输出"绑定形态揭示"串:驱动setObject将数组Java序列化成
 	 * ACED0005..二进制bytes绑定,按各库二进制字面量语法呈现序列化流头ACED0005并附
 	 * array注释保留原始值:mysql系X'ACED0005'(实测列上copy执行与程序报同一字符集
@@ -4415,8 +4435,8 @@ public class SqlUtil {
 		// 注释内元素值含*/会提前截断注释(@loop宏将本输出拼入真实sql时破坏语法),插入空格消解
 		String comment = " /*array:" + csv.replace("*/", "* /") + "*/";
 		// mysql系二进制字面量X'..':仅接受十六进制位,8位hex即Java序列化流头ACED0005
-		if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB
-				|| dbType == DBType.DORIS || dbType == DBType.STARROCKS || dbType == DBType.OCEANBASE) {
+		if (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB || dbType == DBType.DORIS
+				|| dbType == DBType.STARROCKS || dbType == DBType.OCEANBASE) {
 			return "X'ACED0005'" + comment;
 		}
 		// oracle/dm实测HEXTORAW('ACED0005')合法且恒0行
@@ -4447,9 +4467,8 @@ public class SqlUtil {
 	 * h2的setObject(Object[])亦原生映射数组类型(实测日志与程序双向一致)
 	 * <li>不纳入的方言及实测原因:oracle绑定报ORA-17004(列类型无效)/ORA-17059(需
 	 * ArrayDescriptor绑定具名VARRAY类型,类型名用户自定义,日志无法拟合);dm报不支持该
-	 * 数据类型;sqlserver报"不支持从UNKNOWN到OTHER/ARRAY的转换"(无数组类型,正路为
-	 * TVP表值参数);db2数组仅SQL PL内使用;hana的ARRAY()构造器仅SQLScript语法不可
-	 * 内联;oscar数组能力未证实——均走各库二进制字面量/null揭示形态</li>
+	 * 数据类型;sqlserver报"不支持从UNKNOWN到OTHER/ARRAY的转换"(无数组类型,正路为 TVP表值参数);db2数组仅SQL
+	 * PL内使用;hana的ARRAY()构造器仅SQLScript语法不可 内联;oscar数组能力未证实——均走各库二进制字面量/null揭示形态</li>
 	 *
 	 * @param dbType 数据库方言
 	 * @return true表示按ARRAY[..]字面量输出
@@ -4560,7 +4579,7 @@ public class SqlUtil {
 		int startRegexLength = FAST_START_REGEXS.length;
 		int endRegexLength = FAST_END_REGEXS.length;
 		while (startRegexIndex < startRegexLength) {
-			fastStart = StringUtil.matchIndex(sql, FAST_START_REGEXS[startRegexIndex]);
+			fastStart = StringUtil.matchIndex(sql, FAST_START_PATTERNS[startRegexIndex]);
 			if (fastStart >= 0) {
 				break;
 			}
@@ -4570,7 +4589,7 @@ public class SqlUtil {
 			return sql;
 		}
 		while (endRegexIndex < endRegexLength) {
-			fastEnd = StringUtil.matchIndex(sql, FAST_END_REGEXS[endRegexIndex]);
+			fastEnd = StringUtil.matchIndex(sql, FAST_END_PATTERNS[endRegexIndex]);
 			if (fastEnd > 0) {
 				break;
 			}
@@ -4578,11 +4597,11 @@ public class SqlUtil {
 		}
 		// update 2025-2-5 支持只有-- @fast_start标记场景
 		if (fastEnd == -1) {
-			return sql.replaceFirst(FAST_START_REGEXS[startRegexIndex], "@fast");
+			return FAST_START_PATTERNS[startRegexIndex].matcher(sql).replaceFirst("@fast");
 		}
 		if (fastEnd > fastStart) {
-			return sql.replaceFirst(FAST_START_REGEXS[startRegexIndex], "@fast")
-					.replaceFirst(FAST_END_REGEXS[endRegexIndex], " ");
+			String startReplaced = FAST_START_PATTERNS[startRegexIndex].matcher(sql).replaceFirst("@fast");
+			return FAST_END_PATTERNS[endRegexIndex].matcher(startReplaced).replaceFirst(" ");
 		}
 		return sql;
 	}
@@ -4736,10 +4755,10 @@ public class SqlUtil {
 	}
 
 	/**
-	 * update 2026-11-13 原始LIKE值单遍转义(不先剥离已有转义):
-	 * 供新的&lt;like escape-mode="raw"&gt;使用,正确区分"用户原始反斜杠"和"已转义值";
-	 * 旧escapeLikeValue保留其幂等语义,供legacy场景使用。
-	 * 转义顺序:反斜杠→下划线→百分号(受escapePercent控制)→SQL Server方括号。
+	 * update 2026-11-13 原始LIKE值单遍转义(不先剥离已有转义): 供新的&lt;like
+	 * escape-mode="raw"&gt;使用,正确区分"用户原始反斜杠"和"已转义值";
+	 * 旧escapeLikeValue保留其幂等语义,供legacy场景使用。 转义顺序:反斜杠→下划线→百分号(受escapePercent控制)→SQL
+	 * Server方括号。
 	 *
 	 * @param value         原始值
 	 * @param dbType        数据库类型

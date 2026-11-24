@@ -327,7 +327,8 @@ public class SqlResourceScanner {
 
 	/**
 	 * @param url jar资源URL
-	 * @return 是否为嵌套jar(Spring Boot 3.0/3.1多个"!/"或3.2+的nested:协议);嵌套jar的JarFile由加载器缓存持有
+	 * @return 是否为嵌套jar(Spring Boot
+	 *         3.0/3.1多个"!/"或3.2+的nested:协议);嵌套jar的JarFile由加载器缓存持有
 	 */
 	static boolean isNestedJarUrl(URL url) {
 		String external = url.toExternalForm();
@@ -380,9 +381,8 @@ public class SqlResourceScanner {
 			startClasspath = true;
 		}
 		if (CollectionUtil.notContainsAdd(notRepeatDirs, realRes)) {
-			Enumeration<URL> urls = startClasspath
-					? (realRes.isEmpty() ? getClasspathRootUrls(classLoader) : getClasspathResourceUrls(realRes, classLoader))
-					: getResourceUrls(realRes, classLoader);
+			Enumeration<URL> urls = startClasspath ? (realRes.isEmpty() ? getClasspathRootUrls(classLoader)
+					: getClasspathResourceUrls(realRes, classLoader)) : getResourceUrls(realRes, classLoader);
 			if (null != urls) {
 				URL url;
 				Enumeration<JarEntry> entries;
@@ -516,7 +516,8 @@ public class SqlResourceScanner {
 			if (url.getProtocol().equals(JAR)) {
 				if (normalizedRes.toLowerCase(Locale.ROOT).endsWith(SQLTOY_SQL_FILE_SUFFIX)) {
 					// jar中的sql优先加载,从而确保直接放于classes目录下面的sql可以实现对之前的覆盖,便于项目增量发版管理
-					// update 2026-11-11 按物理URL去重:不同jar的同名entry都要保留,相同sqlId仍由breakWhenSqlRepeat决定报错或覆盖
+					// update 2026-11-11
+					// 按物理URL去重:不同jar的同名entry都要保留,相同sqlId仍由breakWhenSqlRepeat决定报错或覆盖
 					URL entryUrl = buildJarEntryUrl(url, normalizedRes);
 					if (CollectionUtil.notContainsAdd(notRepeatResources, entryUrl.toExternalForm())) {
 						result.add(0, entryUrl);
@@ -703,7 +704,8 @@ public class SqlResourceScanner {
 	}
 
 	/**
-	 * update 2026-11-12 判断jar是否已被嵌套jar根覆盖(Spring Boot fat-jar):Boot的LaunchedClassLoader
+	 * update 2026-11-12 判断jar是否已被嵌套jar根覆盖(Spring Boot
+	 * fat-jar):Boot的LaunchedClassLoader
 	 * 已提供jar:nested:/app.jar/!BOOT-INF/classes!/(3.2+)或jar:file:/app.jar!/BOOT-INF/classes!/
 	 * (2.x/3.0-3.1)形态的内层根,若再从java.class.path补外层app.jar根,同一SQL会以两种URL形态各命中
 	 * 一次(按URL字符串去重失效),breakWhenSqlRepeat默认true时判重复sqlId直接阻断启动
@@ -738,9 +740,11 @@ public class SqlResourceScanner {
 			if (!external.contains("classes!/") && !external.contains("classes/!/")) {
 				continue;
 			}
-			// 经典形态jar:file:/path/app.jar!/BOOT-INF/classes!/ 或 嵌套形态jar:nested:[/]path/app.jar/!BOOT-INF/classes/!/
+			// 经典形态jar:file:/path/app.jar!/BOOT-INF/classes!/ 或
+			// 嵌套形态jar:nested:[/]path/app.jar/!BOOT-INF/classes/!/
 			if (external.contains(fileUrl + "!/") || external.contains("nested:" + encodedPath + "/!")
-					|| external.contains("nested:" + rawPath + "/!") || external.contains("nested:/" + rawPath + "/!")) {
+					|| external.contains("nested:" + rawPath + "/!")
+					|| external.contains("nested:/" + rawPath + "/!")) {
 				return true;
 			}
 		}
@@ -852,7 +856,8 @@ public class SqlResourceScanner {
 	}
 
 	/**
-	 * jar entry名转URL路径片段:按URI路径规则转义(空格/%/#/?/非ASCII),JarURLConnection读取时会解码还原为真实entry名
+	 * jar
+	 * entry名转URL路径片段:按URI路径规则转义(空格/%/#/?/非ASCII),JarURLConnection读取时会解码还原为真实entry名
 	 * 
 	 * @param entryName
 	 * @return

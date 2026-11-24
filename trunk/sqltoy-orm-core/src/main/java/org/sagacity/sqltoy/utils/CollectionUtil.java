@@ -2,23 +2,33 @@ package org.sagacity.sqltoy.utils;
 
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.math.RoundingMode;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
+import java.time.ZonedDateTime;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -48,6 +58,15 @@ public class CollectionUtil {
 	private static final AtomicBoolean BOUNDED_EVICTING = new AtomicBoolean(false);
 
 	public static final String ILLEGAL_NUM_REGEX = "%|‰|\\$|¥";
+
+	// update 2026-11-24 可直接用于哈希索引、且"文本相同即相等"的常规取值类型(String、各种数字、日期时间等 JDK 不可变类型)。
+	// 数据旋转的类别索引、树形汇总的父节点索引只对这类取值启用，其它类型保持原先逐个比对的方式
+	private static final Set<Class<?>> INDEX_KEY_CLASSES = Collections.unmodifiableSet(
+			new HashSet<>(Arrays.asList(String.class, Boolean.class, Character.class, Byte.class, Short.class,
+					Integer.class, Long.class, Float.class, Double.class, BigInteger.class, BigDecimal.class,
+					Date.class, java.sql.Date.class, java.sql.Time.class, java.sql.Timestamp.class, LocalDate.class,
+					LocalTime.class, LocalDateTime.class, OffsetDateTime.class, OffsetTime.class, Instant.class,
+					ZonedDateTime.class)));
 
 	// 静态方法避免实例化和继承
 	private CollectionUtil() {
@@ -286,46 +305,242 @@ public class CollectionUtil {
 		List<T> result = new ArrayList<T>();
 		T row;
 		Object pid;
-		for (int i = 0; i < treeList.size(); i++) {
+		// update 2026-11-24 根节点提取改为一次遍历分摊：原先对命中根的行调用 remove(i)，根节点很多时是平方级
+		// (3.2万/6.4万/12.8万根节点分别约 37/113/462 ms)；未命中的行保持原有先后顺序
+		List<T> unlinkedRows = new ArrayList<T>(totalRecord);
+		for (int i = 0; i < totalRecord; i++) {
 			row = treeList.get(i);
 			pid = treeIdAndPidGet.getIdAndPid(row)[1];
-			if (any(pid, pids)) {
+			// 根节点的pid按宽松比较匹配(类型不同按文本)：数据中pid为Long 0而传入的根pid为Integer 0时也能识别为根
+			if (anyTreeKey(pid, pids)) {
 				result.add(row);
-				treeList.remove(i);
-				i--;
+			} else {
+				unlinkedRows.add(row);
 			}
 		}
 		if (result.isEmpty()) {
 			throw new IllegalArgumentException("the sorted tree collection does not contain the parent ids ["
 					+ StringUtil.linkAry(",", false, pids) + "]!");
 		}
-		int beginIndex = 0;
-		int addCount = 0;
-		Object idValue, pidValue;
-		while (treeList.size() != 0) {
-			addCount = 0;
-			// id
-			idValue = treeIdAndPidGet.getIdAndPid(result.get(beginIndex))[0];
-			for (int i = 0; i < treeList.size(); i++) {
-				pidValue = treeIdAndPidGet.getIdAndPid(treeList.get(i))[1];
-				if (idValue.equals(pidValue)) {
-					result.add(beginIndex + addCount + 1, treeList.get(i));
-					treeList.remove(i);
-					addCount++;
-					i--;
-				}
-			}
-			// 下一个
-			beginIndex++;
-			// 防止因数据不符合规则造成的死循环
-			if (beginIndex + 1 > result.size()) {
-				break;
-			}
-		}
+		// 检查不通过时入参保持原样(与原先一致)，通过后才回写剩余行
+		treeList.clear();
+		treeList.addAll(unlinkedRows);
+		// update 2026-11-24 原实现对result中的每个节点都全量扫描剩余节点(O(n²))，改为先按pid分组、再前序挂接一次(O(n))，
+		// 挂接顺序与原先一致；treeList中只留下挂不到树上的节点
+		appendTreeChildren(result, treeList, treeIdAndPidGet);
 		if (result.size() != totalRecord) {
 			logger.error("sortTreeList found some data that does not match the tree structure rules, please check!");
 		}
 		return result;
+	}
+
+	/**
+	 * 判断取值是否在给定的数组中(宽松比较：类型相同按 equals，类型不同按文本比较)
+	 * 
+	 * @param value      待比较的取值
+	 * @param compareAry 待比较的取值数组
+	 * @return 存在相等元素返回true
+	 */
+	private static boolean anyTreeKey(Object value, Object[] compareAry) {
+		for (int i = 0; i < compareAry.length; i++) {
+			if (BeanUtil.equalsIgnoreType(value, compareAry[i], false)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * 将 pending 中能挂到 result 节点上的子节点，按"子节点紧靠父节点"的前序顺序追加到 result 末尾，并从 pending 中移除。
+	 * result 初始存放根节点(保持其顺序)；兄弟节点保持它们在 pending 中的先后顺序；同一个 id 出现多次时，子节点只挂到最先处理的那一行；
+	 * 父 id 不存在或成环的节点挂不到树上，留在 pending 中(保持其原有先后顺序)
+	 * 
+	 * @param result           存放根节点的集合(会被原地修改)，执行完毕后为完整的树形前序序列
+	 * @param pending          待挂接的节点集合(会被原地修改)，执行完毕后只剩挂不到树上的节点
+	 * @param treeIdAndPidGet  获取节点id和pid的回调接口，[0]为id、[1]为pid
+	 */
+	public static <T> void appendTreeChildren(List<T> result, List<T> pending,
+			TreeIdAndPidGet<T> treeIdAndPidGet) {
+		int pendingSize = pending.size();
+		if (pendingSize == 0) {
+			return;
+		}
+		if (result.isEmpty()) {
+			// update 2026-11-24 没有根节点却还有待挂接的节点：原先在取第一个根节点(result.get(0))处抛数组越界，
+			// 提示语看不出原因，改为带说明的异常
+			throw new IllegalArgumentException("invalid tree data: no root node found while " + pendingSize
+					+ " node(s) are still waiting for their parent, please check the id and pid columns");
+		}
+		// update 2026-11-24 按pid分组时按宽松比较归并(类型不同按文本，见 BeanUtil.equalsIgnoreType)。
+		// 父id都是常规类型时用"文本 -> 分组"的索引查找；存在非常规取值类型(如自定义对象)时改为顺序分组：
+		// 这类取值可能 equals 相等而 toString 不同，按文本分桶会把本应同组的节点拆开
+		Object[] pidValues = new Object[pendingSize];
+		T row;
+		Object pidValue;
+		boolean allPidIndexable = true;
+		for (int i = 0; i < pendingSize; i++) {
+			pidValue = treeIdAndPidGet.getIdAndPid(pending.get(i))[1];
+			pidValues[i] = pidValue;
+			if (pidValue != null && !isIndexKey(pidValue)) {
+				allPidIndexable = false;
+			}
+		}
+		Map<String, List<TreeChildGroup>> children = allPidIndexable
+				? new HashMap<String, List<TreeChildGroup>>(pendingSize * 2)
+				: null;
+		List<TreeChildGroup> childGroups = allPidIndexable ? null : new ArrayList<TreeChildGroup>();
+		String pidText;
+		List<TreeChildGroup> bucket;
+		TreeChildGroup group;
+		for (int i = 0; i < pendingSize; i++) {
+			row = pending.get(i);
+			pidValue = pidValues[i];
+			group = null;
+			if (allPidIndexable) {
+				pidText = treeKeyText(pidValue);
+				bucket = children.get(pidText);
+				if (bucket == null) {
+					bucket = new ArrayList<TreeChildGroup>();
+					children.put(pidText, bucket);
+				}
+				for (int g = 0; g < bucket.size(); g++) {
+					if (BeanUtil.equalsIgnoreType(bucket.get(g).pidValue, pidValue, false)) {
+						group = bucket.get(g);
+						break;
+					}
+				}
+				if (group == null) {
+					group = new TreeChildGroup(pidValue);
+					bucket.add(group);
+				}
+			} else {
+				for (int g = 0; g < childGroups.size(); g++) {
+					if (BeanUtil.equalsIgnoreType(childGroups.get(g).pidValue, pidValue, false)) {
+						group = childGroups.get(g);
+						break;
+					}
+				}
+				if (group == null) {
+					group = new TreeChildGroup(pidValue);
+					childGroups.add(group);
+				}
+			}
+			group.rows.add(row);
+		}
+		List<T> linked = new ArrayList<T>(result.size() + pendingSize);
+		// 根节点倒序压栈，弹出时即为原有顺序
+		Deque<T> stack = new ArrayDeque<T>();
+		for (int i = result.size() - 1; i >= 0; i--) {
+			stack.push(result.get(i));
+		}
+		while (!stack.isEmpty()) {
+			row = stack.pop();
+			linked.add(row);
+			Object idValue = treeIdAndPidGet.getIdAndPid(row)[0];
+			boolean hasPending = allPidIndexable ? !children.isEmpty() : !childGroups.isEmpty();
+			// update 2026-11-24 id为null的节点在还有待挂接节点(分组中尚未取走的行)时被处理：原先会因 idValue.equals(pidValue) 抛空指针，
+			// 改为带说明的异常。注意栈上的行都已随其父节点挂接完毕，不属于待挂接
+			if (idValue == null && hasPending) {
+				throw new IllegalArgumentException(
+						"invalid tree data: node id can not be null, please check the id column of the tree data");
+			}
+			// 子节点取走后即从分组中移除，同一个id再次出现时不会再重复挂接(与原先逐个扫描、挂接后即移除一致)
+			group = allPidIndexable ? takeIndexedChildGroup(children, idValue)
+					: takeScannedChildGroup(childGroups, idValue);
+			if (group != null) {
+				for (int i = group.rows.size() - 1; i >= 0; i--) {
+					stack.push((T) group.rows.get(i));
+				}
+			}
+		}
+		result.clear();
+		result.addAll(linked);
+		// 分组中剩余的就是挂不到树上的节点
+		Set<T> unlinked;
+		if (allPidIndexable) {
+			if (children.isEmpty()) {
+				pending.clear();
+				return;
+			}
+			unlinked = Collections.newSetFromMap(new IdentityHashMap<T, Boolean>());
+			for (List<TreeChildGroup> remainBucket : children.values()) {
+				for (TreeChildGroup remain : remainBucket) {
+					unlinked.addAll(remain.rows);
+				}
+			}
+		} else {
+			if (childGroups.isEmpty()) {
+				pending.clear();
+				return;
+			}
+			unlinked = Collections.newSetFromMap(new IdentityHashMap<T, Boolean>());
+			for (TreeChildGroup remain : childGroups) {
+				unlinked.addAll(remain.rows);
+			}
+		}
+		pending.retainAll(unlinked);
+	}
+
+	/**
+	 * 按节点id取走对应的子节点分组(父id都是常规类型)：按父id文本定位候选，再逐个校验(类型不同按文本比较)
+	 * 
+	 * @param children 按父id文本分好的子节点分组
+	 * @param idValue  当前节点的id
+	 * @return 匹配的子节点分组，没有返回null
+	 */
+	@SuppressWarnings("rawtypes")
+	private static TreeChildGroup takeIndexedChildGroup(Map<String, List<TreeChildGroup>> children, Object idValue) {
+		String idText = treeKeyText(idValue);
+		List<TreeChildGroup> bucket = children.get(idText);
+		if (bucket != null) {
+			for (int i = 0; i < bucket.size(); i++) {
+				if (BeanUtil.equalsIgnoreType(idValue, bucket.get(i).pidValue, false)) {
+					TreeChildGroup group = bucket.remove(i);
+					if (bucket.isEmpty()) {
+						children.remove(idText);
+					}
+					return group;
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * 按节点id取走对应的子节点分组(父id含非常规取值类型)：逐个分组比对
+	 * 
+	 * @param childGroups 按宽松比较归并好的子节点分组
+	 * @param idValue     当前节点的id
+	 * @return 匹配的子节点分组，没有返回null
+	 */
+	@SuppressWarnings("rawtypes")
+	private static TreeChildGroup takeScannedChildGroup(List<TreeChildGroup> childGroups, Object idValue) {
+		for (int i = 0; i < childGroups.size(); i++) {
+			if (BeanUtil.equalsIgnoreType(idValue, childGroups.get(i).pidValue, false)) {
+				return childGroups.remove(i);
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * 树形数据中取值用于索引的文本：null 统一记为字符串"null"(与稀疏比较中 null 只匹配 null 的语义配合使用)
+	 */
+	private static String treeKeyText(Object value) {
+		return (value == null) ? "null" : value.toString();
+	}
+
+	/**
+	 * 树形挂接时按父id归并好的一组子节点(组内保持原有先后顺序)
+	 */
+	@SuppressWarnings("rawtypes")
+	private static final class TreeChildGroup {
+		private final Object pidValue;
+		private final List rows = new ArrayList();
+
+		private TreeChildGroup(Object pidValue) {
+			this.pidValue = pidValue;
+		}
 	}
 
 	/**
@@ -467,6 +682,12 @@ public class CollectionUtil {
 		if (data == null || data.isEmpty()) {
 			return data;
 		}
+		// update 2026-11-24 类别参照为空(如 category-sql 查询无结果)原先在取第一个类别时抛数组越界或空指针，
+		// 改为抛出带说明的异常，便于定位是类别列配置还是 category-sql 数据的问题
+		if (categorys == null || categorys.isEmpty()) {
+			throw new IllegalArgumentException(
+					"invalid pivot config: category values are empty, please check the category-columns configuration or the result of category-sql");
+		}
 		Integer[] categCol;
 		if (categoryCol == null) {
 			categCol = new Integer[categCompareCol.length];
@@ -476,8 +697,11 @@ public class CollectionUtil {
 		} else {
 			categCol = categoryCol;
 		}
-		boolean isTwoDimensionCategory = (categorys.get(0) instanceof Collection
-				|| categorys.get(0).getClass().isArray());
+		// update 2026-11-24 首元素为null时原先在探测维度(取class)时抛空指针；null 不是集合/数组，按一维类别处理，
+		// 后续比较本来就把 null 当作字符串"null"，与一维类别中的 null 能正常对应
+		Object firstCategory = categorys.get(0);
+		boolean isTwoDimensionCategory = (firstCategory instanceof Collection
+				|| (firstCategory != null && firstCategory.getClass().isArray()));
 		// 多维旋转参照数据行数跟参照列的数量要一致
 		if (isTwoDimensionCategory
 				&& (categCompareCol.length > categorys.size() || categCompareCol.length != categCol.length)) {
@@ -504,6 +728,10 @@ public class CollectionUtil {
 		int rowSize = data.size();
 		Object pkColValue;
 		Object compareValue;
+		// update 2026-11-24 单类别列时按类别文本建立索引，每行只比对文本相同的类别(原先每行都要把全部类别逐个比对一遍)。
+		// 类别不全是常规取值类型时不建索引，仍逐个比对，行为与原先完全一致；索引在第一次用到时才建立
+		Object[] categoryValues = null;
+		Map<String, int[]> categoryIndex = null;
 		for (int i = 0; i < rowSize; i++) {
 			rowList = (List) data.get(i);
 			pkColumnsEqual = true;
@@ -557,24 +785,48 @@ public class CollectionUtil {
 					}
 				}
 			}
-			for (int j = 0; j < cateItemSize; j++) {
-				// 单个数据
-				if (categColSize == 1) {
-					pkColValue = rowList.get(categCompareCol[0]);
-					if (pkColValue == null) {
-						pkColValue = "null";
+			// 单个数据
+			if (categColSize == 1) {
+				pkColValue = rowList.get(categCompareCol[0]);
+				if (pkColValue == null) {
+					pkColValue = "null";
+				}
+				if (categoryValues == null) {
+					categoryValues = new Object[cateItemSize];
+					for (int j = 0; j < cateItemSize; j++) {
+						compareValue = isTwoDimensionCategory ? ((List) categorys.get(categCol[0])).get(j)
+								: categorys.get(j);
+						categoryValues[j] = (compareValue == null) ? "null" : compareValue;
 					}
-					compareValue = isTwoDimensionCategory ? ((List) categorys.get(categCol[0])).get(j)
-							: categorys.get(j);
-					if (compareValue == null) {
-						compareValue = "null";
-					}
-					if (BeanUtil.equalsIgnoreType(pkColValue, compareValue, false)) {
-						for (int t = 0; t < rotateWith; t++) {
-							rowData[count + j * rotateWith + t] = rowList.get(startCol + t);
+					categoryIndex = buildCategoryIndex(categoryValues);
+				}
+				// 类别全是常规类型时按文本查索引(命中后仍用 equalsIgnoreType 校验)。数据的取值即使不是常规类型，
+				// 与常规类型的类别也必然类型不同，原先同样是比较两者的文本，所以一样可以查索引
+				if (categoryIndex != null) {
+					// 只比对文本相同的类别(下标从小到大)
+					int[] matched = categoryIndex.get(pkColValue.toString());
+					if (matched != null) {
+						for (int m = 0; m < matched.length; m++) {
+							int j = matched[m];
+							if (BeanUtil.equalsIgnoreType(pkColValue, categoryValues[j], false)) {
+								for (int t = 0; t < rotateWith; t++) {
+									rowData[count + j * rotateWith + t] = rowList.get(startCol + t);
+								}
+							}
 						}
 					}
 				} else {
+					for (int j = 0; j < cateItemSize; j++) {
+						compareValue = categoryValues[j];
+						if (BeanUtil.equalsIgnoreType(pkColValue, compareValue, false)) {
+							for (int t = 0; t < rotateWith; t++) {
+								rowData[count + j * rotateWith + t] = rowList.get(startCol + t);
+							}
+						}
+					}
+				}
+			} else {
+				for (int j = 0; j < cateItemSize; j++) {
 					categoryColEqual = true;
 					for (int k = 0; k < categColSize; k++) {
 						pkColValue = rowList.get(categCompareCol[k]);
@@ -603,6 +855,48 @@ public class CollectionUtil {
 		}
 		innerArrayToList(result);
 		return result;
+	}
+
+	/**
+	 * 为单个类别列建立"类别文本 -> 类别下标集合(从小到大)"的索引
+	 * 
+	 * @param categoryValues 类别取值(null已替换为字符串null)
+	 * @return 全部类别都是常规取值类型时返回索引，否则返回null(调用方应保持逐个比对)
+	 */
+	private static Map<String, int[]> buildCategoryIndex(Object[] categoryValues) {
+		Map<String, List<Integer>> grouped = new HashMap<String, List<Integer>>();
+		for (int j = 0; j < categoryValues.length; j++) {
+			if (!isIndexKey(categoryValues[j])) {
+				return null;
+			}
+			String categoryText = categoryValues[j].toString();
+			List<Integer> positions = grouped.get(categoryText);
+			if (positions == null) {
+				positions = new ArrayList<Integer>();
+				grouped.put(categoryText, positions);
+			}
+			positions.add(j);
+		}
+		Map<String, int[]> index = new HashMap<String, int[]>(grouped.size() * 2);
+		for (Map.Entry<String, List<Integer>> entry : grouped.entrySet()) {
+			List<Integer> positions = entry.getValue();
+			int[] indexes = new int[positions.size()];
+			for (int i = 0; i < indexes.length; i++) {
+				indexes[i] = positions.get(i);
+			}
+			index.put(entry.getKey(), indexes);
+		}
+		return index;
+	}
+
+	/**
+	 * 取值是否为可直接用于哈希索引的常规类型(String、各种数字、日期时间等 JDK 不可变类型)，这类取值文本相同即相等
+	 * 
+	 * @param value 待判断的取值
+	 * @return true表示是常规类型，null返回false
+	 */
+	public static boolean isIndexKey(Object value) {
+		return value != null && INDEX_KEY_CLASSES.contains(value.getClass());
 	}
 
 	/**
@@ -723,7 +1017,7 @@ public class CollectionUtil {
 	/**
 	 * 将内部的数组转换为list
 	 * 
-	 * @param source
+	 * @param source 元素为数组(或集合)的二维集合，直接在其上逐行转换；首元素不是数组则不做处理
 	 */
 	public static void innerArrayToList(List source) {
 		if (source == null || source.isEmpty()) {
@@ -732,13 +1026,13 @@ public class CollectionUtil {
 		if (source.get(0).getClass().isArray()) {
 			Object[] rowAry;
 			for (int i = 0, n = source.size(); i < n; i++) {
-				List rowList = new ArrayList();
 				rowAry = convertArray(source.get(i));
+				List rowList = new ArrayList(rowAry.length);
 				for (int j = 0, k = rowAry.length; j < k; j++) {
 					rowList.add(rowAry[j]);
 				}
-				source.remove(i);
-				source.add(i, rowList);
+				// update 2026-11-24 原先 remove(i) 之后再 add(i, rowList)，每次都要搬动其后的全部元素(O(n²))，改为直接覆盖
+				source.set(i, rowList);
 			}
 		}
 	}
@@ -1262,7 +1556,9 @@ public class CollectionUtil {
 				if (i == 0) {
 					compareValue[j] = tempObj[j];
 				}
-				isEqual = isEqual && (tempObj[j].equals(compareValue[j]));
+				// update 2026-11-24 分组列的值可能为null，原先的 tempObj[j].equals(...) 会抛空指针，
+				// 改为空安全比较：null与null视为同组，null与非null视为不同组(与 ResultUtils.sortGroupList 的处理一致)
+				isEqual = isEqual && Objects.equals(tempObj[j], compareValue[j]);
 			}
 			if (!isEqual) {
 				end = i - 1;
@@ -1360,15 +1656,18 @@ public class CollectionUtil {
 			if (iData.equals(jData)) {
 				isEqual = true;
 			} else {
-				if (dataType == 2) {
+				// update 2026-11-24 与ResultUtils.sortList同一口径:比较对的两侧都符合dataType才走类型化比较,
+				// 同一列混有字符串与数字等类型不一致的情形退回下面的文本比较;
+				// 避免dataType由首个非空值定死后对后续其它类型无条件强转抛ClassCastException
+				if (dataType == 2 && iData instanceof Number && jData instanceof Number) {
 					lessThen = ((Number) iData).doubleValue() < ((Number) jData).doubleValue();
-				} else if (dataType == 3) {
+				} else if (dataType == 3 && iData instanceof Date && jData instanceof Date) {
 					lessThen = ((Date) iData).before((Date) jData);
-				} else if (dataType == 4) {
+				} else if (dataType == 4 && iData instanceof LocalDate && jData instanceof LocalDate) {
 					lessThen = ((LocalDate) iData).compareTo((LocalDate) jData) < 0;
-				} else if (dataType == 5) {
+				} else if (dataType == 5 && iData instanceof LocalDateTime && jData instanceof LocalDateTime) {
 					lessThen = ((LocalDateTime) iData).compareTo((LocalDateTime) jData) < 0;
-				} else if (dataType == 6) {
+				} else if (dataType == 6 && iData instanceof LocalTime && jData instanceof LocalTime) {
 					lessThen = ((LocalTime) iData).compareTo((LocalTime) jData) < 0;
 				} else {
 					str1 = iData.toString();
@@ -1424,7 +1723,9 @@ public class CollectionUtil {
 				if (i == 0) {
 					compareValue[j] = row.get(groupIndexes[j]);
 				}
-				isEqual = isEqual && (tempObj[j].equals(compareValue[j]));
+				// update 2026-11-24 分组列的值可能为null，原先的 tempObj[j].equals(...) 会抛空指针，
+				// 改为空安全比较：null与null视为同组，null与非null视为不同组(与 ResultUtils.sortGroupList 的处理一致)
+				isEqual = isEqual && Objects.equals(tempObj[j], compareValue[j]);
 			}
 			if (isEqual) {
 				calculateValue = calculateValue.add(cellValue);
@@ -1488,16 +1789,17 @@ public class CollectionUtil {
 		for (int i = 0; i < size; i++) {
 			middleList.add(new ArrayList<>());
 		}
-		HashSet<String> notRepeatSet = new HashSet<>();
-		String key;
+		// update 2026-11-24 判重键由"拼成 ,{v} 形式的字符串"改为"各参数值的文本组成的列表"：原先参数值本身含 "},{"
+		// 时不同的参数组合会拼出相同文本而被误判为重复；文本比较的语义保持不变(null 仍按字符串"null"处理)
+		Set<List<String>> notRepeatSet = new HashSet<>();
+		List<String> key;
 		int loopSize = inArgsList.get(0).length;
 		for (int i = 0; i < loopSize; i++) {
-			key = "";
+			key = new ArrayList<>(size);
 			for (int j = 0; j < size; j++) {
-				key = key + ",{" + inArgsList.get(j)[i] + "}";
+				key.add(String.valueOf(inArgsList.get(j)[i]));
 			}
-			if (!notRepeatSet.contains(key)) {
-				notRepeatSet.add(key);
+			if (notRepeatSet.add(key)) {
 				for (int j = 0; j < size; j++) {
 					middleList.get(j).add(inArgsList.get(j)[i]);
 				}
@@ -1649,8 +1951,8 @@ public class CollectionUtil {
 	 * @description update 2026-11-10 有界缓存写入:容量达到上限时按迭代顺序回收至3/4目标水位,再写入新键。
 	 *              与"超限后不再缓存"相比,回收后缓存立即恢复生效,不会出现"缓存永久失效、每次全量重算"
 	 *              的性能悬崖(动态列/动态sql等高基数键场景);与"超限整体clear"相比,保留约3/4的既有条目
-	 *              (热键不必全部重建),回收成本按写入次数摊还为O(1)。读取路径仍是ConcurrentHashMap无锁get。
-	 *              update 2026-11-12 CAS单飞门闩:原实现每个写入线程各自回收1/4,并发突发时过度淘汰
+	 *              (热键不必全部重建),回收成本按写入次数摊还为O(1)。读取路径仍是ConcurrentHashMap无锁get。 update
+	 *              2026-11-12 CAS单飞门闩:原实现每个写入线程各自回收1/4,并发突发时过度淘汰
 	 *              (N线程近乎清空缓存,命中率骤降需全量重建);现同一时刻仅一个线程执行回收,其余跳过直接写入。
 	 *              回收按水位循环(而非固定配额)以追上并发回填,容量为软上限(短暂超出量≤并发写入数,下轮收敛);
 	 *              门闩全局共享(回收低频,跨缓存互斥代价可忽略),读取路径不受影响。

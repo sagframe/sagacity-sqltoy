@@ -387,9 +387,8 @@ public class ParamFilterProcessor {
 	}
 
 	/**
-	 * update 2026-11-11 预计算缓存行中参与匹配的列的小写值:每次查询、每行只计算一次,
-	 * 避免 row×查询参数×比较列 级别的重复 toString().toLowerCase();
-	 * 不做跨查询索引(缓存行可被原地修改,跨查询缓存会读到过期值)
+	 * update 2026-11-11 预计算缓存行中参与匹配的列的小写值:每次查询、每行只计算一次, 避免 row×查询参数×比较列 级别的重复
+	 * toString().toLowerCase(); 不做跨查询索引(缓存行可被原地修改,跨查询缓存会读到过期值)
 	 * 
 	 * @param cacheRow     缓存行
 	 * @param matchIndexes 参与匹配的列下标
@@ -953,16 +952,16 @@ public class ParamFilterProcessor {
 	}
 
 	/**
-	 * update 2026-11-13 统一LIKE处理(新&lt;like&gt;元素):
-	 * mode=both/left/right, escapeMode=raw/legacy, escapePercent控制%是否转义。
+	 * update 2026-11-13 统一LIKE处理(新&lt;like&gt;元素): mode=both/left/right,
+	 * escapeMode=raw/legacy, escapePercent控制%是否转义。
 	 * 容器统一支持CharSequence/String[]/Object[]/基本类型数组/List/Set/其它Collection;
 	 * 处理顺序固定为“先转义值,再拼appendStr,最后补%”,避免值末尾反斜杠把补的%转义掉。
 	 *
-	 * @param paramValue     原始参数值
-	 * @param appendStr      补%前拼接的字符(仅left/right)
-	 * @param mode           both/left/right
-	 * @param escapeMode     raw/legacy
-	 * @param escapePercent  是否将%作为字面量转义
+	 * @param paramValue         原始参数值
+	 * @param appendStr          补%前拼接的字符(仅left/right)
+	 * @param mode               both/left/right
+	 * @param escapeMode         raw/legacy
+	 * @param escapePercent      是否将%作为字面量转义
 	 * @param extendedContainers 是否启用扩展容器(CharSequence/Object[]/基本数组/其它Collection);
 	 *                           旧l-like/r-like保持false,新&lt;like&gt;为true
 	 * @return 处理后的LIKE参数值
@@ -984,11 +983,9 @@ public class ParamFilterProcessor {
 		}
 		String realMode = normalizeLikeMode(mode);
 		String realEscapeMode = normalizeLikeEscapeMode(escapeMode);
-		String escapedAppend = (appendStr == null) ? ""
-				: escapeLikeText(appendStr, dbType, realEscapeMode, true);
+		String escapedAppend = (appendStr == null) ? "" : escapeLikeText(appendStr, dbType, realEscapeMode, true);
 		if (paramValue instanceof CharSequence) {
-			return wrapLikeValue(paramValue.toString(), escapedAppend, realMode, dbType, realEscapeMode,
-					escapePercent);
+			return wrapLikeValue(paramValue.toString(), escapedAppend, realMode, dbType, realEscapeMode, escapePercent);
 		}
 		if (paramValue instanceof String[]) {
 			String[] tmpAry = (String[]) paramValue;
@@ -1049,8 +1046,8 @@ public class ParamFilterProcessor {
 		return paramValue;
 	}
 
-	private static String wrapLikeValue(String value, String escapedAppend, String mode, int dbType,
-			String escapeMode, boolean escapePercent) {
+	private static String wrapLikeValue(String value, String escapedAppend, String mode, int dbType, String escapeMode,
+			boolean escapePercent) {
 		String escaped = escapeLikeText(value, dbType, escapeMode, escapePercent);
 		if ("left".equals(mode)) {
 			return "%".concat(escapedAppend).concat(escaped);

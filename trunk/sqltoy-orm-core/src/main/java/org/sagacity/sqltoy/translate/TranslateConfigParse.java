@@ -65,7 +65,8 @@ public class TranslateConfigParse {
 	private final static String[] TRANSLATE_CHECKER_TYPES = new String[] { "sql-increment", "sql", "service-increment",
 			"service", "rest", "rest-increment" };
 
-	// update 2026-11-15 原静态Map<String(类名),HashMap<String,FieldTranslate>>改为ClassValue:
+	// update 2026-11-15
+	// 原静态Map<String(类名),HashMap<String,FieldTranslate>>改为ClassValue:
 	// 条目挂Class自身,热部署/多classloader场景下同名类重新加载会按新Class重新解析注解配置,
 	// 不会串用旧类的缓存翻译定义;类卸载时条目随Class回收(与BeanUtil.cascadeModels、classFieldTypeCache同一治理口径)
 	private final static ClassValue<HashMap<String, FieldTranslate>> classTranslateConfigs = new ClassValue<HashMap<String, FieldTranslate>>() {

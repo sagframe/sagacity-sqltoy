@@ -190,8 +190,7 @@ public class ElasticEndpoint implements Serializable {
 	}
 
 	/**
-	 * 解析配置的节点地址列表:兼容全角分隔符,去除首尾空白与空白项。
-	 * 多地址用于构建rest5客户端,单地址同样使用rest5客户端(默认节点)
+	 * 解析配置的节点地址列表:兼容全角分隔符,去除首尾空白与空白项。 多地址用于构建rest5客户端,单地址同样使用rest5客户端(默认节点)
 	 *
 	 * @return 节点地址数组,未配置时返回空数组
 	 */
@@ -497,8 +496,7 @@ public class ElasticEndpoint implements Serializable {
 			return restClient;
 		}
 		final String key = requestTimeout + "_" + connectTimeout + "_" + socketTimeout;
-		return restClients.computeIfAbsent(key,
-				k -> buildRest5Client(requestTimeout, connectTimeout, socketTimeout));
+		return restClients.computeIfAbsent(key, k -> buildRest5Client(requestTimeout, connectTimeout, socketTimeout));
 	}
 
 	/**
@@ -534,8 +532,9 @@ public class ElasticEndpoint implements Serializable {
 		}
 		// 凭据提供器(AuthScope在httpclient5.6中移除了ANY常量,null/-1即为任意host/port)
 		final BasicCredentialsProvider credsProvider = new BasicCredentialsProvider();
-		final boolean hasCrede = (StringUtil.isNotBlank(this.getUsername())
-				&& StringUtil.isNotBlank(getPassword())) ? true : false;
+		final boolean hasCrede = (StringUtil.isNotBlank(this.getUsername()) && StringUtil.isNotBlank(getPassword()))
+				? true
+				: false;
 		// 是否ssl证书模式
 		final boolean hasSsl = StringUtil.isNotBlank(this.keyStore);
 		if (hasCrede) {
@@ -547,8 +546,8 @@ public class ElasticEndpoint implements Serializable {
 		SSLContextBuilder sslBuilder = null;
 		try {
 			if (hasSsl) {
-				KeyStore truststore = KeyStore.getInstance(
-						StringUtil.isBlank(keyStoreType) ? KeyStore.getDefaultType() : keyStoreType);
+				KeyStore truststore = KeyStore
+						.getInstance(StringUtil.isBlank(keyStoreType) ? KeyStore.getDefaultType() : keyStoreType);
 				// KeyStore.load(null)不抛错而是初始化为空keystore,静默导致SSL握手失败难以定位
 				try (InputStream keyStoreStream = FileUtil.getFileInputStream(keyStore)) {
 					if (keyStoreStream == null) {
@@ -565,11 +564,11 @@ public class ElasticEndpoint implements Serializable {
 			final boolean disableAuthCaching = !authCaching;
 			// 请求超时配置(socketTimeout对应httpclient5的响应超时)
 			// RequestConfig.setConnectTimeout已废弃,连接超时由ConnectionConfig配置
-			builder.setRequestConfigCallback(requestConfig -> requestConfig
-					.setConnectionRequestTimeout(Timeout.ofMilliseconds(requestTimeout))
-					.setResponseTimeout(Timeout.ofMilliseconds(socketTimeout)));
-			builder.setConnectionConfigCallback(connectionConfig -> connectionConfig
-					.setConnectTimeout(Timeout.ofMilliseconds(connectTimeout)));
+			builder.setRequestConfigCallback(
+					requestConfig -> requestConfig.setConnectionRequestTimeout(Timeout.ofMilliseconds(requestTimeout))
+							.setResponseTimeout(Timeout.ofMilliseconds(socketTimeout)));
+			builder.setConnectionConfigCallback(
+					connectionConfig -> connectionConfig.setConnectTimeout(Timeout.ofMilliseconds(connectTimeout)));
 			builder.setHttpClientConfigCallback(httpClientBuilder -> {
 				// 禁用抢占式身份验证
 				if (disableAuthCaching) {

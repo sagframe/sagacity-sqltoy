@@ -9,8 +9,7 @@ import java.io.Serializable;
  *              说明:elasticSearch的超时与字符集采用"endpoint默认+语句覆盖":eql上显式配置的
  *              request-timeout/connection-timeout/socket-timeout/charset优先,未配置时取
  *              ElasticEndpoint(由starter的ElasticConfig注入);单地址/多地址/eql自定义url统一走
- *              rest5客户端,超时组合与endpoint默认值不同的语句使用独立客户端(异步客户端超时
- *              只能在构建时确定)。
+ *              rest5客户端,超时组合与endpoint默认值不同的语句使用独立客户端(异步客户端超时 只能在构建时确定)。
  * @author zhongxuchen
  * @version v1.0,Date:2018-01-03
  */

@@ -284,7 +284,8 @@ public class DDLUtils {
 			}
 			// update 2026-11-22 uuid族列类型:原生uuid方言(pg内核10库/h2的UUID/sqlserver的
 			// uniqueidentifier)保原生,其余方言以36位变长字符承载(oracle VARCHAR2(36)/mysql系
-			// VARCHAR(36)/db2 VARCHAR(36)/hana NVARCHAR(36)/sqlite TEXT/dm VARCHAR(36));统一用变长
+			// VARCHAR(36)/db2 VARCHAR(36)/hana NVARCHAR(36)/sqlite TEXT/dm
+			// VARCHAR(36));统一用变长
 			// 而非CHAR——CHAR空白填充会给去连字符的32位值补尾空格,读回带空格(Java equals/JSON错位),
 			// 迁到其它方言的VARCHAR后尾空格变成有效字符,跨库等值/唯一约束失真
 			Integer metaType0 = colMeta.getDataType();
@@ -333,8 +334,7 @@ public class DDLUtils {
 		// 反向工程/手工构造链路(ColumnMeta同时带BINARY/BLOB类型与组件类型)——byte[]在SQL侧无对应数组
 		// 元素类型(int2为2字节整数,与byte语义不同),必须保BYTEA/BLOB/VARBINARY(MAX),不得降级为elem[]
 		boolean binaryColumn = colMeta.getDataType() != null
-				&& (colMeta.getDataType() == java.sql.Types.BINARY
-						|| colMeta.getDataType() == java.sql.Types.VARBINARY
+				&& (colMeta.getDataType() == java.sql.Types.BINARY || colMeta.getDataType() == java.sql.Types.VARBINARY
 						|| colMeta.getDataType() == java.sql.Types.LONGVARBINARY
 						|| colMeta.getDataType() == java.sql.Types.BLOB);
 		// update 2026-11-22 显式标量jdbcType优先于组件类型推断(与wrapSelectFields的jdbcType优先链
@@ -348,14 +348,13 @@ public class DDLUtils {
 		boolean neutralType = declaredType == null || declaredType == java.sql.Types.OTHER
 				|| declaredType == java.sql.Types.ARRAY || declaredType == java.sql.Types.JAVA_OBJECT
 				|| declaredType == java.sql.Types.STRUCT;
-		if (!binaryColumn && neutralType && StringUtil.isNotBlank(colMeta.getArrayComponentType())
-				&& (StringUtil.isBlank(colMeta.getNativeType())
+		if (!binaryColumn && neutralType && StringUtil.isNotBlank(colMeta.getArrayComponentType()) && (StringUtil
+				.isBlank(colMeta.getNativeType())
 				// 数组族nativeType(pg源text[]/varchar[]形态)仅pg内核系目标有效,其余目标视同未配置
 				// 回落组件链(elem[]/elem ARRAY),避免源形态拼入h2/dm等目标产生非法DDL
 				// update 2026-11-22 用现场兜底识别的specialFamily(与json/bson族同构),而非仅取字段——
 				// 手工构造/反向工程链路ColumnMeta字段为空但nativeType=text[]时,非pg目标亦须回落JSON承载
-				|| (NativeTypeUtils.FAMILY_ARRAY.equals(specialFamily)
-						&& !NativeTypeUtils.isPgKernel(dbType)))) {
+				|| (NativeTypeUtils.FAMILY_ARRAY.equals(specialFamily) && !NativeTypeUtils.isPgKernel(dbType)))) {
 			if (NativeTypeUtils.isPgKernel(dbType)) {
 				String elem = PostgreSqlDialectUtils.pgArrayElementTypeName(colMeta.getArrayComponentType());
 				if (elem != null) {
@@ -428,11 +427,14 @@ public class DDLUtils {
 			break;
 		case java.sql.Types.VARCHAR:
 		case java.sql.Types.NVARCHAR: {
-			// update 2026-11-22 sqlserver默认NVARCHAR(unicode):VARCHAR为非unicode码页,中文经setString
+			// update 2026-11-22
+			// sqlserver默认NVARCHAR(unicode):VARCHAR为非unicode码页,中文经setString
 			// (nvarchar参数)隐式转换丢失为"????"(真库A/B实证NVARCHAR中文往返MATCH);hana同因ASCII须NVARCHAR
 			typeName = (dbType == DBType.HANA || dbType == DBType.SQLSERVER) ? "NVARCHAR" : "VARCHAR";
-			// update 2026-11-22 sqlserver NVARCHAR上限4000:varchar源列(length=8000等)直接拼NVARCHAR(8000)
-			// 建表报"The size (8000) given to the parameter ... exceeds the maximum allowed (4000)"
+			// update 2026-11-22 sqlserver
+			// NVARCHAR上限4000:varchar源列(length=8000等)直接拼NVARCHAR(8000)
+			// 建表报"The size (8000) given to the parameter ... exceeds the maximum allowed
+			// (4000)"
 			// (真库实证),超出上限按NVARCHAR(MAX)承载;4000及以内沿用长度
 			if (dbType == DBType.SQLSERVER && colMeta.getColumnSize() > 4000) {
 				typeName = "NVARCHAR(MAX)";
@@ -535,11 +537,11 @@ public class DDLUtils {
 			break;
 		case java.sql.Types.CLOB:
 		case java.sql.Types.NCLOB:
-		// update 2026-11-22 LONGVARCHAR(mysql源text/longtext列的jdbcType)归并CLOB家族:此前无case
-		// 落default按nativeType原样输出,在db2/hana等无TEXT类型库为非法DDL(真库实证db2报-204
-		// SQLERRMC=TEXT)。但mysql系目标须保留源nativeType(longtext/mediumtext),否则longtext降级
-		// TEXT(64KB上限)截断大文本——故仅mysql协议系(MYSQL/MYSQL57/TIDB)目标透传nativeType,
-		// 其余目标翻译为CLOB/NCLOB/TEXT(DORIS/STARROCKS用STRING非longtext,亦走翻译)
+			// update 2026-11-22 LONGVARCHAR(mysql源text/longtext列的jdbcType)归并CLOB家族:此前无case
+			// 落default按nativeType原样输出,在db2/hana等无TEXT类型库为非法DDL(真库实证db2报-204
+			// SQLERRMC=TEXT)。但mysql系目标须保留源nativeType(longtext/mediumtext),否则longtext降级
+			// TEXT(64KB上限)截断大文本——故仅mysql协议系(MYSQL/MYSQL57/TIDB)目标透传nativeType,
+			// 其余目标翻译为CLOB/NCLOB/TEXT(DORIS/STARROCKS用STRING非longtext,亦走翻译)
 		case java.sql.Types.LONGVARCHAR:
 			if (colMeta.getDataType() == java.sql.Types.LONGVARCHAR
 					&& (dbType == DBType.MYSQL || dbType == DBType.MYSQL57 || dbType == DBType.TIDB)

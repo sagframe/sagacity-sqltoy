@@ -816,8 +816,7 @@ public class JoinContext {
 	}
 
 	/**
-	 * 复位递归成员标记:标记仅限单次组合渲染作用域,渲染结束由外层composeSql调用,
-	 * 避免成员被复用为独立查询时残留旧标记误触DB2隐式JOIN守卫
+	 * 复位递归成员标记:标记仅限单次组合渲染作用域,渲染结束由外层composeSql调用, 避免成员被复用为独立查询时残留旧标记误触DB2隐式JOIN守卫
 	 */
 	public void clearRecursiveMember() {
 		this.recursiveMember = false;

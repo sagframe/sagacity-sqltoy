@@ -50,8 +50,8 @@ import co.elastic.clients.transport.rest5_client.low_level.Rest5Client;
 
 /**
  * @project sagacity-sqltoy
- * @description 提供基于http请求的工具类(elastic查询统一走rest5客户端:单地址/多地址、eql自定义url
- *              一致,base path由pathPrefix承载,请求路径由buildRequestPath组织)
+ * @description 提供基于http请求的工具类(elastic查询统一走rest5客户端:单地址/多地址、eql自定义url 一致,base
+ *              path由pathPrefix承载,请求路径由buildRequestPath组织)
  * @author zhongxuchen
  * @version v1.0,Date:2018-01-07
  * @modified 2025-3-17 适配性优化，为切换httpclient5做准备
@@ -322,8 +322,7 @@ public class HttpClientUtils {
 	}
 
 	/**
-	 * 组织rest5客户端的请求相对路径(节点地址与base path由客户端构建时的HttpHost/pathPrefix承载);
-	 * 包级可见以便同包测试
+	 * 组织rest5客户端的请求相对路径(节点地址与base path由客户端构建时的HttpHost/pathPrefix承载); 包级可见以便同包测试
 	 *
 	 * @param esConfig
 	 * @param nosqlConfig
@@ -394,8 +393,7 @@ public class HttpClientUtils {
 	}
 
 	/**
-	 * 解析字符集:语句级配置优先,endpoint(默认UTF-8)兜底;配置值非法时给出明确的配置错误。
-	 * 包级可见以便同包测试
+	 * 解析字符集:语句级配置优先,endpoint(默认UTF-8)兜底;配置值非法时给出明确的配置错误。 包级可见以便同包测试
 	 *
 	 * @param nosqlConfig
 	 * @param esConfig
@@ -403,7 +401,8 @@ public class HttpClientUtils {
 	 */
 	static Charset resolveCharset(NoSqlConfigModel nosqlConfig, ElasticEndpoint esConfig) {
 		String charset = (nosqlConfig.isCharsetSet() && StringUtil.isNotBlank(nosqlConfig.getCharset()))
-				? nosqlConfig.getCharset() : esConfig.getCharset();
+				? nosqlConfig.getCharset()
+				: esConfig.getCharset();
 		if (StringUtil.isBlank(charset)) {
 			return Charset.forName(CHARSET);
 		}

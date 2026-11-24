@@ -838,7 +838,8 @@ public class ResultUtils {
 	 * 
 	 * @param rs      ResultSet结果集对象(当前行)
 	 * @param columns 分组对比的列名称数组
-	 * @return 单列时为该列值(null转"null"文本)，多列时为下划线连接的拼接字符串
+	 * @return 单列时为该列值(null转"null"文本)，多列时为各列文本按顺序组成的List
+	 *         (逐列比较，不存在拼接歧义)
 	 * @throws Exception
 	 */
 	private static Object getLinkColumnsId(ResultSet rs, String[] columns) throws Exception {
@@ -848,18 +849,14 @@ public class ResultUtils {
 			Object singleValue = rs.getObject(columns[0]);
 			return (singleValue == null) ? "null" : singleValue;
 		}
-		StringBuilder result = new StringBuilder();
-		Object colValue;
-		int index = 0;
+		// update 2026-11-24 多列link键由"下划线拼接文本"改为"逐列文本组成的列表":值含下划线时不同组合会拼出相同文本
+		// 而被误判为同一link组;List.equals逐元素比较消除碰撞(null仍按字符串"null")
+		List<String> result = new ArrayList<>(columns.length);
 		for (String column : columns) {
-			if (index > 0) {
-				result.append("_");
-			}
-			colValue = rs.getObject(column);
-			result.append(colValue == null ? "null" : colValue.toString());
-			index++;
+			Object colValue = rs.getObject(column);
+			result.add(colValue == null ? "null" : colValue.toString());
 		}
-		return result.toString();
+		return result;
 	}
 
 	/**
@@ -1147,25 +1144,27 @@ public class ResultUtils {
 	 */
 	private static List extractCategory(List items, Integer[] categoryCols) {
 		List categoryList = new ArrayList();
-		Set<String> identitySet = new HashSet<>();
-		String tmpStr;
+		// update 2026-11-24 判重键由"各列文本直接拼成一个字符串"改为"逐列文本组成的列表"：原先把各列文本不加分隔地
+		// 拼接，(1,23) 与 (12,3) 这类组合会得到相同文本而被误判为同一类别，导致行转列结果丢失数据列。
+		// 逐列比较与原先"按文本比较"的语义一致(null 仍按字符串"null"处理)，且不存在拆分歧义
+		Set<List<String>> identitySet = new HashSet<>();
 		int categorySize = categoryCols.length;
 		Object obj;
 		List categoryRow;
+		List<String> identity;
 		List row;
 		for (int i = 0, size = items.size(); i < size; i++) {
 			row = (List) items.get(i);
-			tmpStr = "";
 			categoryRow = new ArrayList();
+			identity = new ArrayList<>(categorySize);
 			for (int j = 0; j < categorySize; j++) {
 				obj = row.get(categoryCols[j]);
 				categoryRow.add(obj);
-				tmpStr = tmpStr.concat(obj == null ? "null" : obj.toString());
+				identity.add(obj == null ? "null" : obj.toString());
 			}
-			// 不存在
-			if (!identitySet.contains(tmpStr)) {
+			// 不存在(用add的返回值判断，省去一次contains查找)
+			if (identitySet.add(identity)) {
 				categoryList.add(categoryRow);
-				identitySet.add(tmpStr);
 			}
 		}
 		// 分组排序输出
@@ -1225,12 +1224,8 @@ public class ResultUtils {
 		}
 		Object iData;
 		Object jData;
-		// 1:string,2:数字;3:日期
 		boolean lessThen = false;
 		String str1, str2;
-		int dataType = 1;
-		// 是否已经判断过数据类型
-		boolean finishedJudgeType = false;
 		for (int i = start; i < end; i++) {
 			for (int j = i + 1; j < end + 1; j++) {
 				iData = sortList.get(i).get(orderCol);
@@ -1240,23 +1235,19 @@ public class ResultUtils {
 				} else if (iData == null && jData != null) {
 					lessThen = true;
 				} else {
-					// 首次判断数据类型
-					if (!finishedJudgeType) {
-						if (iData instanceof java.lang.Number) {
-							dataType = 2;
-						} else if (iData instanceof java.util.Date) {
-							dataType = 3;
-						} else if (iData instanceof LocalDate) {
-							dataType = 4;
-						} else if (iData instanceof LocalDateTime) {
-							dataType = 5;
-						} else if (iData instanceof LocalTime) {
-							dataType = 6;
-						}
-						finishedJudgeType = true;
-					}
-					// 字符串
-					if (dataType == 1) {
+					// update 2026-11-24 按当前比较对的两个值动态判型:同类型走对应比较,类型不一致退回文本比较,
+					// 避免原先仅由首值定type后无条件强转导致混合类型列ClassCastException
+					if (iData instanceof Number && jData instanceof Number) {
+						lessThen = ((Number) iData).doubleValue() < ((Number) jData).doubleValue();
+					} else if (iData instanceof Date && jData instanceof Date) {
+						lessThen = ((Date) iData).before((Date) jData);
+					} else if (iData instanceof LocalDate && jData instanceof LocalDate) {
+						lessThen = ((LocalDate) iData).compareTo((LocalDate) jData) < 0;
+					} else if (iData instanceof LocalDateTime && jData instanceof LocalDateTime) {
+						lessThen = ((LocalDateTime) iData).compareTo((LocalDateTime) jData) < 0;
+					} else if (iData instanceof LocalTime && jData instanceof LocalTime) {
+						lessThen = ((LocalTime) iData).compareTo((LocalTime) jData) < 0;
+					} else {
 						str1 = iData.toString();
 						str2 = jData.toString();
 						if (str1.length() < str2.length()) {
@@ -1266,16 +1257,6 @@ public class ResultUtils {
 						} else {
 							lessThen = str1.compareTo(str2) < 0;
 						}
-					} else if (dataType == 2) {
-						lessThen = ((Number) iData).doubleValue() < ((Number) jData).doubleValue();
-					} else if (dataType == 3) {
-						lessThen = ((Date) iData).before((Date) jData);
-					} else if (dataType == 4) {
-						lessThen = ((LocalDate) iData).compareTo((LocalDate) jData) < 0;
-					} else if (dataType == 5) {
-						lessThen = ((LocalDateTime) iData).compareTo((LocalDateTime) jData) < 0;
-					} else if (dataType == 6) {
-						lessThen = ((LocalTime) iData).compareTo((LocalTime) jData) < 0;
 					}
 				}
 				if ((ascend && !lessThen) || (!ascend && lessThen)) {
@@ -1393,8 +1374,7 @@ public class ResultUtils {
 	 * update 2026-9-12
 	 * 处理Result单行数据(旧签名,已废弃):并行数组(labelNames/columnTypeNames/columnKinds)
 	 * 形态已被ResultColumnMeta[]取代,内部桥接转换后委托新签名;update 2026-11-12
-	 * 框架内部调用方(USF锁游标回读、getMoreLinkResultSet)已全部迁移至新签名,
-	 * 本签名仅为第三方兼容保留。
+	 * 框架内部调用方(USF锁游标回读、getMoreLinkResultSet)已全部迁移至新签名, 本签名仅为第三方兼容保留。
 	 */
 	@Deprecated
 	public static List processResultRow(Integer dbType, TypeHandler typeHandler, DynamicCacheFetch dynamicCacheFetch,
@@ -1588,7 +1568,8 @@ public class ResultUtils {
 
 	// pg系衍生驱动扩展类型对象的getType()方法缓存(类名→Method,按类解析一次规避逐单元格反射开销)
 	private static final java.util.concurrent.ConcurrentHashMap<String, java.util.Optional<java.lang.reflect.Method>> PG_GET_TYPE_METHODS = new java.util.concurrent.ConcurrentHashMap<>();
-	// update 2026-11-22 oracle.sql.TIMESTAMPTZ/TIMESTAMPLTZ的offsetDateTimeValue()方法缓存(类名→Method,
+	// update 2026-11-22
+	// oracle.sql.TIMESTAMPTZ/TIMESTAMPLTZ的offsetDateTimeValue()方法缓存(类名→Method,
 	// 按类解析一次规避大结果集逐行反射开销,与PG_GET_TYPE_METHODS同口径)
 	private static final java.util.concurrent.ConcurrentHashMap<String, java.util.Optional<java.lang.reflect.Method>> ORACLE_TZ_METHODS = new java.util.concurrent.ConcurrentHashMap<>();
 
@@ -1611,6 +1592,7 @@ public class ResultUtils {
 			return null;
 		}
 	}
+
 	// mssql-jdbc的Geometry类与解码方法缓存(microsoft.sqlserver.jdbc.Geometry为驱动内置,
 	// 类不存在时AVAIL=false整体跳过;static Method线程安全)
 	private static final boolean MSSQL_GEO_AVAIL;
@@ -1901,10 +1883,12 @@ public class ResultUtils {
 			return String.valueOf(value);
 		}
 		// update 2026-11-22 oracle.sql.TIMESTAMPTZ读回归一为OffsetDateTime:驱动专属对象,否则Map/VO得
-		// "oracle.sql.TIMESTAMPTZ@hash"地址形垃圾值(真库实证);TIMESTAMPTZ有无参 offsetDateTimeValue()
+		// "oracle.sql.TIMESTAMPTZ@hash"地址形垃圾值(真库实证);TIMESTAMPTZ有无参
+		// offsetDateTimeValue()
 		// TIMESTAMPLTZ不在归一范围:其转换入口均需会话上下文(offsetDateTimeValue/stringValue/timestampValue
 		// 带Connection,无参版本报Conversion failed,toJdbc()返回自身),无参归一不可行——真库实证
-		// rs.getTimestamp/rs.getString可读("2026-11-22 10:00:00.0 Asia/Shanghai"),需要可读值时在SQL端
+		// rs.getTimestamp/rs.getString可读("2026-11-22 10:00:00.0
+		// Asia/Shanghai"),需要可读值时在SQL端
 		// to_char或VO用Timestamp接收(边界记录)
 		if (className.equals("oracle.sql.timestamptz")) {
 			try {
@@ -2342,7 +2326,7 @@ public class ResultUtils {
 		int[] oneToManyGroupColIndexs = null;
 		// 分组的master数据
 		List masterData;
-		LinkedHashMap<String, List> groupListMap = null;
+		LinkedHashMap<List<String>, List> groupListMap = null;
 		Iterator<List> groupListIter;
 		// 存在oneToMany 则将数据进行分组
 		if (oneToMany != null) {
@@ -2592,18 +2576,21 @@ public class ResultUtils {
 	 * 
 	 * @param queryResultRows 查询结果的二维行数据集合
 	 * @param groupIndexes    分组列的下标数组
-	 * @return key为分组列值拼接串、value为同组行数据列表的LinkedHashMap(保持出现顺序)
+	 * @return key为各分组列文本按顺序组成的List、value为同组行数据列表的LinkedHashMap(保持出现顺序)
 	 */
-	private static LinkedHashMap<String, List> hashGroupList(List queryResultRows, int[] groupIndexes) {
-		LinkedHashMap<String, List> groupListMap = new LinkedHashMap<String, List>();
+	private static LinkedHashMap<List<String>, List> hashGroupList(List queryResultRows, int[] groupIndexes) {
+		LinkedHashMap<List<String>, List> groupListMap = new LinkedHashMap<List<String>, List>();
 		List row;
-		String key = "";
 		List groupList;
+		// update 2026-11-24 分组键由"逗号拼接文本"改为"逐列文本组成的列表":原先值本身含逗号时不同组合会拼出相同文本
+		// 而被误判为同一组(一对多级联主对象分组错乱);逐列比较与原先按文本比较语义一致(null仍按字符串"null")
+		List<String> key;
 		for (int i = 0; i < queryResultRows.size(); i++) {
 			row = (List) queryResultRows.get(i);
-			key = "";
+			key = new ArrayList<>(groupIndexes.length);
 			for (int j = 0; j < groupIndexes.length; j++) {
-				key = key + "," + row.get(groupIndexes[j]);
+				Object cell = row.get(groupIndexes[j]);
+				key.add(cell == null ? "null" : cell.toString());
 			}
 			groupList = groupListMap.get(key);
 			if (groupList == null) {

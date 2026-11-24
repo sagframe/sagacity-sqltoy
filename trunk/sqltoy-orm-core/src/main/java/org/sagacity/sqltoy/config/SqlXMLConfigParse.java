@@ -1077,8 +1077,7 @@ public class SqlXMLConfigParse {
 			filterModel.setAppendStr(filter.getAttribute("append-str"));
 		}
 		if (isLike && "both".equals(filterModel.getLikeMode()) && StringUtil.isNotBlank(filterModel.getAppendStr())) {
-			throw new IllegalArgumentException(
-					"the <like> filter does not support [append-str] when mode is [both]!");
+			throw new IllegalArgumentException("the <like> filter does not support [append-str] when mode is [both]!");
 		}
 		// <cache-arg param="" cache-name="" cache-type="" alias-name="">
 		// <filter compare-param="" cache-index=""/>

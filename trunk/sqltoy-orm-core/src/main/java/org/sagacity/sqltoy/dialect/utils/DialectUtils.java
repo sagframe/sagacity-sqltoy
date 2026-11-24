@@ -113,11 +113,11 @@ public class DialectUtils {
 	/**
 	 * 集合操作匹配模式:update 2026-11-10 count改写器此前的union守卫不识别minus/except/intersect,
 	 * 裸集合查询走fast-path后count(1)被塞进第一个分支参与集合运算,分页记录数静默失真
-	 * (h2真库复现:except实际3行、count读出0);命中即改走包裹路径
-	 * update 2026-11-12 与SqlUtil.SET_OPERATION_PATTERN口径对齐:排除函数调用形态
+	 * (h2真库复现:except实际3行、count读出0);命中即改走包裹路径 update 2026-11-12
+	 * 与SqlUtil.SET_OPERATION_PATTERN口径对齐:排除函数调用形态
 	 * (minus(a,b)是ClickHouse算术函数,关键字后紧跟"("且括号内非select时不命中),
-	 * 否则count改写/top/random链路误包派生表(旧版CH子查询重复列名报Duplicate column name);
-	 * except(select ...)等集合运算紧贴括号写法仍命中
+	 * 否则count改写/top/random链路误包派生表(旧版CH子查询重复列名报Duplicate column name); except(select
+	 * ...)等集合运算紧贴括号写法仍命中
 	 */
 	public static final Pattern SET_OPERATION_PATTERN = Pattern
 			.compile("(?i)\\W+(minus|except|intersect)(?!\\s*\\((?!\\s*select))(\\W+|$)");
@@ -1372,7 +1372,8 @@ public class DialectUtils {
 					isAssignPK, realTable);
 		}
 		// sql 缓存，避免每次重复产生
-		// update 2026-11-15 key同步纳入unifyFieldsHandler与DBProfile维度(与insert/insertIgnore一致)
+		// update 2026-11-15
+		// key同步纳入unifyFieldsHandler与DBProfile维度(与insert/insertIgnore一致)
 		String sqlCacheKey = DialectExtUtils.getCacheKey(entityMeta, tableName, profile, pkStrategy,
 				unifyFieldsHandler);
 		String mergeIgnoreSql = mergeIgnoreSqlCache.get(sqlCacheKey);
@@ -1585,7 +1586,8 @@ public class DialectUtils {
 				sql.append("=");
 				// 判断强制修改
 				if (fupc.contains(columnName)) {
-					// update 2026-11-22 vastbase boolean强制更新须cast(? as boolean):裸?+setString/setNull
+					// update 2026-11-22 vastbase boolean强制更新须cast(? as
+					// boolean):裸?+setString/setNull
 					// 经驱动发varchar/smallint与boolean列拒收(真库实证U1/U2);cast定型后值与null均可行(U5/U7)
 					if (fieldMeta.getType() == java.sql.Types.BOOLEAN && dbType == DBType.VASTBASE) {
 						sql.append("cast(? as boolean)");
@@ -1618,7 +1620,8 @@ public class DialectUtils {
 						directAssign = true;
 					} else if (fieldMeta.getType() == java.sql.Types.BLOB && dbType == DBType.STARROCKS) {
 						// update 2026-11-22 starrocks VARBINARY列coalesce类型合并失败:setBytes的hex串被推断
-						// DECIMAL,coalesce(?,col)/coalesce(cast(? as VARBINARY),col)/内联X'..'均报Cannot cast
+						// DECIMAL,coalesce(?,col)/coalesce(cast(? as VARBINARY),col)/内联X'..'均报Cannot
+						// cast
 						// DECIMAL to VARBINARY(真库A/B实证);直赋col=?+setBytes可行(同ob vector能力边界,
 						// null参数将覆盖原值,非null更新生效)
 						directAssign = true;
@@ -1702,10 +1705,13 @@ public class DialectUtils {
 						}
 					} else if (fieldMeta.getType() == java.sql.Types.BOOLEAN
 							&& (dbType == DBType.VASTBASE || dbType == DBType.HANA)) {
-						// update 2026-11-22 vastbase boolean:驱动setBoolean发smallint拒收,绑定setObject(文本,OTHER)(见SqlUtil),
-						// update以cast(? as boolean)定型,nvl两端同型(varchar→boolean可cast,smallint→boolean非法,真库实证)
+						// update 2026-11-22 vastbase
+						// boolean:驱动setBoolean发smallint拒收,绑定setObject(文本,OTHER)(见SqlUtil),
+						// update以cast(? as
+						// boolean)定型,nvl两端同型(varchar→boolean可cast,smallint→boolean非法,真库实证)
 						// update 2026-11-22 hana boolean:coalesce(?,flag)的裸?被推断VARCHAR,报
-						// [266]inconsistent datatype VARCHAR incompatible BOOLEAN(真库实证);cast(? as boolean)
+						// [266]inconsistent datatype VARCHAR incompatible BOOLEAN(真库实证);cast(? as
+						// boolean)
 						// 后coalesce两端同型通过(merge路径的同类cast由DialectUtils merge分支承担)
 						sql.append("cast(? as boolean)");
 					} else {

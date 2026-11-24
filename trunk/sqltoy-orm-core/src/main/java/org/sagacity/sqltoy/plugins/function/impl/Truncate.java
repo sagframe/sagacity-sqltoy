@@ -131,11 +131,11 @@ public class Truncate extends IFunction {
 		}
 		// Oracle/DM/PG 系/DB2/H2:trunc 为原生数值截断函数(OB Oracle模式同Oracle)
 		boolean truncNative = dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DM
-				|| dialect == DBType.OCEANBASE
-				|| dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14 || dialect == DBType.OPENGAUSS
-				|| dialect == DBType.GAUSSDB || dialect == DBType.MOGDB || dialect == DBType.VASTBASE
-				|| dialect == DBType.STARDB || dialect == DBType.OSCAR || dialect == DBType.KINGBASE
-				|| dialect == DBType.HIGHGO || dialect == DBType.DB2 || dialect == DBType.H2;
+				|| dialect == DBType.OCEANBASE || dialect == DBType.POSTGRESQL || dialect == DBType.POSTGRESQL14
+				|| dialect == DBType.OPENGAUSS || dialect == DBType.GAUSSDB || dialect == DBType.MOGDB
+				|| dialect == DBType.VASTBASE || dialect == DBType.STARDB || dialect == DBType.OSCAR
+				|| dialect == DBType.KINGBASE || dialect == DBType.HIGHGO || dialect == DBType.DB2
+				|| dialect == DBType.H2;
 		if (truncNative) {
 			// 源 trunc 原生透传;源 truncate 须改名 trunc
 			if ("trunc".equals(funLow)) {

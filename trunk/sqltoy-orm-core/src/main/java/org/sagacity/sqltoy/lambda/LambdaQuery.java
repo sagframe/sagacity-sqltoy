@@ -585,7 +585,7 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 
 	/**
 	 * @description 组合sql渲染主体,dbType已由{@link #composeSql()}解析并向成员下发
-	 * @param dbType 本次渲染使用的执行库类型
+	 * @param dbType                 本次渲染使用的执行库类型
 	 * @param recursiveMarkedMembers 收集本次渲染标记的递归成员,供composeSql在finally按作用域复位
 	 */
 	private String composeSqlBody(int dbType, List<LambdaQuery<?>> recursiveMarkedMembers,
@@ -904,7 +904,8 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	/**
 	 * @description 指定编程式缓存翻译,参数模型与EntityQuery/QueryExecutor的translates一致:
 	 *              <p>
-	 *              单表通道:keyColumn为实体属性名,框架自动追加"keyColumn as column"查询列,翻译结果写入column属性;
+	 *              单表通道:keyColumn为实体属性名,框架自动追加"keyColumn as
+	 *              column"查询列,翻译结果写入column属性;
 	 *              </p>
 	 *              <p>
 	 *              join/SQL通道:仅支持结果列原地翻译,column须为select结果列别名(该列原始值即缓存key),
@@ -912,8 +913,8 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	 *              JoinCol.of(key属性).as(column)显式产出该列
 	 *              </p>
 	 *              <p>
-	 *              只作用于数据查询:count 不携带翻译;findColumns/聚合终端不支持;exists 走 top1
-	 *              数据查询故与 find 同口径
+	 *              只作用于数据查询:count 不携带翻译;findColumns/聚合终端不支持;exists 走 top1 数据查询故与
+	 *              find 同口径
 	 *              </p>
 	 * @param translates 翻译定义
 	 * @return 自身
@@ -938,8 +939,7 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	}
 
 	/**
-	 * @description 字段引用形式的缓存翻译(单表最常用):key属性值翻译后写入target属性,
-	 *              框架自动补充"key as target"查询列
+	 * @description 字段引用形式的缓存翻译(单表最常用):key属性值翻译后写入target属性, 框架自动补充"key as target"查询列
 	 * @param cacheName 缓存名称(须在translate配置中定义)
 	 * @param key       作为缓存key的属性引用
 	 * @param target    承接翻译结果的属性引用
@@ -989,7 +989,8 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	/**
 	 * @return 克隆后的翻译定义(供单表/join通道各自持有,避免执行期改写污染构建器)
 	 */
-	Translate[] cloneTranslates() {		Translate[] result = new Translate[translates.size()];
+	Translate[] cloneTranslates() {
+		Translate[] result = new Translate[translates.size()];
 		for (int i = 0; i < result.length; i++) {
 			result[i] = translates.get(i).clone();
 		}
@@ -1358,8 +1359,8 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 	 * update 2026-11-22 翻译与组合的合法性校验(执行期):
 	 * <li>组合分支(union/CTE/@fast内层)不得携带缓存翻译:它们只贡献SQL,翻译只在外层最终结果集
 	 * 执行一次,声明期之后补设的翻译会被静默丢弃,故此处补齐执行期校验</li>
-	 * <li>单表通道的"补列式"翻译(同列翻译为原地替换、不补列,不受影响)与 distinct/groupBy 冲突:
-	 * 追加的查询列会改变 DISTINCT 的行口径,或在 groupBy 下成为非分组列</li>
+	 * <li>单表通道的"补列式"翻译(同列翻译为原地替换、不补列,不受影响)与 distinct/groupBy 冲突: 追加的查询列会改变 DISTINCT
+	 * 的行口径,或在 groupBy 下成为非分组列</li>
 	 */
 	private void validateTranslateComposition() {
 		Set<LambdaQuery<?>> visited = new HashSet<>();
@@ -1370,8 +1371,7 @@ public final class LambdaQuery<T> extends AbstractWhere<T, LambdaQuery<T>> {
 			checkBranchTranslates((LambdaQuery<?>) union[1], "union branch", visited);
 		}
 		checkBranchTranslates(fastInner, "@fast inner query", visited);
-		if (!isJoinMode() && !translates.isEmpty()
-				&& (distinct || StringUtil.isNotBlank(getGroupByColumns()))) {
+		if (!isJoinMode() && !translates.isEmpty() && (distinct || StringUtil.isNotBlank(getGroupByColumns()))) {
 			for (Translate translate : translates) {
 				TranslateExtend extend = translate.getExtend();
 				// update 2026-11-22 补列判定须含"同列翻译但目标未在投影中":findEntityBase的anti-no-op修复

@@ -72,8 +72,7 @@ public class PageOptimizeUtils {
 	 * 缓存命名空间:sql标识(dialect)+数据源身份
 	 * <p>
 	 * 身份优先用"url+账号+schema/catalog"稳定档案(同一库重建连接池也可复用,命名空间数量随真实端点收敛);
-	 * 拿不到url时回退数据源对象身份(==,避免不同数据源因hash冲突共用同一份count);对象身份用弱引用,
-	 * 避免静态缓存长期持有动态创建的数据源。
+	 * 拿不到url时回退数据源对象身份(==,避免不同数据源因hash冲突共用同一份count);对象身份用弱引用, 避免静态缓存长期持有动态创建的数据源。
 	 * </p>
 	 */
 	private static final class CacheNamespace {
@@ -93,8 +92,7 @@ public class PageOptimizeUtils {
 					: new WeakReference<Object>(dataSourceRef);
 			int hash = sqlId.hashCode();
 			hash = 31 * hash + ((dialect == null) ? 0 : dialect.hashCode());
-			this.hash = 31 * hash
-					+ ((identity != null) ? identity.hashCode() : System.identityHashCode(dataSourceRef));
+			this.hash = 31 * hash + ((identity != null) ? identity.hashCode() : System.identityHashCode(dataSourceRef));
 		}
 
 		/**
@@ -373,8 +371,7 @@ public class PageOptimizeUtils {
 	}
 
 	/**
-	 * 命名空间有界化:超过上限先清理数据源已回收项,仍超限则淘汰最久未访问的命名空间;
-	 * 淘汰只导致该命名空间后续重新count(性能),不会返回错值
+	 * 命名空间有界化:超过上限先清理数据源已回收项,仍超限则淘汰最久未访问的命名空间; 淘汰只导致该命名空间后续重新count(性能),不会返回错值
 	 */
 	private static void evictIfNeeded() {
 		if (pageOptimizeCache.size() < NAMESPACE_MAX_SIZE) {
@@ -403,8 +400,7 @@ public class PageOptimizeUtils {
 	 * <p>
 	 * url已由DBProfile按连接档案缓存;账号按数据源弱引用缓存(同一池内恒定);schema/catalog每次从当前
 	 * 连接读取(同一池setSchema/setCatalog切换多租户时身份随会话变化,不串用count缓存)。
-	 * 同一库重建连接池可复用缓存,命名空间数量随真实"库端点×会话"收敛;url不可用(非JDBC/无档案)时返回null,
-	 * 调用侧回退数据源对象身份。
+	 * 同一库重建连接池可复用缓存,命名空间数量随真实"库端点×会话"收敛;url不可用(非JDBC/无档案)时返回null, 调用侧回退数据源对象身份。
 	 * </p>
 	 *
 	 * @param profile    连接档案(提供url)

@@ -46,8 +46,8 @@ public class H2DialectUtils {
 		// (实测pg上COALESCE(varchar,jsonb)报错);族可翻译按目标cast,数组族null回落原链
 		// (h2进组件链),族不可识别(null)保持原链nativeType精确控制
 		String specialCast = (fieldMeta.getSpecialFamily() == null) ? null
-				: NativeTypeUtils.specialCastType(DataSourceUtils.DBType.H2,
-						fieldMeta.getSpecialFamily(), fieldMeta.getNativeType());
+				: NativeTypeUtils.specialCastType(DataSourceUtils.DBType.H2, fieldMeta.getSpecialFamily(),
+						fieldMeta.getNativeType());
 		if (StringUtil.isNotBlank(specialCast)) {
 			sql.append("cast(? as " + specialCast + ")");
 		} else if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NVARCHAR
@@ -140,8 +140,7 @@ public class H2DialectUtils {
 	}
 
 	/**
-	 * update 2026-11-21 数组字段组件类型对应的h2数组元素类型名,未识别(含null)返回null
-	 * (维持裸?现状交nativeType口子)
+	 * update 2026-11-21 数组字段组件类型对应的h2数组元素类型名,未识别(含null)返回null (维持裸?现状交nativeType口子)
 	 *
 	 * @param componentType 数组/集合字段的元素组件类型全限定名(含原始类型简名如int)
 	 * @return h2元素类型名(VARCHAR/INT/BIGINT/NUMERIC/DOUBLE/REAL/BOOLEAN),未识别null

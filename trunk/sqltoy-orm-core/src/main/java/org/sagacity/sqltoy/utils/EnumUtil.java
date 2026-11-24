@@ -10,7 +10,8 @@ import java.lang.reflect.Modifier;
  * @version v1.0,Date:2026-02-06
  */
 public class EnumUtil {
-	// update 2026-11-15 原静态Map<Class,Boolean>改为ClassValue:条目挂Class自身,热部署/多classloader
+	// update 2026-11-15
+	// 原静态Map<Class,Boolean>改为ClassValue:条目挂Class自身,热部署/多classloader
 	// 下类卸载即回收,静态结构不再强引用应用枚举类
 	private static final ClassValue<Boolean> withoutCustomFieldEnum = new ClassValue<Boolean>() {
 		@Override

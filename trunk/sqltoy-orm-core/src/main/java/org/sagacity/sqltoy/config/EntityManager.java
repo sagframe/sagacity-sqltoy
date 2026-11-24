@@ -93,12 +93,11 @@ public class EntityManager {
 	protected final static Logger logger = LoggerFactory.getLogger(EntityManager.class);
 
 	/**
-	 * 存放主键生成策略实例
-	 * update 2026-11-15 static改为实例字段:原JVM级共享导致首个解析实体的上下文独占初始化生成器
+	 * 存放主键生成策略实例 update 2026-11-15 static改为实例字段:原JVM级共享导致首个解析实体的上下文独占初始化生成器
 	 * (RedisIdGenerator经initialize绑定该上下文的redisTemplate),后续上下文containsKey短路跳过
 	 * 初始化而串用首个上下文的连接工厂(quickstart CI实测:Lesson01的嵌入式redis被无视,save走了
-	 * 主上下文无redis的STOPPED工厂报"LettuceConnectionFactory has been STOPPED");EntityManager
-	 * 本为每SqlToyContext一份,元数据缓存entitysMetaMap亦为实例级,生成器随上下文走;
+	 * 主上下文无redis的STOPPED工厂报"LettuceConnectionFactory has been
+	 * STOPPED");EntityManager 本为每SqlToyContext一份,元数据缓存entitysMetaMap亦为实例级,生成器随上下文走;
 	 * 与cascadeModels改ClassValue同族的"静态结构持有上下文资源"治理;无状态生成器行为不变
 	 */
 	private IgnoreKeyCaseMap<String, IdGenerator> IdGeneratorsInstance = new IgnoreKeyCaseMap<String, IdGenerator>();
@@ -840,7 +839,8 @@ public class EntityManager {
 		// update 2026-11-21 数组/集合字段提取元素组件类型(定型数组取组件类,List/Set取泛型实参,
 		// 泛型实参非具体Class时留空),供h2等prepare期急切定型的方言生成cast(? as xx ARRAY)
 		// update 2026-11-22 byte[]是二进制语义(bytea/blob/varbinary/IMAGE),不是"字节数组列":不提取
-		// 组件类型,否则DDL按component=byte分派成int2[]/INT ARRAY/JSON等,丢失BYTEA/BLOB/VARBINARY(MAX)
+		// 组件类型,否则DDL按component=byte分派成int2[]/INT
+		// ARRAY/JSON等,丢失BYTEA/BLOB/VARBINARY(MAX)
 		// (与SqlUtil绑定路径"byte[]在数组分支前return"口径一致);Byte[]等真正数组语义保持提取
 		if (field.getType().isArray() && field.getType() != byte[].class) {
 			fieldMeta.setArrayComponentType(field.getType().getComponentType().getName());

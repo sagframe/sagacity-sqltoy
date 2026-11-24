@@ -31,8 +31,8 @@ public class DB2DialectUtils {
 		// (实测pg上COALESCE(varchar,jsonb)报错);族可翻译按目标cast,数组族null回落原链
 		// (h2进组件链),族不可识别(null)保持原链nativeType精确控制
 		String specialCast = (fieldMeta.getSpecialFamily() == null) ? null
-				: NativeTypeUtils.specialCastType(DataSourceUtils.DBType.DB2,
-						fieldMeta.getSpecialFamily(), fieldMeta.getNativeType());
+				: NativeTypeUtils.specialCastType(DataSourceUtils.DBType.DB2, fieldMeta.getSpecialFamily(),
+						fieldMeta.getNativeType());
 		if (StringUtil.isNotBlank(specialCast)) {
 			sql.append("cast(? as " + specialCast + ")");
 		} else if (jdbcType == java.sql.Types.VARCHAR || jdbcType == java.sql.Types.NVARCHAR

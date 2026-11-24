@@ -333,7 +333,8 @@ public class FunctionUtils {
 	}
 
 	/**
-	 * update 2026-11-13 函数参数切分专用(仅FunctionUtils使用,不改变StringUtil.splitExcludeSymMark的全局语义):
+	 * update 2026-11-13
+	 * 函数参数切分专用(仅FunctionUtils使用,不改变StringUtil.splitExcludeSymMark的全局语义):
 	 * 按逗号切分参数,跳过括号/方括号/花括号嵌套,跳过单双引号字面量。
 	 * 反斜杠语义按方言区分:backslashEscape=true(mysql系)时仅奇数个连续反斜杠转义后续引号;
 	 * false(标准SQL)时反斜杠不转义,支持SQL Server/PostgreSQL的'C:\'这类合法字面量。

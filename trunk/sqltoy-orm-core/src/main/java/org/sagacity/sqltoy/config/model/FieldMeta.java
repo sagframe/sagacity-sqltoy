@@ -62,8 +62,7 @@ public class FieldMeta implements Serializable {
 
 	/**
 	 * update 2026-11-21 数组/集合字段的元素组件类型全限定名(定型数组取组件类,如java.lang.String;
-	 * List/Set取泛型实参,泛型实参非具体Class时为null),供h2等prepare期急切定型的方言
-	 * 生成cast(? as xx ARRAY)
+	 * List/Set取泛型实参,泛型实参非具体Class时为null),供h2等prepare期急切定型的方言 生成cast(? as xx ARRAY)
 	 */
 	private String arrayComponentType;
 

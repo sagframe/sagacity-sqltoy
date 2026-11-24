@@ -11,6 +11,8 @@ import org.sagacity.sqltoy.config.model.RowsChainRelativeModel;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.NumberUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
@@ -21,6 +23,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class RowsChainRelative {
+	private final static Logger logger = LoggerFactory.getLogger(RowsChainRelative.class);
 	// |月份 | 产品 |交易笔数 | 环比 | 金额 | 环比 | 收入 | 环比 |
 	// | 5月 | 香蕉 | 2000 | 环比 | 金额 | 环比 | 收入 | 环比 |
 	// | 5月 | 苹果 | 2000 | 环比 | 金额 | 环比 | 收入 | 环比 |
@@ -45,9 +48,14 @@ public class RowsChainRelative {
 		// 实际需要计算的列(如果环比值是插入模式,则需要调整列的对应index)
 		Integer[] realRelativeCols = new Integer[rowsRelative.getRelativeColumns().length];
 		int start = rowsRelative.getStartRow() == null ? 0 : rowsRelative.getStartRow();
+		// update 2026-11-24 负数startRow钳到0,避免按负下标取行越界
+		if (start < 0) {
+			start = 0;
+		}
 		int end = rowsRelative.getEndRow() == null ? dataSize - 1 : rowsRelative.getEndRow();
+		// update 2026-11-24 负数endRow按python式从末尾计:dataSize+end(-1指最后一行);原dataSize-1+end会差1
 		if (end < 0) {
-			end = dataSize - 1 + end;
+			end = dataSize + end;
 		}
 		if (end > dataSize - 1) {
 			end = dataSize - 1;
@@ -72,6 +80,12 @@ public class RowsChainRelative {
 				groupSize = map.size();
 			}
 		}
+		// update 2026-11-24 起止行之间没有数据时(如start-row比end-row大1、负数end-row恰好超出末尾1行、start-row超出最后一行)，
+		// 上面提取不到任何分组值，groupSize为0会让下面两个循环的步长变成0从而死循环
+		// (原边界i>start/i<end这种情况下不会进入循环)，这里钳到1，与ColsChainRelative的处理一致
+		if (groupSize < 1) {
+			groupSize = 1;
+		}
 		Integer[] relativeIndexs = rowsRelative.getRelativeIndexs();
 		if (relativeIndexs == null || relativeIndexs.length == 0) {
 			relativeIndexs = new Integer[groupSize];
@@ -81,6 +95,16 @@ public class RowsChainRelative {
 		} else {
 			// 从低到高排列
 			CollectionUtil.sortArray(relativeIndexs, false);
+		}
+		// update 2026-11-24 relative-index超出分组长度[0,groupSize)时对应行会被跳过(表现为少算值),
+		// 属配置错误,一次性告警使其可见(不改变跳过行为)
+		for (int idx : relativeIndexs) {
+			if (idx < 0 || idx >= groupSize) {
+				logger.warn(
+						"rows-chain-relative relative-index [{}] is out of group-size [0,{}), the corresponding rows will be skipped, please check the relative-indexs configuration!",
+						idx, groupSize);
+				break;
+			}
 		}
 		int addIndex = 0;
 		String relativeCol;
@@ -126,11 +150,18 @@ public class RowsChainRelative {
 		boolean divIsZero;
 		// 逆序(从下到上)
 		if (rowsRelative.isReverse()) {
-			for (int i = end - groupSize; i > start; i = i - groupSize) {
+			// update 2026-11-24 下界含首组:i>=start+groupSize-1;原i>start在groupSize=1时漏掉首行。
+			// groupSize=2时与旧界完全等价;groupSize>=3时新界更严格(要求首块完整落在区间内),
+			// 首块不完整时旧界会取到start之前的行并抛数组越界
+			for (int i = end - groupSize; i >= start + groupSize - 1; i = i - groupSize) {
 				for (int j = 0; j < relativeIndexs.length; j++) {
 					index = relativeIndexs[j];
 					divIndex = i - groupSize + index + 1;
 					divedIndex = i + index + 1;
+					// update 2026-11-24 relative-index超出分组长度时取到的行会落在起止行之外(原先数组越界)，跳过
+					if (divIndex < start || divIndex > end || divedIndex < start || divedIndex > end) {
+						continue;
+					}
 					divRowList = (List) result.get(divIndex);
 					divedRowList = (List) result.get(divedIndex);
 					// 对环比列进行数据运算(环比结果列必须是在比较值列的后面第一列)
@@ -169,11 +200,18 @@ public class RowsChainRelative {
 				}
 			}
 		} else {
-			for (int i = start + groupSize; i < end; i = i + groupSize) {
+			// update 2026-11-24 上界含末组:i<=end-groupSize+1;原i<end在groupSize=1时漏掉末行。
+			// groupSize=2时与旧界完全等价;groupSize>=3时新界更严格(要求末块完整落在区间内),
+			// 末块不完整时旧界会取到end之后的行并抛数组越界
+			for (int i = start + groupSize; i <= end - groupSize + 1; i = i + groupSize) {
 				for (int j = 0; j < relativeIndexs.length; j++) {
 					index = relativeIndexs[j];
 					divIndex = i + index;
 					divedIndex = i + index - groupSize;
+					// update 2026-11-24 relative-index超出分组长度时取到的行会落在起止行之外(原先数组越界)，跳过
+					if (divIndex < start || divIndex > end || divedIndex < start || divedIndex > end) {
+						continue;
+					}
 					divRowList = (List) result.get(divIndex);
 					divedRowList = (List) result.get(divedIndex);
 					// 对环比列进行数据运算(环比结果列必须是在比较值列的后面第一列)

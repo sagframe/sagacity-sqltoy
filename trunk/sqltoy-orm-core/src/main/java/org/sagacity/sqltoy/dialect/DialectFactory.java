@@ -2027,7 +2027,8 @@ public class DialectFactory {
 	public Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
 			final UpdateRowCallback updateRowCallback, final int lockWaitTimeout, final String[] uniqueProps,
 			final DataSource dataSource) {
-		return updateSaveFetch(sqlToyContext, entity, updateRowCallback, lockWaitTimeout, uniqueProps, true, dataSource);
+		return updateSaveFetch(sqlToyContext, entity, updateRowCallback, lockWaitTimeout, uniqueProps, true,
+				dataSource);
 	}
 
 	/**

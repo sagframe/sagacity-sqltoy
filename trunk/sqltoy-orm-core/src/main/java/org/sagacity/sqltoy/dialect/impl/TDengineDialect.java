@@ -182,8 +182,8 @@ public class TDengineDialect extends DefaultDialect {
 			UpdateRowCallback updateRowCallback, int lockWaitTimeout, String[] uniqueProps, Connection conn,
 			DBProfile profile, String tableName, boolean insertIfAbsent) throws Exception {
 		// update 2026-11-22 按实际调用方给出方法名(updateSaveFetch 也经本9参方法分派,原先一律报updateFetch)
-		throw new UnsupportedOperationException("TDengine 无 UPDATE 语句且无行级锁," + (insertIfAbsent ? "updateSaveFetch"
-				: "updateFetch") + " 不适用;更新请用相同时间戳重新 INSERT 覆盖!");
+		throw new UnsupportedOperationException("TDengine 无 UPDATE 语句且无行级锁,"
+				+ (insertIfAbsent ? "updateSaveFetch" : "updateFetch") + " 不适用;更新请用相同时间戳重新 INSERT 覆盖!");
 	}
 
 	@Override

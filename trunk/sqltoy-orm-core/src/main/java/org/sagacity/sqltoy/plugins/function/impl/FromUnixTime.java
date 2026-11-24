@@ -62,8 +62,9 @@ public class FromUnixTime extends IFunction {
 		// 原生单参解析实际不可用,保留epoch转换(数值epoch列可用,文本列响亮类型错)。
 		// update 2026-11-12 评审R2:数值字面量(含引号数值)epoch意图明确,仍按epoch转换,
 		// 只有列/占位符/非数值形态才透传——避免to_timestamp(1794362400)在Oracle报ORA-00932
-		if (pgEpochSrc && (dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DM
-				|| dialect == DBType.OCEANBASE)
+		if (pgEpochSrc
+				&& (dialect == DBType.ORACLE || dialect == DBType.ORACLE11 || dialect == DBType.DM
+						|| dialect == DBType.OCEANBASE)
 				&& !n.matches("[-+]?[0-9]+(\\.[0-9]+)?") && !n.matches("'[-+]?[0-9]+(\\.[0-9]+)?'")) {
 			return super.IGNORE;
 		}

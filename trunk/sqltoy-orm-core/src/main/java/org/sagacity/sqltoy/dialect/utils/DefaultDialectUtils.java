@@ -375,14 +375,14 @@ public class DefaultDialectUtils {
 	 * @param profile
 	 * @param dialect
 	 * @param tableName
-	 * @param insertIfAbsent 记录不存在时是否执行insert(false即updateFetch语义)
+	 * @param insertIfAbsent   记录不存在时是否执行insert(false即updateFetch语义)
 	 * @return
 	 * @throws Exception
 	 */
 	public static Serializable updateSaveFetch(final SqlToyContext sqlToyContext, final Serializable entity,
 			final UpdateRowHandler updateRowHandler, final UpdateRowCallback updateRowCallback, String[] uniqueProps,
-			final Connection conn, DBProfile profile, String tableName, int lockWaitTimeout,
-			boolean insertIfAbsent) throws Exception {
+			final Connection conn, DBProfile profile, String tableName, int lockWaitTimeout, boolean insertIfAbsent)
+			throws Exception {
 		Integer dbType = profile.getDbType();
 		final String operateName = insertIfAbsent ? "updateSaveFetch" : "updateFetch";
 		final EntityMeta entityMeta = sqlToyContext.getEntityMeta(entity.getClass());
@@ -502,8 +502,8 @@ public class DefaultDialectUtils {
 							for (int i = 0; i < rowCnt; i++) {
 								String tn = usfTypeNames[i];
 								usfCols[i] = new ResultColumnMeta(null, null, i + 1, tn, tn,
-										ResultColumnMeta.ReadStrategy.of(usfKinds[i]),
-										ResultColumnMeta.ExtType.of(tn), 0, null);
+										ResultColumnMeta.ReadStrategy.of(usfKinds[i]), ResultColumnMeta.ExtType.of(tn),
+										0, null);
 							}
 							int index = 0;
 							List result = new ArrayList();
@@ -530,8 +530,8 @@ public class DefaultDialectUtils {
 									};
 							while (finalRs.next()) {
 								if (index > 0) {
-									throw new DataAccessException(
-											operateName + " can only operate on a single record, please check the uniqueProps setting!");
+									throw new DataAccessException(operateName
+											+ " can only operate on a single record, please check the uniqueProps setting!");
 								}
 								// update 2026-9-14 oracle系重查回读的行定位值:须在回调执行前提取
 								// (回调可能修改uniqueProps对应列,主键值则稳定)
@@ -558,8 +558,8 @@ public class DefaultDialectUtils {
 										}
 										if (entityVersion != null && !entityVersion.toString().equals(nowVersion)) {
 											throw new IllegalArgumentException("table [" + entityMeta.getTableName()
-													+ "] has @DataVersion configuration, when " + operateName + " updates, the property ["
-													+ dataVersionField
+													+ "] has @DataVersion configuration, when " + operateName
+													+ " updates, the property [" + dataVersionField
 													+ "] value does not equal the current value in database:"
 													+ entityVersion + "<>" + nowVersion
 													+ ", the data has been modified by others!");
@@ -653,8 +653,7 @@ public class DefaultDialectUtils {
 									// 重新获得修改后的值(列元数据已在循环前查询级一次构建,重查
 									// select列清单与锁查询完全一致,类型名/序号一一对应)
 									result.add(ResultUtils.processResultRow(dbType, typeHandler, dynamicCacheFetch,
-											dynamicCacheHolder, readRs, null, rowCnt, null, null, false,
-											usfCols, 0));
+											dynamicCacheHolder, readRs, null, rowCnt, null, null, false, usfCols, 0));
 								} finally {
 									if (reReadPst != null) {
 										// close语句连带关闭其结果集

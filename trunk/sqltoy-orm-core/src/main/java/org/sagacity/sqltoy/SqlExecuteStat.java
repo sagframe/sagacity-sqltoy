@@ -259,10 +259,9 @@ public class SqlExecuteStat {
 							paramStr.append("p[" + i + "]=");
 							// update 2026-11-21 数组/集合参数渲染为元素列表,
 							// 避免Object[]默认toString输出[Ljava.lang.String;@..形态
-							if (args[i] != null && (args[i].getClass().isArray()
-									|| args[i] instanceof java.util.Collection)) {
-								paramStr.append(SqlUtil
-										.combineArray(CollectionUtil.convertArray(args[i])));
+							if (args[i] != null
+									&& (args[i].getClass().isArray() || args[i] instanceof java.util.Collection)) {
+								paramStr.append(SqlUtil.combineArray(CollectionUtil.convertArray(args[i])));
 							} else {
 								paramStr.append(args[i]);
 							}

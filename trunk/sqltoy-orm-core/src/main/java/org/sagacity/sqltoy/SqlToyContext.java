@@ -648,7 +648,8 @@ public class SqlToyContext {
 		// 初始化默认dataSource
 		initDefaultDataSource();
 		// 设置workerId和dataCenterId,为使用snowflake主键ID产生算法服务(workerId被后续context覆写会导致ID重复,首个生效)
-		if (claimStaticStateOwned("workerAndDataCenterId", workerId != null || dataCenterId != null || serverId != null)) {
+		if (claimStaticStateOwned("workerAndDataCenterId",
+				workerId != null || dataCenterId != null || serverId != null)) {
 			SqlToyConstants.setWorkerAndDataCenterId(workerId, dataCenterId, serverId);
 		}
 		// 初始化脚本加载器
@@ -1198,7 +1199,8 @@ public class SqlToyContext {
 	/**
 	 * functionConverts=close表示关闭
 	 * <p>
-	 * update 2026-11-15 仅记录配置,由initialize阶段经claimStaticState首占生效(见applyJvmStaticConfig),
+	 * update 2026-11-15
+	 * 仅记录配置,由initialize阶段经claimStaticState首占生效(见applyJvmStaticConfig),
 	 * 避免setter即时写JVM全局导致后配置者覆盖先初始化上下文的语义
 	 * </p>
 	 * 
@@ -1278,7 +1280,8 @@ public class SqlToyContext {
 	}
 
 	/**
-	 * update 2026-11-15 仅记录配置,由initialize阶段经claimStaticState首占生效(见applyJvmStaticConfig)
+	 * update 2026-11-15
+	 * 仅记录配置,由initialize阶段经claimStaticState首占生效(见applyJvmStaticConfig)
 	 * 
 	 * @param keywordSign the keywordSign to set
 	 */

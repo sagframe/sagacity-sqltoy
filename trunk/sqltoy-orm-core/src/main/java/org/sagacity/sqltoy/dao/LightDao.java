@@ -370,11 +370,11 @@ public interface LightDao extends LambdaDao {
 	 * 
 	 * <pre>{@code
 	 * InvStock stock = lightDao.updateFetch(invStock, (entity, rowIndex) -> {
-	 *     Integer stockNum = entity.getStockNum();
-	 *     if (stockNum == null || stockNum < 10) {
-	 *         throw new IllegalStateException("库存不足");
-	 *     }
-	 *     entity.setStockNum(stockNum - 10);
+	 * 	Integer stockNum = entity.getStockNum();
+	 * 	if (stockNum == null || stockNum < 10) {
+	 * 		throw new IllegalStateException("库存不足");
+	 * 	}
+	 * 	entity.setStockNum(stockNum - 10);
 	 * });
 	 * }</pre>
 	 * </p>
