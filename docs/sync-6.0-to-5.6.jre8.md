@@ -97,6 +97,19 @@
 > 2583 例)逐类比对——+131 例全部归因(17 个新测试类 127 例 + DDLConvertTypeMatrixTest 7→11),无类丢失、既有类计数零变化;
 > starter 4 例、solon 7 例、spring 编译通过。合并后全景:trunk 下 930 文件 836 个与上游逐字节一致,差异 92 个(本轮 17 +
 > 既有 75)、上游独有 36、jre8 独有 2,全部有归属。
+>
+> **第八轮同步完成(2026-11-24,6.0.12 发版后开发内容,版本仍 5.6.99.jre8 未发布)**:上游 af0dc7c25..b1c980ab3 共 7 提交
+> 62 文件(+5367/-350),无新 tag。内容:CollectionUtil 树排序 O(n²)→O(n)(新增公开 appendTreeChildren)、TreeDataSort
+> 索引化与 id/pid 宽松比较(修 bigint id 对 int pid 全被当根节点)、pivot 类别索引、extractCategory/clearRepeat 判重键
+> 撞键修复、分组比较空安全、BeanUtil 枚举记忆与缓存键简化、MapperUtils setter 元数据缓存、SqlUtil @fast 与
+> StringUtil splitRegex 正则预编译。**关键发现:本侧提交 9adab7bee(95 文件)已包含与上游 766bdb937 完全相同的 IDE
+> 格式化(第七轮交付为 72 文件),故本轮 D 类 34 个——上游已变而本侧已等于新值,核对 blob 确认属实,无需再动**。
+> 实际进入:A 类 2 个 main(TreeDataSort/MapperUtils)+17 个新测试文件(其中 4 个为差分参照实现与夹具,不作为测试执行);
+> B 类 9 个三方合并,ElasticEndpoint/HttpClientUtils 的 6 处冲突全部取 jre8 侧(上游只是重排本侧不存在的 hc5 代码形态
+> 与"rest5"措辞),两文件与提交逐字节一致;CollectionUtil/ResultUtils/SqlUtil 合并后与上游逐字一致;BeanUtil/StringUtil/
+> DialectUtils/PostgreSqlDialectUtils 的登记适配保留。19 个新文件全部 jre8-clean,无需语法转换。门禁:core clean 全量
+> 360 类 2806 例全绿(82 例环境性跳过),与上轮 347 类 2714 例逐类比对——+92 例全部归因于 13 个新测试类,无类丢失、
+> 既有类计数零变化;starter 4 例、solon 7 例、spring 编译通过。全景:947 文件 853 个与上游一致,差异 92(本轮 6 + 既有 86)。
 
 ## 同步流程(每个 6.0 release tag 执行一轮)
 
@@ -115,10 +128,17 @@
 | A 干净基线 | 上游本轮变更 且 jre8 blob == gitee@上个 tag blob | 整体拷贝(覆盖前再校验目标文件==基线,防误覆盖登记适配文件),再做 `--release 8` 编译 |
 | B 登记适配 | 上游本轮变更 且 jre8 blob != gitee@上个 tag blob | 三方合并(base=gitee@上个 tag,ours=jre8,theirs=gitee@HEAD,`git merge-file`),须校验两条不变量:diff(ours→merged)≡diff(base→theirs)、diff(theirs→merged)≡diff(base→ours) |
 | C 残余差异 | 上游未变 但 jre8 与上游不同 | 应全部命中「排除清单」/「适配清单」,出现未登记项即为存量缺口 |
-| D | 上游已变 但 jre8 已等于上游新值 | 应为 0,否则说明基线 tag 选错 |
+| D | 上游已变 但 jre8 已等于上游新值 | 通常为 0;非 0 有两种成因——基线 tag 选错,或**本侧已先行应用同一改动**(第八轮:本侧提交含与上游相同的 IDE 格式化,34 个文件属此)。须逐文件核对 blob 是否真等于上游新值来区分 |
 
 上游变更范围以 gitee 自身的 `git diff --stat <上个 tag> HEAD` 为准;合并后用同一哈希法对工作区做全景复核,所有差异必须能归入
 上述清单。B 类合并的三方输入一律取 git blob(`git show`),输出再转回工作区的 CRLF。
+
+**校验不变量(第八轮修正)**:记 U=diff(base→theirs)、A=diff(base→ours)、P=diff(ours→merged)、R=diff(theirs→merged),
+按"变更行多重集"校验四条子集关系:①P⊆U(只应用了上游改动)②R⊆A(残留只含登记适配)③U⊆P+A(上游改动没被丢:要么本轮应用、
+要么本侧已有)④A⊆R+U(适配没丢:要么保留、要么被上游改动正当替换)。第七轮用的"等式"形式(P=U 且 R=A)仅在 ours 不含任何
+上游改动时成立;本侧已先行应用部分上游改动(如格式化)时必须用子集形式,否则会误报。
+**纯格式化批次的处理口径**:上游 IDE 重排若落在登记适配区内(如 hc4 代码形态、"rest"措辞),冲突取 jre8 侧、不跟进该处重排;
+此时 ③ 会报 upstream-dropped,须人工确认被跳过的行确实位于登记适配区(第八轮 6 处冲突即此情形,合并结果与 ours 逐字节一致)。
 
 ## 排除清单(不进入 5.6.jre8 的文件/代码)
 
@@ -183,3 +203,4 @@
 - spring/spring-starter/solon 模块:编译验证通过;starter/solon 自第三轮起有真实单测(caffeine 双上下文 3 例/DbManager 作用域 1 例),构建前需先 `mvn install` 同步后的 core
 - 版本号:已发布的版本(如 5.6.98.jre8)不得再用 `mvn install` 覆盖本地仓库——同版本本地构件会与中央仓库不一致,且 `_remote.repositories` 残留远端来源标记使 Maven 不再重新下载(第七轮曾误覆盖,已删除该版本目录后 `dependency:get` 从镜像恢复);模块验证一律安装**新的未发布版本号**(core→spring→starter 有依赖顺序,三模块无聚合 pom)
 - 统计口径(第七轮实测):同步前 008ca5b62 = 330 类 2583 例/82 跳过,同步后 = 347 类 2714 例/82 跳过。核对测试数时注意——①带 `@DisplayName` 的类,`Running` 行与汇总行输出的是显示名而非类全名(第七轮有 18 个类如此),且控制台日志为 GBK;按类统计应数 `target/surefire-reports/TEST-*.xml`,或用紧邻的 `Running` 行归属汇总行,否则会漏计;②`EntityScannerFatJarTest` 的 5 例是否跳过取决于构建目录是否遗留 boot-loader(clean 检出跳过→82,增量目录执行并通过→77),属环境差异非代码差异;③要证明"零回归",把同步前的提交检出到独立 worktree(`git worktree add --detach <tmp> HEAD`)clean 实跑一遍,再与同步后的日志逐类比对
+- 第八轮实测:360 类 2806 例/82 跳过,较第七轮 +13 类 +92 例,既有类计数零变化。新增测试文件中不以 `Test` 结尾的(如 `oracle/` 下的差分参照实现 `CollectionUtilLegacyOracle`/`TreeDataSortLegacyOracle` 与夹具 `TreeFixtures`/`DiffSupport`)不被 surefire 执行,统计"新增测试类"时须扣除(第八轮 17 个新文件中 13 个是测试类)

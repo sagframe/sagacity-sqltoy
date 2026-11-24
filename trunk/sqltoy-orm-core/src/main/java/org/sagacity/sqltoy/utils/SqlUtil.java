@@ -140,6 +140,19 @@ public class SqlUtil {
 	private final static String[] FAST_END_REGEXS = { "(?i)\\-{2}\\s+\\@fast\\_end",
 			"(?i)\\/\\*\\s*\\@fast\\_end\\s*\\*\\/" };
 
+	// update 2026-11-24 预编译@fast标记正则:原先replaceFirst(String regex,..)每次调用各编译一次正则,
+	// 改为静态Pattern数组(仍以FAST_START_REGEXS/FAST_END_REGEXS为唯一正则来源)
+	private final static Pattern[] FAST_START_PATTERNS = compilePatterns(FAST_START_REGEXS);
+	private final static Pattern[] FAST_END_PATTERNS = compilePatterns(FAST_END_REGEXS);
+
+	private static Pattern[] compilePatterns(String[] regexs) {
+		Pattern[] patterns = new Pattern[regexs.length];
+		for (int i = 0; i < regexs.length; i++) {
+			patterns[i] = Pattern.compile(regexs[i]);
+		}
+		return patterns;
+	}
+
 	// 数字、字母、下划线、横杠
 	public static final Pattern STRICT_WORD = Pattern.compile("^[a-zA-Z0-9_\\-\\.]+$");
 	// 含中文、点号、%号、单引号、双引号、@
@@ -4566,7 +4579,7 @@ public class SqlUtil {
 		int startRegexLength = FAST_START_REGEXS.length;
 		int endRegexLength = FAST_END_REGEXS.length;
 		while (startRegexIndex < startRegexLength) {
-			fastStart = StringUtil.matchIndex(sql, FAST_START_REGEXS[startRegexIndex]);
+			fastStart = StringUtil.matchIndex(sql, FAST_START_PATTERNS[startRegexIndex]);
 			if (fastStart >= 0) {
 				break;
 			}
@@ -4576,7 +4589,7 @@ public class SqlUtil {
 			return sql;
 		}
 		while (endRegexIndex < endRegexLength) {
-			fastEnd = StringUtil.matchIndex(sql, FAST_END_REGEXS[endRegexIndex]);
+			fastEnd = StringUtil.matchIndex(sql, FAST_END_PATTERNS[endRegexIndex]);
 			if (fastEnd > 0) {
 				break;
 			}
@@ -4584,11 +4597,11 @@ public class SqlUtil {
 		}
 		// update 2025-2-5 支持只有-- @fast_start标记场景
 		if (fastEnd == -1) {
-			return sql.replaceFirst(FAST_START_REGEXS[startRegexIndex], "@fast");
+			return FAST_START_PATTERNS[startRegexIndex].matcher(sql).replaceFirst("@fast");
 		}
 		if (fastEnd > fastStart) {
-			return sql.replaceFirst(FAST_START_REGEXS[startRegexIndex], "@fast")
-					.replaceFirst(FAST_END_REGEXS[endRegexIndex], " ");
+			String startReplaced = FAST_START_PATTERNS[startRegexIndex].matcher(sql).replaceFirst("@fast");
+			return FAST_END_PATTERNS[endRegexIndex].matcher(startReplaced).replaceFirst(" ");
 		}
 		return sql;
 	}

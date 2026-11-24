@@ -1418,13 +1418,15 @@ public class StringUtil {
 		} else if ("|".equals(regex)) {
 			result = source.split("\\|");
 		} else if (regex.length() > 0 && "".equals(regex.trim())) {
-			result = source.split("\\s+");
+			// update 2026-11-24 正则分支改用缓存Pattern(直译调用方可能逐单元格触发):
+			// 语义与String.split一致(limit=0,尾部空串丢弃),仅省去每次编译正则
+			result = patternOf("\\s+").split(source);
 		} else if ("||".equals(regex)) {
-			result = source.split("\\|{2}");
+			result = patternOf("\\|{2}").split(source);
 		} else if ("&&".equals(regex)) {
-			result = source.split("\\&{2}");
+			result = patternOf("\\&{2}").split(source);
 		} else {
-			result = source.split(regex);
+			result = patternOf(regex).split(source);
 		}
 		if (doTrim) {
 			for (int i = 0, n = result.length; i < n; i++) {

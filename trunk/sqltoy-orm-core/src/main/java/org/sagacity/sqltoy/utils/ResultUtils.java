@@ -1147,25 +1147,27 @@ public class ResultUtils {
 	 */
 	private static List extractCategory(List items, Integer[] categoryCols) {
 		List categoryList = new ArrayList();
-		Set<String> identitySet = new HashSet<>();
-		String tmpStr;
+		// update 2026-11-24 判重键由"各列文本直接拼成一个字符串"改为"逐列文本组成的列表"：原先把各列文本不加分隔地
+		// 拼接，(1,23) 与 (12,3) 这类组合会得到相同文本而被误判为同一类别，导致行转列结果丢失数据列。
+		// 逐列比较与原先"按文本比较"的语义一致(null 仍按字符串"null"处理)，且不存在拆分歧义
+		Set<List<String>> identitySet = new HashSet<>();
 		int categorySize = categoryCols.length;
 		Object obj;
 		List categoryRow;
+		List<String> identity;
 		List row;
 		for (int i = 0, size = items.size(); i < size; i++) {
 			row = (List) items.get(i);
-			tmpStr = "";
 			categoryRow = new ArrayList();
+			identity = new ArrayList<>(categorySize);
 			for (int j = 0; j < categorySize; j++) {
 				obj = row.get(categoryCols[j]);
 				categoryRow.add(obj);
-				tmpStr = tmpStr.concat(obj == null ? "null" : obj.toString());
+				identity.add(obj == null ? "null" : obj.toString());
 			}
-			// 不存在
-			if (!identitySet.contains(tmpStr)) {
+			// 不存在(用add的返回值判断，省去一次contains查找)
+			if (identitySet.add(identity)) {
 				categoryList.add(categoryRow);
-				identitySet.add(tmpStr);
 			}
 		}
 		// 分组排序输出
