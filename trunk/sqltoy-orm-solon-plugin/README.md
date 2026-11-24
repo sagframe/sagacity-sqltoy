@@ -157,6 +157,9 @@ public class AppService{
     
     @Db("tow")//多数据源
     private SqlToyLazyDao sqlToyLazyDao2;
+
+    @Db
+    private SqlToyDao sqlToyDao; //支持注入SqlToyDao(规范命名方法,如:findList、findOneById等)
     
     @Db
     private DemoMapper demoMapper;

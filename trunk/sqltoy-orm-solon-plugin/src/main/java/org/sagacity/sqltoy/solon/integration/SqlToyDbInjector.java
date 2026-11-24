@@ -6,6 +6,7 @@ import org.noear.solon.core.BeanInjector;
 import org.noear.solon.core.VarHolder;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.dao.LightDao;
+import org.sagacity.sqltoy.dao.SqlToyDao;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
 import org.sagacity.sqltoy.solon.DbManager;
@@ -48,6 +49,10 @@ public class SqlToyDbInjector implements BeanInjector<Db> {
 			}
 			if (type.equals(LightDao.class)) {
 				varH.setValue(DbManager.getLightDao(dataSource));
+				return;
+			}
+			if (type.equals(SqlToyDao.class)) {
+				varH.setValue(DbManager.getSqlToyDao(dataSource));
 				return;
 			}
 			if (type.equals(SqlToyCRUDService.class)) {

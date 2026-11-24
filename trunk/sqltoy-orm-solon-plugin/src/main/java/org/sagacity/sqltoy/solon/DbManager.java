@@ -9,9 +9,11 @@ import javax.sql.DataSource;
 import org.noear.solon.core.AppContext;
 import org.sagacity.sqltoy.SqlToyContext;
 import org.sagacity.sqltoy.dao.LightDao;
+import org.sagacity.sqltoy.dao.SqlToyDao;
 import org.sagacity.sqltoy.dao.SqlToyLazyDao;
 import org.sagacity.sqltoy.service.SqlToyCRUDService;
 import org.sagacity.sqltoy.solon.dao.impl.LightDaoImpl;
+import org.sagacity.sqltoy.solon.dao.impl.SqlToyDaoImpl;
 import org.sagacity.sqltoy.solon.dao.impl.SqlToyLazyDaoImpl;
 import org.sagacity.sqltoy.solon.service.impl.SqlToyCRUDServiceForSolon;
 import org.slf4j.Logger;
@@ -34,6 +36,7 @@ public class DbManager {
 
 	private static final Map<DataSource, SqlToyLazyDao> daoMap = new ConcurrentHashMap<>();
 	private static final Map<DataSource, LightDao> lightDaoMap = new ConcurrentHashMap<>();
+	private static final Map<DataSource, SqlToyDao> sqlToyDaoMap = new ConcurrentHashMap<>();
 	private static final Map<DataSource, SqlToyCRUDService> serviceMap = new ConcurrentHashMap<>();
 	private static volatile SqlToyContext context;
 
@@ -47,6 +50,7 @@ public class DbManager {
 					previous, context);
 			daoMap.clear();
 			lightDaoMap.clear();
+			sqlToyDaoMap.clear();
 			serviceMap.clear();
 		}
 	}
@@ -71,6 +75,18 @@ public class DbManager {
 			lightDao.setSqlToyContext(context);
 			LightDao prev = lightDaoMap.putIfAbsent(dataSource, lightDao);
 			dao = (prev != null) ? prev : lightDao;
+		}
+		return dao;
+	}
+
+	public static SqlToyDao getSqlToyDao(DataSource dataSource) {
+		SqlToyDao dao = sqlToyDaoMap.get(dataSource);
+		if (dao == null) {
+			SqlToyDaoImpl sqlToyDao = new SqlToyDaoImpl();
+			sqlToyDao.setDataSource(dataSource);
+			sqlToyDao.setSqlToyContext(context);
+			SqlToyDao prev = sqlToyDaoMap.putIfAbsent(dataSource, sqlToyDao);
+			dao = (prev != null) ? prev : sqlToyDao;
 		}
 		return dao;
 	}
