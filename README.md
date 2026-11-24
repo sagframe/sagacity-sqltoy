@@ -1,110 +1,63 @@
-English | [简体中文](README.zh-CN.md)
+English | [简体中文](README.md)
 
 <p align="center">
-    <img src="https://img.shields.io/badge/SqlToy-6.0.12-blue" alt="version">
+    <img src="https://img.shields.io/badge/SqlToy-6.0.14-blue" alt="version">
     <a target="_blank" href="LICENSE"><img src="https://img.shields.io/:license-Apache%202.0-blue.svg"></a>
+    <a target="_blank" href="https://github.com/sagframe/sagacity-sqltoy"><img src="https://img.shields.io/github/stars/sagframe/sagacity-sqltoy.svg?style=social"/></a>
+    <a target="_blank" href="https://gitee.com/sagacity/sagacity-sqltoy"><img src="https://gitee.com/sagacity/sagacity-sqltoy/badge/star.svg?theme=white" /></a>
     <a target="_blank" href="https://github.com/sagframe/sagacity-sqltoy/releases"><img src="https://img.shields.io/github/v/release/sagframe/sagacity-sqltoy?logo=github"></a>
     <a href="https://mvnrepository.com/artifact/com.sagframe/sagacity-sqltoy">
         <img alt="maven" src="https://img.shields.io/maven-central/v/com.sagframe/sagacity-sqltoy?style=flat-square">
     </a>
-    <a target="_blank" href="https://github.com/sagframe/sagacity-sqltoy/actions/workflows/ci.yml"><img src="https://github.com/sagframe/sagacity-sqltoy/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-    <img src="https://img.shields.io/badge/Java-17%2B-blue" alt="java">
-    <a target="_blank" href="https://github.com/sagframe/sagacity-sqltoy"><img src="https://img.shields.io/github/stars/sagframe/sagacity-sqltoy.svg?style=social"/></a>
-    <a target="_blank" href="https://gitee.com/sagacity/sagacity-sqltoy"><img src="https://gitee.com/sagacity/sagacity-sqltoy/badge/star.svg?theme=white" /></a>
 </p>
 
 # SqlToy ORM
 
-**JPA-style object CRUD + SQL-first querying — one SQL across 25 databases.**
-
-SqlToy is a Java ORM for applications that need both convenient object-based data access and the full power of SQL. Open source and in production since 2008; runs on JDK 17+ with Spring Boot 3/4 (a JDK 8 line is maintained for legacy systems), and compiles to a GraalVM Native Image for cloud-native and XinChuang (domestic-stack) deployments with instant startup and a minimal memory footprint.
-
-## Why SqlToy?
-
-- **Dynamic SQL without the noise** — `#[and s.name like :name]` is a condition that joins the SQL only when its parameter is set. No `<if>`/`<foreach>` blocks, and the SQL stays copy-paste runnable in any database client.
-- **Four-layer optimized pagination** — intelligent count rewriting, cached counts for identical filters, `@fast()` page-first joins, and parallel count + fetch.
-- **Cache translate** — resolve codes to names in memory after the query returns; skip the dictionary JOIN on every list page.
-- **One SQL across 25 databases** — automatic function adaptation (`nvl` → `coalesce`/`ifnull`), per-dialect sqlId variants, and replay-against-other-databases verification in tests.
-- **Race-safe ledgers** — `updateFetch` locks the row, updates against its current values and returns the result in a single database interaction.
-- **Enterprise-grade** — sharding, multi-tenancy, data masking & field encryption, quickvo code generation, GraalVM AOT.
-
-A 30-second look — optional filters, no branching tags:
-
-```xml
-<sql id="staff_search">
-    select s.STAFF_ID, s.STAFF_NAME, s.ORGAN_ID
-    from sqltoy_staff_info s
-    where s.STATUS = 1
-    #[and s.ORGAN_ID in (:organIds)]
-    #[and s.STAFF_NAME like :staffName]
-</sql>
-```
-
-```java
-// staffName = "Chen" -> sqltoy wraps it as '%Chen%' automatically
-List<StaffVO> staff = lightDao.find("staff_search",
-        MapKit.keys("staffName").values("Chen"), StaffVO.class);
-```
-
-## Get Started
-
-📖 [Documentation (English)](https://sagframe.github.io/sqltoy-docs/#/en/) ·
-🚀 [Quickstart lessons](https://github.com/sagframe/sqltoy-quickstart) — runnable JUnit lessons from CRUD to cross-database SQL (with a real-database finale), nothing to install ·
-📰 [One SQL, every database](docs/multi-db-adaptation.en.md) (cross-database adaptation article)
-
-```xml
-<dependency>
-	<groupId>com.sagframe</groupId>
-	<artifactId>sagacity-sqltoy-spring-starter</artifactId>
-	<version>6.0.12</version>
-</dependency>
-```
-
-<details>
-<summary>Other artifacts and the 6.0 upgrade note</summary>
-
-```text
-solon adapter        : sagacity-sqltoy-solon-plugin
-traditional Spring   : sagacity-sqltoy-spring
-plain sqltoy only    : sagacity-sqltoy
-jdk8 line (legacy)   : 5.6.98.jre8 (core synced with 6.0.12; works with quickvo-maven-plugin)
-```
-
-> For 5.6.x → 6.0.x changes (the `parallQuery→parallelQuery` rename, the changed `DBProfile` signature of the connection callback, package structure adjustments), see the [6.0 Upgrade Guide](https://sagframe.github.io/sqltoy-docs/#/introduction/upgrade_6.0).
-</details>
-
-**Supported databases** — mysql, oracle, postgresql, sqlserver, db2, sap hana, sqlite, h2, tidb, oceanbase, polardb, dm, kingbase, gaussdb, opengauss, mogdb, vastbase, oscar, highgo, stardb · olap: clickhouse, doris, starrocks, greenplum, impala (kudu), tdengine · nosql: elasticsearch, mongodb — see the [full list](https://sagframe.github.io/sqltoy-docs/#/en/introduction/db_list)
+SqlToy is a fusion of JPA-style object CRUD and SQL-first querying — the distilled and shared experience of real-world projects of many kinds: simple business apps, large SaaS-based multi-tenant ERPs, and big data analytics. Starting from an intuitive dynamic SQL authoring model, it provides high-value features such as Cache Translate, Pagination Optimize, Fast Pagination, and cross-database SQL function auto-adaptation — and it also compiles to a GraalVM Native Image for cloud-native and XinChuang (domestic-stack) deployments with instant startup and minimal memory footprint!
 
 ## 📚 Documentation & Resources
 
 | Resource | Link |
 | --- | --- |
-| 📖 Documentation (English / 中文) | <https://sagframe.github.io/sqltoy-docs/#/en/> · <https://sagframe.github.io/sqltoy-docs/> |
+| 📖 Online documentation (recommended) | <https://sagframe.github.io/sqltoy-docs/> |
 | 📰 Cross-database adaptation article | [One SQL, every database: how SqlToy makes cross-database adaptation disappear](docs/multi-db-adaptation.en.md) |
-| 📄 Dynamic SQL specification | [Online docs · Dynamic SQL](https://sagframe.github.io/sqltoy-docs/#/query/dynamic_sql) |
-| 📄 Detailed manual (PDF, English) | [Download (PDF)](https://raw.githubusercontent.com/sagframe/sagacity-sqltoy/6.0/docs/sqltoy-orm_en.pdf) · [6.0 Upgrade Guide](https://sagframe.github.io/sqltoy-docs/#/introduction/upgrade_6.0) |
-| 🚀 Quickstart lessons (start here) | <https://github.com/sagframe/sqltoy-quickstart> |
-| 🚀 Full-feature demos (sharding / multi-datasource / NoSQL / masking / FIFO cache / native) | <https://github.com/sagframe/sqltoy-showcase> |
+| 📄 Complete configuration of sql queries in xml | [Online docs · Dynamic SQL specification](https://sagframe.github.io/sqltoy-docs/#/query/dynamic_sql) |
+| 📄 Detailed manual (PDF, English) | [Download (PDF)](https://gitee.com/sagacity/sagacity-sqltoy/raw/6.0/docs/sqltoy-orm_en.pdf) (English manual; for 6.0 changes see the [Upgrade Guide](https://sagframe.github.io/sqltoy-docs/#/introduction/upgrade_6.0)) |
+| 🚀 Lesson-style quickstart | <https://github.com/sagframe/sqltoy-quickstart> |
+| 🚀 Full-feature demos (showcase: sharding / multi-datasource / NoSQL / masking / tree table / FIFO cache / native) | <https://github.com/sagframe/sqltoy-showcase> |
 | 🚀 Solon demo | <https://github.com/CoCoTeaNet/sqltoy-solon-demo> |
-| 🔌 quickvo code generator | [quickvo docs](https://sagframe.github.io/sqltoy-docs/#/en/prepare/quickvo) · [gitee](https://gitee.com/sagacity/maven-quickvo-plugin) |
+| 🔌 quickvo code generator (official) | <https://gitee.com/sagacity/maven-quickvo-plugin> |
 | 🔌 sqltoy-plus (Lambda enhancements) | Lambda capability merged into core since 6.0.8 ([Lambda conditions](https://sagframe.github.io/sqltoy-docs/#/en/query/lambda_query)); this repo remains as historical reference: <https://gitee.com/gzghde/sqltoy-plus> |
 | 🔌 Admin system scaffold | <https://github.com/CoCoTeaNet/CyreneAdmin> |
 | 🔌 IDEA plugin | <https://github.com/imyuyu/sqltoy-idea-plugin> |
 
-> Chinese-ecosystem mirrors: [Gitee](https://gitee.com/sagacity/sagacity-sqltoy) · [showcase on Gitee](https://gitee.com/sagacity/sqltoy-showcase)
-
 ## 💬 Community
 
-[GitHub Discussions](https://github.com/sagframe/sagacity-sqltoy/discussions) · [Issues](https://github.com/sagframe/sagacity-sqltoy/issues) · QQ group **531812227** *(China)* · [GitCode](https://gitcode.com/sqltoy/sagacity-sqltoy)
+QQ group: **531812227** | [Gitee](https://gitee.com/sagacity/sagacity-sqltoy) | [GitHub](https://github.com/sagframe/sagacity-sqltoy) | [GitCode](https://gitcode.com/sqltoy/sagacity-sqltoy)
 
-**Have a use case or suggestion?** Feedback, bug reports and contributions from the Java community are welcome — open an issue or start a discussion.
+## 📦 Latest Version 6.0.14
+
+```xml
+<dependency>
+	<groupId>com.sagframe</groupId>
+	<artifactId>sagacity-sqltoy-spring-starter</artifactId>
+	<!-- solon adapter version <artifactId>sagacity-sqltoy-solon-plugin</artifactId> -->
+	<!-- traditional Spring project <artifactId>sagacity-sqltoy-spring</artifactId> -->
+	<!-- plain sqltoy only <artifactId>sagacity-sqltoy</artifactId> -->
+	<!-- for jdk8 the corresponding version is: 5.6.100.jre8 (core fully synced with 6.0.14, also works with the quickvo-maven-plugin) -->
+	<version>6.0.14</version>
+</dependency>
+```
+
+> [!NOTE]
+> For the changes when upgrading from 5.6.x to 6.0.x (the `parallQuery→parallelQuery` rename, the changed `DBProfile` signature of the connection callback, package structure adjustments, etc.), see the [6.0 Upgrade Guide](https://sagframe.github.io/sqltoy-docs/#/introduction/upgrade_6.0).
 
 ## ✨ Features
 
 | Category | Core Capabilities |
 | --- | --- |
 | Object operations | JPA-style CRUD, lambda condition query/update/delete (one builder for single-table and joins), elastic update, updateFetch / updateSaveFetch, cascades, query hierarchy packaging, tree-table routing |
-| SQL query | Dynamic SQL (`#[]` + filters), Cache Translate (incl. extra-large FIFO dynamic cache), four-layer pagination (count optimization / cached / fast / parallel), parallel query, stored procedures, streaming query |
+| SQL query | Dynamic SQL (`#[]` + filters), Cache Translate (incl. extra-large FIFO dynamic cache), four-layer optimized pagination (count optimization / cached / fast / parallel), parallel query, stored procedures, streaming query |
 | Data analysis | Row-to-column / column-to-row pivot, grouped totals, year-over-year / period-over-period comparison, tree-sorted aggregation, group concatenation, date and number formatting |
 | Cross-database | 25 dialects (incl. SAP HANA, HighGo), automatic function replacement, virtual-table macro @virtualTable(), multi-dialect sqlId, multi-database adaptation verification |
 | Enterprise-grade | Database & table sharding, multi-tenancy, data permission and privilege-escalation validation, data masking with encryption/decryption, data version control, SQL interception, slow SQL handling |
@@ -131,13 +84,38 @@ jdk8 line (legacy)   : 5.6.98.jre8 (core synced with 6.0.12; works with quickvo-
 * Supports Cache Translate and reverse cache matching by key as a replacement for like fuzzy queries
 * Provides cross-database support: automatic conversion and adaptation of functions across different databases, multi-dialect sql automatically matched to the actual environment, and synchronized testing across multiple databases — greatly improving productization
 * Provides query functions for special scenarios such as fetching top records and random records
-* Provides a four-layer pagination mechanism: 1) automatic optimization of the count statement; 2) cache-based Pagination Optimize that avoids executing the count query every time; 3) Fast Pagination (@fast); 4) parallel pagination
+* Provides a four-layer pagination mechanism: 1) automatic optimization of the count statement; 2) cache-based Pagination Optimize that avoids executing the count query every time; 3) the distinctive Fast Pagination (@fast); 4) parallel pagination
 * Provides database & table sharding
 * Provides algorithms of great value in management-style projects, naturally integrated: grouped totals, row/column pivot (row-to-column, column-to-row), year-over-year / period-over-period comparison, tree sorting, and tree aggregation
 * Provides query-based hierarchy packaging of data structures
 * Provides many auxiliary features: data masking, formatting, condition-parameter preprocessing, and more
 
 </details>
+
+### Supported Databases
+* Common databases: mysql, oracle, db2, postgresql, sqlserver, dm, kingbase, hana, sqlite, h2, oceanBase, polardb, gaussdb, tidb, oscar (Shentong), HighGo, mogdb, vastbase, stardb
+* Distributed OLAP databases: clickhouse, doris, StarRocks, greenplum, impala(kudu), TDengine
+* Supports elasticsearch and mongodb
+* Any database query based on sql and jdbc
+
+## 🚀 Quick Start
+
+Three steps: **1. Generate POJOs with [quickvo](https://gitee.com/sagacity/maven-quickvo-plugin); 2. Complete the yml configuration; 3. Inject LightDao in your Service (no need to write custom Dao classes)**
+
+```java
+@Autowired
+LightDao lightDao;
+
+StaffInfoVO staffInfo = new StaffInfoVO();
+// save
+lightDao.save(staffInfo);
+// update (elastic: null fields are automatically skipped)
+lightDao.update(staffInfo, "photo");
+// delete
+lightDao.delete(new StaffInfoVO("S2007"));
+```
+
+It is recommended to start with [sqltoy-quickstart](https://github.com/sagframe/sqltoy-quickstart) (lesson-style; clone and run `mvn test` — nothing to install); for full-feature demos see [sqltoy-showcase](https://github.com/sagframe/sqltoy-showcase).
 
 ## 🔍 Feature Details
 
@@ -261,7 +239,7 @@ String sql = """
 List<StaffInfoVO> staffList = lightDao.find(sql, staffVO, StaffInfoVO.class);
 ```
 
-### 3. Plain SQL Authoring (Discovery and Abstraction of the Essential Rules)
+### 3. Extremely Plain SQL Authoring (Discovery and Abstraction of the Essential Rules)
 
 * sqltoy's style (the intent of the sql is obvious at a glance, later changes and adjustments are very convenient, and you can copy it into a database client and execute it with minor tweaks)
 * The principle behind sqltoy condition assembly is simple: e.g. `#[order_id=:orderId]` equals if(:orderId<>null) sql.append(order_id=:orderId); as soon as one parameter inside `#[]` is null, the fragment is removed
@@ -352,7 +330,7 @@ where t.ORGAN_ID in (?,?,?)
 Then condition values are set via: pst.set(index,value); there is no concatenating condition values directly into the sql as string fragments
 ```
 
-### 5. Four-Layer Optimized Pagination
+### 5. The Most Powerful Pagination
 
 **Pagination highlights**
 
@@ -360,7 +338,7 @@ Then condition values are set via: pst.set(index,value); there is no concatenati
 * 2. Pagination Optimize: page-optimize reduces a paginated query from two executions to about 1.3~1.5 (using a cache, the total record count for identical query conditions need not be re-queried within a certain period)
 * 3. sqltoy's way of getting the total record count for pagination is not a naive select count(1) from (original sql); it intelligently decides whether it can become: select count(1) from 'the statement after from', and automatically strips the outermost order by
 * 4. sqltoy supports parallel query: parallel="true" queries the total record count and the single page of data simultaneously, greatly improving performance
-* 5. Special pagination shapes are handled specifically, e.g.: with t1 as (),t2 as @fast(select * from table1) select * from xxx
+* 5. Special pagination shapes are handled specifically as well, e.g.: with t1 as (),t2 as @fast(select * from table1) select * from xxx
 For the pagination of such a complex query, sqltoy's count query would be: with t1 as () select count(1) from table1;
 and for: with t1 as @fast(select * from table1) select * from t1, the count sql is: select count(1) from table1
 
@@ -385,7 +363,7 @@ and for: with t1 as @fast(select * from table1) select * from t1, the count sql 
 	left join sqltoy_organ_info t2 on  t1.organ_id=t2.ORGAN_ID
 	]]>
 	</value>
-	<!-- For special cases a custom count-sql can be provided for targeted performance optimization -->
+	<!-- For extremely special cases a custom count-sql can be provided here to achieve ultimate performance optimization -->
 	<!-- <count-sql></count-sql> -->
 </sql>
 ```
@@ -413,7 +391,7 @@ public void findPageByEntity() {
 }
 ```
 
-### 6. Cache Translation — Eliminating Table JOINs
+### 6. The Cleverest Cache Usage — Eliminating Table JOINs
 
 * 1. Cache translate via `<translate>`: converts codes into names, avoiding JOIN queries, significantly simplifying SQL and improving query efficiency
 * 2. Fuzzy matching against cache names via `<cache-arg>`: obtains the exact codes as query criteria, avoiding JOIN and LIKE fuzzy queries
@@ -498,7 +476,7 @@ List<QueryResult<TreeModel>> list2 = lightDao.parallelQuery(queries, paramsMap,
 > Note: Parallel query targets query scenarios (**do not use it in the middle of transactional operations**); whether it is appropriate to use must be reasonably judged by the user based on the actual scenario.
 > 6.0 rename note: `parallQuery`/`ParallQuery` in 5.6.x are renamed to `parallelQuery`/`ParallelQuery` starting from 6.0.
 
-### 8. Cross-Database Capability
+### 8. The Strongest Cross-Database Capability
 
 * 1. Provides hibernate-like object operations, automatically generating the dialect of the corresponding database.
 * 2. Provides the most common queries: pagination, top-N, random records, etc., avoiding the different syntax of different databases.
@@ -1004,7 +982,7 @@ public class CrudCaseServiceTest {
 
 ### Project History
 
-* 2007~2008: while building a management system project for the Agricultural Bank of China, there were many query and statistics needs, with numerous query conditions that kept being added, so I kept thinking about how to adapt quickly to such changes. From a rather accidental flash of inspiration I discovered a way of writing dynamic sql more concise than mybatis, which served as a complement to hibernate jpa queries and visibly improved development efficiency. See a blog post written in 2009: https://blog.csdn.net/iteye_2252/article/details/81683940
+* 2007~2008: while building a management system project for the Agricultural Bank of China, there were many query and statistics needs, with numerous query conditions that kept being added, so I kept thinking about how to adapt quickly to such changes. From a rather accidental flash of inspiration I discovered a way of writing dynamic sql vastly more powerful than mybatis, which served as a complement to hibernate jpa queries and delivered an extremely striking development experience. See a blog post written in 2009: https://blog.csdn.net/iteye_2252/article/details/81683940
 * 2008~2012: since I kept working on financial enterprise projects, the data volumes were basically in the tens of millions of rows, so sqltoy continuously focused on enhancing sql queries around jpa. During this period it already integrated cache translation, fast pagination, pivot (row/column rotation), and other query features more distinctive than those of other frameworks.
 * 2013~2014: to avoid making developers use two technologies side by side in one project, sqltoy implemented object-based crud functionality, forming the complete sqltoy-orm framework.
 * 2014~2017: while leading the Lakala big data platform, sqltoy underwent a substantial refactor that rationalized its underlying structure, and it was strengthened and validated on the Lakala CRM and a big data platform with a daily average in the tens of millions, accumulating to the tens-of-billions level.

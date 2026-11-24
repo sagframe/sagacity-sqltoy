@@ -1,8 +1,7 @@
 [English](README.md) | 简体中文
 
 <p align="center">
-    <a target="_blank" href="https://github.com/sagframe/sagacity-sqltoy/actions/workflows/ci.yml"><img src="https://github.com/sagframe/sagacity-sqltoy/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-    <img src="https://img.shields.io/badge/SqlToy-6.0.12-blue" alt="version">
+    <img src="https://img.shields.io/badge/SqlToy-6.0.14-blue" alt="version">
     <a target="_blank" href="LICENSE"><img src="https://img.shields.io/:license-Apache%202.0-blue.svg"></a>
     <a target="_blank" href="https://github.com/sagframe/sagacity-sqltoy"><img src="https://img.shields.io/github/stars/sagframe/sagacity-sqltoy.svg?style=social"/></a>
     <a target="_blank" href="https://gitee.com/sagacity/sagacity-sqltoy"><img src="https://gitee.com/sagacity/sagacity-sqltoy/badge/star.svg?theme=white" /></a>
@@ -21,9 +20,9 @@ SqlToy 是 JPA 式对象操作与 SQL 优先查询的融合体，是简单业务
 | 资源 | 地址 |
 | --- | --- |
 | 📖 在线文档（推荐） | <https://sagframe.github.io/sqltoy-docs/> |
-| 📰 跨库适配选型文章 | [一套 SQL，跑遍 25 种数据库：跨库适配，凭什么首选 SqlToy？](docs/multi-db-adaptation.md) |
+| 📰 信创替换选型文章 | [一套 SQL，跑遍 25 种数据库：信创换库，凭什么首选 SqlToy？](docs/multi-db-adaptation.md) |
 | 📄 xml中sql查询完整配置 | [在线文档·动态SQL规范](https://sagframe.github.io/sqltoy-docs/#/query/dynamic_sql) |
-| 📄 PDF版详细手册 | [点击下载（PDF）](https://raw.githubusercontent.com/sagframe/sagacity-sqltoy/6.0/docs/sqltoy-orm_cn.pdf)（6.0 变更见[升级指南](https://sagframe.github.io/sqltoy-docs/#/introduction/upgrade_6.0)） |
+| 📄 PDF版详细手册 | [点击下载（PDF）](https://gitee.com/sagacity/sagacity-sqltoy/raw/6.0/docs/sqltoy-orm_cn.pdf)（6.0 变更见[升级指南](https://sagframe.github.io/sqltoy-docs/#/introduction/upgrade_6.0)） |
 | 🚀 课程式入门演示(quickstart) | <https://github.com/sagframe/sqltoy-quickstart> |
 | 🚀 全功能演示(showcase:分库分表/多数据源/NoSQL/脱敏/树表/FIFO缓存/native) | <https://github.com/sagframe/sqltoy-showcase> |
 | 🚀 Solon 演示 | <https://github.com/CoCoTeaNet/sqltoy-solon-demo> |
@@ -36,7 +35,7 @@ SqlToy 是 JPA 式对象操作与 SQL 优先查询的融合体，是简单业务
 
 QQ交流群：**531812227** ｜ [Gitee](https://gitee.com/sagacity/sagacity-sqltoy) ｜ [GitHub](https://github.com/sagframe/sagacity-sqltoy) ｜ [GitCode](https://gitcode.com/sqltoy/sagacity-sqltoy)
 
-## 📦 最新版本 6.0.12
+## 📦 最新版本 6.0.14
 
 ```xml
 <dependency>
@@ -45,8 +44,8 @@ QQ交流群：**531812227** ｜ [Gitee](https://gitee.com/sagacity/sagacity-sqlt
 	<!-- solon 适配版本 <artifactId>sagacity-sqltoy-solon-plugin</artifactId> -->
 	<!-- 传统spring项目 <artifactId>sagacity-sqltoy-spring</artifactId> -->
 	<!-- 单纯sqltoy <artifactId>sagacity-sqltoy</artifactId> -->
-	<!-- jdk8 对应的版本号为：5.6.98.jre8（core 与 6.0.12 全量同步，同样支持 quickvo-maven-plugin 插件） -->
-	<version>6.0.12</version>
+	<!-- jdk8 对应的版本号为：5.6.100.jre8（core 与 6.0.14 全量同步，同样支持 quickvo-maven-plugin 插件） -->
+	<version>6.0.14</version>
 </dependency>
 ```
 
@@ -116,7 +115,7 @@ lightDao.update(staffInfo, "photo");
 lightDao.delete(new StaffInfoVO("S2007"));
 ```
 
-推荐从 [sqltoy-quickstart](https://github.com/sagframe/sqltoy-quickstart) 开始（clone 后 `mvn test` 即可运行：内置 H2 内存库 + 嵌入式 Redis；5 节基础课程覆盖 CRUD 与 Redis 业务主键、动态条件、分页优化、缓存翻译、跨库 SQL 适配，进阶课程覆盖高并发台账、报表零 ETL、函数转换，第 9 课经 docker-compose 在 PostgreSQL/SQL Server/Oracle/MySQL 真库验证同一套 SQL），全功能演示见 [sqltoy-showcase](https://github.com/sagframe/sqltoy-showcase)。
+推荐从 [sqltoy-quickstart](https://github.com/sagframe/sqltoy-quickstart) 开始（课程式入门，clone 后 `mvn test` 零安装运行），全功能演示见 [sqltoy-showcase](https://github.com/sagframe/sqltoy-showcase)。
 
 ## 🔍 特性详解
 
