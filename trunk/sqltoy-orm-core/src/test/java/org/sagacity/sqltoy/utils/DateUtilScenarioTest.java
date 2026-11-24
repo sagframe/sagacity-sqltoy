@@ -52,6 +52,16 @@ public class DateUtilScenarioTest {
 		assertTrue(failures.isEmpty(), scene + " 存在失败场景:\n" + String.join("\n", failures));
 	}
 
+	/**
+	 * jre8同步适配:中文月份/星期的"短名"在JDK8与JDK9+下拼写不同——JDK8用传统JRE locale数据
+	 * (MMM=八月、EEE=星期二),JDK9+默认CLDR(MMM=8月、EEE=周二),两者都是所在JDK的正确输出,
+	 * 非框架缺陷(DateUtil只是按locale委托SimpleDateFormat)。按运行JDK选择期望值,断言仍为精确匹配。
+	 * 全名(MMMM=八月、EEEE=星期二)与英文/日文各形态两代JDK一致,不受影响
+	 */
+	private static boolean legacyLocaleData() {
+		return System.getProperty("java.version", "").startsWith("1.8");
+	}
+
 	/** 场景一:日期格式化(横杠、斜杠、点号、冒号、全数字、中文单位、简写、各种输入类型) */
 	@Test
 	public void scenario1Format() {
@@ -231,7 +241,8 @@ public class DateUtilScenarioTest {
 	public void scenario4Locale() {
 		System.out.println("\n========== 场景四:locale格式化 ==========");
 		String base = "Date(2026-08-18 12:30:45)";
-		check("4-01", base, "formatDate(yyyy-MM-dd MMM,CHINA)", "2026-08-18 8月",
+		check("4-01", base, "formatDate(yyyy-MM-dd MMM,CHINA)",
+				legacyLocaleData() ? "2026-08-18 八月" : "2026-08-18 8月",
 				DateUtil.formatDate(BASE, "yyyy-MM-dd MMM", Locale.CHINA));
 		check("4-02", base, "formatDate(yyyy-MM-dd MMM,ENGLISH)", "2026-08-18 Aug",
 				DateUtil.formatDate(BASE, "yyyy-MM-dd MMM", Locale.ENGLISH));
@@ -241,7 +252,8 @@ public class DateUtilScenarioTest {
 				DateUtil.formatDate(BASE, "MMMM dd, yyyy", Locale.US));
 		check("4-05", base, "formatDate(EEEE,CHINA)", "星期二", DateUtil.formatDate(BASE, "EEEE", Locale.CHINA));
 		check("4-06", base, "formatDate(EEEE,ENGLISH)", "Tuesday", DateUtil.formatDate(BASE, "EEEE", Locale.ENGLISH));
-		check("4-07", base, "formatDate(yyyy-MM-dd EEE,CHINA)", "2026-08-18 周二",
+		check("4-07", base, "formatDate(yyyy-MM-dd EEE,CHINA)",
+				legacyLocaleData() ? "2026-08-18 星期二" : "2026-08-18 周二",
 				DateUtil.formatDate(BASE, "yyyy-MM-dd EEE", Locale.CHINA));
 		check("4-08", base, "formatDate(yyyy-MM-dd EEE,ENGLISH)", "2026-08-18 Tue",
 				DateUtil.formatDate(BASE, "yyyy-MM-dd EEE", Locale.ENGLISH));
