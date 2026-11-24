@@ -1,4 +1,4 @@
-English | [简体中文](README.md)
+English | [简体中文](README.zh-CN.md)
 
 <p align="center">
     <img src="https://img.shields.io/badge/SqlToy-6.0.14-blue" alt="version">
