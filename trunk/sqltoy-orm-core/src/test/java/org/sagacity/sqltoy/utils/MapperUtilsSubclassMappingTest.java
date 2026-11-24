@@ -3,6 +3,7 @@ package org.sagacity.sqltoy.utils;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.Serializable;
@@ -184,6 +185,37 @@ public class MapperUtilsSubclassMappingTest {
 		ParentDst pd = MapperUtils.map(ps, ParentDst.class);
 		assertNotNull(pd.getChild());
 		assertEquals("child", pd.getChild().getName());
+		// update 2026-11-24 同类型嵌套DTO应递归映射产生独立副本,不与源对象共享(glm5.4恢复的原行为)
+		assertNotSame(c, pd.getChild(), "同类型嵌套DTO应为独立副本而非共享引用");
+	}
+
+	/** 字段类型无无参构造(不可变对象):同类型值无法递归映射,直接赋值保留 */
+	@Test
+	public void noArgConstructorLessTypeDirectAssign() {
+		NoDefault value = new NoDefault("v");
+		NoDefaultHolderSrc src = new NoDefaultHolderSrc();
+		src.setItem(value);
+		NoDefaultHolderDst dst = MapperUtils.map(src, NoDefaultHolderDst.class);
+		assertNotNull(dst.getItem(), "无无参构造类型不应被丢弃");
+		assertEquals("v", dst.getItem().getV());
+	}
+
+	public static class NoDefault implements Serializable {
+		private final String v;
+		public NoDefault(String v) { this.v = v; }
+		public String getV() { return v; }
+	}
+
+	public static class NoDefaultHolderSrc implements Serializable {
+		private NoDefault item;
+		public NoDefault getItem() { return item; }
+		public void setItem(NoDefault item) { this.item = item; }
+	}
+
+	public static class NoDefaultHolderDst implements Serializable {
+		private NoDefault item;
+		public NoDefault getItem() { return item; }
+		public void setItem(NoDefault item) { this.item = item; }
 	}
 
 	/** mapList集合映射含接口字段不NPE */

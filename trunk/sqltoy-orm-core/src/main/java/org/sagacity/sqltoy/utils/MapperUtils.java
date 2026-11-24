@@ -593,7 +593,7 @@ public class MapperUtils {
 	 * 
 	 * @param voClass     目标类(仅用于缓存归属)
 	 * @param realMethods setter方法数组
-	 * @return [参数类型名数组, 类型分类数组, 泛型目标类型数组, 是否List数组, List<T>中T是否非基本类型数组]
+	 * @return [参数类型名数组, 类型分类数组, 泛型目标类型数组, 是否List数组, List<T>中T是否非基本类型数组, setter原始参数类型数组]
 	 */
 	private static Object[] getSetterMeta(Class voClass, Method[] realMethods) {
 		ConcurrentHashMap<List<Method>, Object[]> cache = SETTER_META.get(voClass);
@@ -617,6 +617,8 @@ public class MapperUtils {
 		Boolean[] isList = new Boolean[indexSize];
 		// 判断List<T> 场景泛型是否是基本类型
 		Boolean[] notListBaseType = new Boolean[indexSize];
+		// update 2026-11-24 缓存setter原始参数类型,热路径直接读数组,避免每单元格多次getParameterTypes()clone整个数组
+		Class[] methodParamTypes = new Class[indexSize];
 		Class methodType;
 		// 自动适配属性的数据类型
 		for (int i = 0; i < indexSize; i++) {
@@ -624,13 +626,14 @@ public class MapperUtils {
 			notListBaseType[i] = Boolean.TRUE;
 			if (null != realMethods[i]) {
 				methodType = realMethods[i].getParameterTypes()[0];
+				methodParamTypes[i] = methodType;
 				methodTypes[i] = methodType.getTypeName();
 				methodTypeValues[i] = DataType.getType(methodType);
 				// 非普通类型、非枚举、非Map(DTO)
 				if ((methodTypeValues[i] == DataType.objectType || methodTypeValues[i] == DataType.listType
 						|| methodTypeValues[i] == DataType.setType) && !methodType.isEnum()
 						&& !Map.class.isAssignableFrom(methodType)) {
-					methodGenTypes[i] = realMethods[i].getParameterTypes()[0];
+					methodGenTypes[i] = methodType;
 				}
 				// 泛型
 				if (realMethods[i].getGenericParameterTypes()[0] instanceof ParameterizedType) {
@@ -643,14 +646,13 @@ public class MapperUtils {
 							&& !Map.class.isAssignableFrom(methodType) && !methodType.isArray()) {
 						notListBaseType[i] = Boolean.FALSE;
 					}
-					if (realMethods[i].getParameterTypes()[0].equals(List.class)
-							|| realMethods[i].getParameterTypes()[0].equals(ArrayList.class)) {
+					if (methodParamTypes[i].equals(List.class) || methodParamTypes[i].equals(ArrayList.class)) {
 						isList[i] = Boolean.TRUE;
 					}
 				}
 			}
 		}
-		return new Object[] { methodTypes, methodTypeValues, methodGenTypes, isList, notListBaseType };
+		return new Object[] { methodTypes, methodTypeValues, methodGenTypes, isList, notListBaseType, methodParamTypes };
 	}
 
 	// 提取映射对应的methods
@@ -676,6 +678,7 @@ public class MapperUtils {
 		Class[] methodGenTypes = (Class[]) meta[2];
 		Boolean[] isList = (Boolean[]) meta[3];
 		Boolean[] notListBaseType = (Boolean[]) meta[4];
+		Class[] methodParamTypes = (Class[]) meta[5];
 		int size;
 		Object bean;
 		List row;
@@ -716,8 +719,13 @@ public class MapperUtils {
 								}
 							}
 						} // update 2026-11-24 值已是字段类型的子类/实现(IS-A)时直接赋值,保留子类实例;
-						// 修复Map<-HashMap、Number<-Integer、Object<-String、raw List<-ArrayList等被静默丢弃或递归映射接口NPE
-						else if (realMethods[j].getParameterTypes()[0].isAssignableFrom(cellData.getClass())) {
+						// 修复Map<-HashMap、Number<-Integer、Object<-String、raw List<-ArrayList等被静默丢弃或递归映射接口NPE。
+						// 值的类型与字段类型相同时不在这里赋值,仍走下面的DTO->DTO递归映射产生副本(保持原有行为:
+						// 映射结果不与源对象共用嵌套对象)；但字段类型没有无参构造(如不可变对象、非静态内部类)时递归映射
+						// 必然失败(原先整个映射抛异常或属性被丢弃),同样直接赋值
+						else if (methodParamTypes[j].isAssignableFrom(cellData.getClass())
+								&& (!methodParamTypes[j].equals(cellData.getClass())
+										|| BeanUtil.cachedNoArgConstructor(methodParamTypes[j]) == null)) {
 							realMethods[j].invoke(bean, cellData);
 						} // DTO->DTO 对象之间转换
 						else if (recursionLevel < MAX_RECURSION && methodGenTypes[j] != null
@@ -726,6 +734,10 @@ public class MapperUtils {
 									emptyConfig);
 							if (convertData != null) {
 								realMethods[j].invoke(bean, convertData);
+							} // update 2026-11-24 递归映射不出结果(如集合类、Locale等没有成对get/set属性的类,原先属性被静默丢弃),
+							// 而值本身可以赋给字段类型时,直接赋值
+							else if (methodParamTypes[j].isAssignableFrom(cellData.getClass())) {
+								realMethods[j].invoke(bean, cellData);
 							}
 						} // 类型相同直接赋值
 						else if (cellData.getClass().getTypeName().equals(methodTypes[j])) {
@@ -756,11 +768,14 @@ public class MapperUtils {
 		int indexSize = realMethods.length;
 		String[] methodTypes = new String[indexSize];
 		int[] methodTypeValues = new int[indexSize];
+		// update 2026-11-24 缓存setter原始参数类型,热路径直接读数组,避免每单元格getParameterTypes()clone数组
+		Class[] methodParamTypes = new Class[indexSize];
 		Class methodType;
 		// 自动适配属性的数据类型
 		for (int i = 0; i < indexSize; i++) {
 			if (null != realMethods[i]) {
 				methodType = realMethods[i].getParameterTypes()[0];
+				methodParamTypes[i] = methodType;
 				methodTypes[i] = methodType.getTypeName();
 				methodTypeValues[i] = DataType.getType(methodType);
 			}
@@ -784,7 +799,7 @@ public class MapperUtils {
 								realMethods[j].invoke(bean, BeanUtil.convertType(cellData, JdbcTypes.OTHER,
 										methodTypeValues[j], methodTypes[j]));
 							} // update 2026-11-24 值可赋值给字段类型(含子类/实现)即直接赋值,修复Map/Number/Object/List子类丢失
-							else if (realMethods[j].getParameterTypes()[0].isAssignableFrom(cellData.getClass())) {
+							else if (methodParamTypes[j].isAssignableFrom(cellData.getClass())) {
 								realMethods[j].invoke(bean, cellData);
 							}
 						} else if (!skipNull) {

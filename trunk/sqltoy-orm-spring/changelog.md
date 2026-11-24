@@ -1,4 +1,4 @@
-﻿# v5.6.99.jre8 2026-11-23
+﻿# v5.6.99.jre8 2026-11-24
 1、参照6.0分支(6.0.12)同步缺陷修复与新特性,详见sqltoy-orm-core/changelog.md的v5.6.99.jre8条目;本模块变更:LightDaoImpl/SqlToyLazyDaoImpl/SqlToyDaoImpl补updateFetch单实体只更新入口(与core新增的updateFetch(entity,callback,uniqueProps...)对齐,记录不存在返回null不插入);spring-boot-starter的LightDaoImpl/SqlToyLazyDaoImpl同步补入
 
 # v5.6.98.jre8 2026-11-19

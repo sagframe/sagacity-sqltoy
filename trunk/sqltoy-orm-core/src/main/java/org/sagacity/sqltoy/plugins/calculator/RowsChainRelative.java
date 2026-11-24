@@ -11,6 +11,8 @@ import org.sagacity.sqltoy.config.model.RowsChainRelativeModel;
 import org.sagacity.sqltoy.utils.CollectionUtil;
 import org.sagacity.sqltoy.utils.NumberUtil;
 import org.sagacity.sqltoy.utils.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @project sagacity-sqltoy
@@ -21,6 +23,7 @@ import org.sagacity.sqltoy.utils.StringUtil;
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class RowsChainRelative {
+	private final static Logger logger = LoggerFactory.getLogger(RowsChainRelative.class);
 	// |月份 | 产品 |交易笔数 | 环比 | 金额 | 环比 | 收入 | 环比 |
 	// | 5月 | 香蕉 | 2000 | 环比 | 金额 | 环比 | 收入 | 环比 |
 	// | 5月 | 苹果 | 2000 | 环比 | 金额 | 环比 | 收入 | 环比 |
@@ -77,6 +80,12 @@ public class RowsChainRelative {
 				groupSize = map.size();
 			}
 		}
+		// update 2026-11-24 起止行之间没有数据时(如start-row比end-row大1、负数end-row恰好超出末尾1行、start-row超出最后一行)，
+		// 上面提取不到任何分组值，groupSize为0会让下面两个循环的步长变成0从而死循环
+		// (原边界i>start/i<end这种情况下不会进入循环)，这里钳到1，与ColsChainRelative的处理一致
+		if (groupSize < 1) {
+			groupSize = 1;
+		}
 		Integer[] relativeIndexs = rowsRelative.getRelativeIndexs();
 		if (relativeIndexs == null || relativeIndexs.length == 0) {
 			relativeIndexs = new Integer[groupSize];
@@ -86,6 +95,16 @@ public class RowsChainRelative {
 		} else {
 			// 从低到高排列
 			CollectionUtil.sortArray(relativeIndexs, false);
+		}
+		// update 2026-11-24 relative-index超出分组长度[0,groupSize)时对应行会被跳过(表现为少算值),
+		// 属配置错误,一次性告警使其可见(不改变跳过行为)
+		for (int idx : relativeIndexs) {
+			if (idx < 0 || idx >= groupSize) {
+				logger.warn(
+						"rows-chain-relative relative-index [{}] is out of group-size [0,{}), the corresponding rows will be skipped, please check the relative-indexs configuration!",
+						idx, groupSize);
+				break;
+			}
 		}
 		int addIndex = 0;
 		String relativeCol;
@@ -139,6 +158,10 @@ public class RowsChainRelative {
 					index = relativeIndexs[j];
 					divIndex = i - groupSize + index + 1;
 					divedIndex = i + index + 1;
+					// update 2026-11-24 relative-index超出分组长度时取到的行会落在起止行之外(原先数组越界)，跳过
+					if (divIndex < start || divIndex > end || divedIndex < start || divedIndex > end) {
+						continue;
+					}
 					divRowList = (List) result.get(divIndex);
 					divedRowList = (List) result.get(divedIndex);
 					// 对环比列进行数据运算(环比结果列必须是在比较值列的后面第一列)
@@ -185,6 +208,10 @@ public class RowsChainRelative {
 					index = relativeIndexs[j];
 					divIndex = i + index;
 					divedIndex = i + index - groupSize;
+					// update 2026-11-24 relative-index超出分组长度时取到的行会落在起止行之外(原先数组越界)，跳过
+					if (divIndex < start || divIndex > end || divedIndex < start || divedIndex > end) {
+						continue;
+					}
 					divRowList = (List) result.get(divIndex);
 					divedRowList = (List) result.get(divedIndex);
 					// 对环比列进行数据运算(环比结果列必须是在比较值列的后面第一列)

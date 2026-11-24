@@ -120,6 +120,46 @@
 > 4 个新测试文件在上游为 LF 结尾,拷入后转 CRLF 与本侧工作区一致(blob 不受影响)。门禁:core clean 全量 364 类 2838 例
 > 全绿(82 例环境性跳过),与上轮 360 类 2806 例逐类比对——+32 例全部归因于 4 个新测试类(12+9+6+5),无类丢失、
 > 既有类计数零变化;starter 4 例、solon 7 例、spring 编译通过。
+>
+> **第十轮同步完成(2026-11-24,混合类型排序与日志口径,版本仍 5.6.99.jre8)**:上游 e532640cb..e4e0b67ef 单提交 7 文件
+> (+127/-22),src 下 6 个全部 A 类(B=0、D=0),直接拷贝。实质改动仅两处:①CollectionUtil.compareValue 与 ResultUtils.sortList
+> 同口径(两侧都符合 dataType 才强转,否则退回文本比较),修 sortList/groupSort 混合类型列 CCE;②TreeDataSort 的
+> "所有行都是根"提示 warn→debug(过滤后的树形查询属正常用法,避免刷日志)。其余为注释/javadoc(RowsChainRelative 补
+> groupSize>=3 越界说明、MapperUtils javadoc 归位、ResultUtils 键形态描述)。新测试文件仍为 LF,已转 CRLF。
+> 门禁:core clean 全量 365 类 2842 例全绿(82 例环境性跳过),+4 例归因于 CollectionUtilSortMixedTypeTest,既有类计数零变化;
+> starter 4 例、solon 7 例、spring 编译通过。另:上游 changelog 将计算器边界修正标注为"产物可见的行为变更,升级需注意",
+> 本侧 changelog 第 6 条已同步该标注与 groupSize>=3 的越界说明。
+>
+> **第十一轮同步完成(2026-11-24,死循环修复与独立复核套件,版本仍 5.6.99.jre8)**:上游 e4e0b67ef..e804418dd 共 4 提交
+> 7 文件(+4152),全部 A 类(B=0、D=0)。主代码仅 RowsChainRelative:①起止行间无数据时 groupSize 为 0 会让循环步长为 0
+> **死循环**(上轮边界改动的跟进修复),钳到 1;②relative-index 超出分组长度时 divIndex/divedIndex 落在起止行外
+> (原数组越界),改为跳过。其余 6 个为新包 `org.sagacity.sqltoy.recheck` 下的独立复核套件(43 例,参考实现按优化前源码
+> 重新转写,不复用既有对拍基准类;含死循环修复的真实链路回归 sql xml→H2→ResultUtils→RowsChainRelative)。
+> jre8 适配 1 处:CacheAndRegexRecheckTest 的 `String.isBlank()`(JDK11)→`trim().isEmpty()`。门禁:core clean 全量
+> 371 类 2885 例全绿(82 例环境性跳过),+43 例全部归因于 6 个新类,既有类计数零变化;starter 4 例、solon 7 例、spring 编译通过。
+>
+> **第十二轮同步完成(2026-11-24,复核用例调整)**:上游 e804418dd..469bcee09(含一个 merge,系同一文件两处并行编辑后的
+> 合并),净变更仅 RowsChainRelativeH2RecheckTest(+10/-10):对照用例改用默认乘数 1、保留 3 位小数(期望值相应更新),
+> context 捕获为局部 final 变量供工作线程使用。纯测试调整,无产品代码变化。本侧该文件尚未提交,故按"已修改"而非"新增"
+> 走带保险拷贝(先校验工作区副本==上游基线)。门禁:core clean 全量 371 类 2885 例全绿(82 跳过),类数/例数与上轮完全一致;
+> starter 4 例、solon 7 例、spring 编译通过。
+>
+> **第十三轮同步完成(2026-11-24,IS-A 直赋的副本语义修正,版本仍 5.6.99.jre8)**:上游 469bcee09..9e7e1a886 共 2 提交 4 文件
+> (+342/-5)。MapperUtils 修正第九轮 IS-A 直赋的副作用:同类型嵌套 DTO 原应递归映射产生**独立副本**,第九轮改成共用实例;
+> 现"类型相同且有无参构造"仍走递归映射,"类型相同但无无参构造(不可变对象/非静态内部类)"才直赋,"递归映射不出结果
+> (集合类、Locale 等)且值可赋值"也直赋(原先静默丢弃)。BeanUtil 仅 cachedNoArgConstructor 的 javadoc(B 类,三方合并
+> +2/-1,适配 +47/-219 保留,校验通过);MapperUtils 与 2 个测试文件为 A 类拷贝。本轮工作区有未提交改动,ours 清单改由
+> **工作区内容**生成(wt-tree.js),未提交的 recheck 文件因此被正确识别为"已修改、干净基线"。门禁:core clean 全量
+> 371 类 2887 例全绿(82 跳过),+2 例落在 MappingAndSortRecheckTest(5→6)与 MapperUtilsSubclassMappingTest(6→7),
+> 其余零变化;starter 4 例、solon 7 例、spring 编译通过。
+>
+> **第十四轮同步完成(2026-11-24,越界告警与热路径优化,版本仍 5.6.99.jre8)**:上游 9e7e1a886..ac90f3021 共 2 提交
+> (e4c8cb8f2 + 跑测试期间新增的 ac90f3021),src 下 2 个文件均 A 类,直接拷贝。①RowsChainRelative:relative-index 超出
+> [0,groupSize) 时一次性 warn 告警(跳过行为不变,使"少算值"的配置错误可见);②MapperUtils:setter 原始参数类型缓存进
+> 元数据 meta[5](Class[] methodParamTypes),两条映射路径的热路径改读数组,消除每单元格 getParameterTypes() 的数组 clone;
+> ac90f3021 为 getSetterMeta 的 @return javadoc 补第 6 个元素说明(纯注释)。**教训:上游在本轮门禁跑测试期间又前进了一次,
+> 收尾复核时用 `git show HEAD:` 直接比对才发现——每轮收尾必须重新确认上游 HEAD 未再移动**。无测试改动。
+> 门禁:core clean 全量 371 类 2887 例全绿(82 跳过),类数/例数与上轮完全一致;starter 4 例、solon 7 例、spring 编译通过。
 
 ## 同步流程(每个 6.0 release tag 执行一轮)
 
@@ -142,6 +182,10 @@
 
 上游变更范围以 gitee 自身的 `git diff --stat <上个 tag> HEAD` 为准;合并后用同一哈希法对工作区做全景复核,所有差异必须能归入
 上述清单。B 类合并的三方输入一律取 git blob(`git show`),输出再转回工作区的 CRLF。
+**每轮必须重新导出 base/theirs/ours 三份清单**:沿用上一轮快照会把本轮已同步好的文件误判为"仍有差异"(第十二轮曾因此误报,
+重新导出后归零);工作区有未提交改动时,ours 须取工作区内容而非 HEAD。
+**收尾必须重新确认上游 HEAD 未再移动**:门禁跑测试的几分钟里上游可能又提交(第十四轮即如此),收尾时用
+`git show HEAD:<path>` 与本地文件直接比对可发现;发现移动则补同步并重跑门禁,勿用旧 HEAD 的数字交差。
 
 **校验不变量(第八轮修正)**:记 U=diff(base→theirs)、A=diff(base→ours)、P=diff(ours→merged)、R=diff(theirs→merged),
 按"变更行多重集"校验四条子集关系:①P⊆U(只应用了上游改动)②R⊆A(残留只含登记适配)③U⊆P+A(上游改动没被丢:要么本轮应用、
@@ -183,6 +227,7 @@
 | solon `DbManager.getService` | `crudService.setLightDao(...)`(6.0 服务类签名) | 保持本模块 `setSqlToyLazyDao(...)` 形态(第 13 条的切换清空逻辑照常移植) |
 | `OracleTzNormalizeTest` | 断言 TIMESTAMPTZ 必解析出无参 `offsetDateTimeValue()`(ojdbc11 23.x 具备该方法) | 按驱动能力分派断言——ojdbc8 19.24(JDK8 最后一条 Oracle 驱动线)的 TIMESTAMPTZ 只有 `offsetDateTimeValue(Connection)`,javap 实证无无参方法:此时断言解析为 null。产品代码 `ResultUtils` 与 6.0 逐字一致(反射不到方法即保留驱动对象=6.0.12 之前行为),故**本线 Oracle TIMESTAMPTZ 读回归一不生效**,需要可读值时 SQL 端 to_char 或 VO 用 Timestamp 接收;若日后 ojdbc8 线提供无参方法,产品代码自动生效、测试自动切换断言 |
 | `BeanUtilArrayConvertTypeTest`/`SqlUtilsExtArrayResultUpdateTest` | `Set.of(..)`/`List.of(..)`(JDK9) | `new HashSet<>(Arrays.asList(..))`/`Arrays.asList(..)` |
+| `recheck/CacheAndRegexRecheckTest` | `String.isBlank()`(JDK11) | `trim().isEmpty()` |
 
 ## pom 差异基线(5.6 侧 jre8 化规则)
 

@@ -275,7 +275,8 @@ public class BeanUtil {
 	}
 
 	/**
-	 * 测试可见:取已缓存的无参构造器(避免测试反射ClassValue内部结构)
+	 * 同包及测试可见:取已缓存的无参构造器(避免反射ClassValue内部结构)；
+	 * MapperUtils用它判断"类型与字段相同的值能否经递归映射产生副本"
 	 * 
 	 * @param voClass
 	 * @return
