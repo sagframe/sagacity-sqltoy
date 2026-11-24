@@ -108,10 +108,12 @@ public class TreeDataSort {
 					+ "), please check that the id and pid values are of comparable types and that pid really references id");
 		}
 		// update 2026-11-24 id 与 pid 取值类型完全无法匹配时，任何 pid 都不会等于任何 id，所有行都会被当作根节点，
-		// 树形结构与逐层汇总实际不会发生却不报错，这里给出告警(不改变结果)
+		// 树形结构与逐层汇总实际不会发生却不报错，这里给出提示(不改变结果)。
+		// 用debug而非warn:按条件过滤后的树形查询(如只查顶层)本来就会"所有行都是根",属正常用法,
+		// 若每次查询都告警,大结果集场景会持续刷日志
 		if (result.size() == totalRows && totalRows > 1
 				&& hasIncompatibleIdPidTypes(result, idColIndex, pidColIndex)) {
-			logger.warn(
+			logger.debug(
 					"TreeDataSort: no pid value matches any id value (rows={}, id column index={}, pid column index={}), every row is treated as a root node and the tree roll-up will not happen, please check that pid really references id",
 					totalRows, idColIndex, pidColIndex);
 		}

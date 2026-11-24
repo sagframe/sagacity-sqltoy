@@ -578,17 +578,6 @@ public class MapperUtils {
 		return result;
 	}
 
-	// 提取映射对应的methods
-	/**
-	 * 利用java.lang.reflect并结合页面的property， 从对象中取出对应方法的值，组成一个List
-	 * 
-	 * @param dataSet
-	 * @param voClass
-	 * @param realMethods
-	 * @param recursionLevel 递归层级
-	 * @return
-	 * @throws Exception
-	 */
 	/**
 	 * setter元数据缓存：按目标类归属的ClassValue，内层以"setter方法列表"为键(Method.equals按声明类+签名比较)
 	 */
@@ -664,6 +653,17 @@ public class MapperUtils {
 		return new Object[] { methodTypes, methodTypeValues, methodGenTypes, isList, notListBaseType };
 	}
 
+	// 提取映射对应的methods
+	/**
+	 * 利用java.lang.reflect并结合页面的property， 从对象中取出对应方法的值，组成一个List
+	 * 
+	 * @param dataSet
+	 * @param voClass
+	 * @param realMethods
+	 * @param recursionLevel 递归层级
+	 * @return
+	 * @throws Exception
+	 */
 	private static List reflectListToBean(List dataSet, Class voClass, Method[] realMethods, int recursionLevel)
 			throws Exception {
 		List result = new ArrayList();

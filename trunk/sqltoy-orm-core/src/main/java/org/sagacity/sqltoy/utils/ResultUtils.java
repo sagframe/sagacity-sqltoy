@@ -838,7 +838,8 @@ public class ResultUtils {
 	 * 
 	 * @param rs      ResultSet结果集对象(当前行)
 	 * @param columns 分组对比的列名称数组
-	 * @return 单列时为该列值(null转"null"文本)，多列时为下划线连接的拼接字符串
+	 * @return 单列时为该列值(null转"null"文本)，多列时为各列文本按顺序组成的List
+	 *         (逐列比较，不存在拼接歧义)
 	 * @throws Exception
 	 */
 	private static Object getLinkColumnsId(ResultSet rs, String[] columns) throws Exception {
@@ -2575,7 +2576,7 @@ public class ResultUtils {
 	 * 
 	 * @param queryResultRows 查询结果的二维行数据集合
 	 * @param groupIndexes    分组列的下标数组
-	 * @return key为分组列值拼接串、value为同组行数据列表的LinkedHashMap(保持出现顺序)
+	 * @return key为各分组列文本按顺序组成的List、value为同组行数据列表的LinkedHashMap(保持出现顺序)
 	 */
 	private static LinkedHashMap<List<String>, List> hashGroupList(List queryResultRows, int[] groupIndexes) {
 		LinkedHashMap<List<String>, List> groupListMap = new LinkedHashMap<List<String>, List>();

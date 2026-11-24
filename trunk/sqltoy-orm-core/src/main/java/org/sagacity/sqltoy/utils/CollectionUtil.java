@@ -1656,15 +1656,18 @@ public class CollectionUtil {
 			if (iData.equals(jData)) {
 				isEqual = true;
 			} else {
-				if (dataType == 2) {
+				// update 2026-11-24 与ResultUtils.sortList同一口径:比较对的两侧都符合dataType才走类型化比较,
+				// 同一列混有字符串与数字等类型不一致的情形退回下面的文本比较;
+				// 避免dataType由首个非空值定死后对后续其它类型无条件强转抛ClassCastException
+				if (dataType == 2 && iData instanceof Number && jData instanceof Number) {
 					lessThen = ((Number) iData).doubleValue() < ((Number) jData).doubleValue();
-				} else if (dataType == 3) {
+				} else if (dataType == 3 && iData instanceof Date && jData instanceof Date) {
 					lessThen = ((Date) iData).before((Date) jData);
-				} else if (dataType == 4) {
+				} else if (dataType == 4 && iData instanceof LocalDate && jData instanceof LocalDate) {
 					lessThen = ((LocalDate) iData).compareTo((LocalDate) jData) < 0;
-				} else if (dataType == 5) {
+				} else if (dataType == 5 && iData instanceof LocalDateTime && jData instanceof LocalDateTime) {
 					lessThen = ((LocalDateTime) iData).compareTo((LocalDateTime) jData) < 0;
-				} else if (dataType == 6) {
+				} else if (dataType == 6 && iData instanceof LocalTime && jData instanceof LocalTime) {
 					lessThen = ((LocalTime) iData).compareTo((LocalTime) jData) < 0;
 				} else {
 					str1 = iData.toString();

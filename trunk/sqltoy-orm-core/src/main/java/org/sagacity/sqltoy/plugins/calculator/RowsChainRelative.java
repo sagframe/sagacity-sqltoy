@@ -131,7 +131,9 @@ public class RowsChainRelative {
 		boolean divIsZero;
 		// 逆序(从下到上)
 		if (rowsRelative.isReverse()) {
-			// update 2026-11-24 下界含首组:i>=start+groupSize-1;原i>start在groupSize=1时漏掉首行(groupSize>=2时二者等价)
+			// update 2026-11-24 下界含首组:i>=start+groupSize-1;原i>start在groupSize=1时漏掉首行。
+			// groupSize=2时与旧界完全等价;groupSize>=3时新界更严格(要求首块完整落在区间内),
+			// 首块不完整时旧界会取到start之前的行并抛数组越界
 			for (int i = end - groupSize; i >= start + groupSize - 1; i = i - groupSize) {
 				for (int j = 0; j < relativeIndexs.length; j++) {
 					index = relativeIndexs[j];
@@ -175,7 +177,9 @@ public class RowsChainRelative {
 				}
 			}
 		} else {
-			// update 2026-11-24 上界含末组:i<=end-groupSize+1;原i<end在groupSize=1时漏掉末行(groupSize>=2时二者等价)
+			// update 2026-11-24 上界含末组:i<=end-groupSize+1;原i<end在groupSize=1时漏掉末行。
+			// groupSize=2时与旧界完全等价;groupSize>=3时新界更严格(要求末块完整落在区间内),
+			// 末块不完整时旧界会取到end之后的行并抛数组越界
 			for (int i = start + groupSize; i <= end - groupSize + 1; i = i + groupSize) {
 				for (int j = 0; j < relativeIndexs.length; j++) {
 					index = relativeIndexs[j];
