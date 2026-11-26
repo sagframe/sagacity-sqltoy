@@ -28,7 +28,7 @@ public class SqlToyApplication {
 <dependency>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-jdbc</artifactId>
-    <version>4.0.1</version>
+    <version>4.1.2</version>
 </dependency>
 
 ```
@@ -104,7 +104,7 @@ CREATE TABLE SQLTOY_ORDER_INFO(
 <plugin>
 	<groupId>com.sagframe</groupId>
 	<artifactId>quickvo-maven-plugin</artifactId>
-	<version>2.0.2</version>
+	<version>2.0.7</version>
 	<configuration>
 		<configFile>./src/main/resources/quickvo.xml</configFile>
 		<baseDir>${project.basedir}</baseDir>
